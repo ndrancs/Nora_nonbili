@@ -58,6 +58,10 @@ public class NoraViewModule: Module {
       NouController.shared.settings = settings
     }
 
+    Function("setBlocklist") { (blocklist: NoraBlocklist) in
+      NouController.shared.setBlocklist(blocklist)
+    }
+
     Function("setLocaleStrings") { (v: [String: Any]) in
       for (key, value) in v {
         if let strValue = value as? String {

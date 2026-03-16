@@ -58,12 +58,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.apache.tika.Tika
 
-
-val BLOCK_HOSTS = arrayOf(
-  "www.googletagmanager.com",
-  "googleads.g.doubleclick.net"
-)
-
 val VIEW_HOSTS = arrayOf(
   "bsky.app",
   "www.linkedin.com",
@@ -251,7 +245,7 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
           }
 
           override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
-            if (request.url.host in BLOCK_HOSTS) {
+            if (!request.isForMainFrame && nouController.shouldBlockRequestHost(request.url.host)) {
               return WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0)))
             }
             if (request.url.scheme == "http" && !nouController.settings.allowHttpWebsite) {

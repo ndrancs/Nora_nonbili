@@ -15,6 +15,7 @@ import { t } from 'i18next'
 import { MaterialButton } from '../button/IconButtons'
 
 import { ProfileManager } from '../profile/ProfileManager'
+import { BlocklistSection } from '../blocklist/BlocklistSection'
 
 const headerPositions = ['top', 'bottom'] as const
 const themes = [null, 'dark', 'light'] as const
@@ -131,6 +132,7 @@ export const SettingsModalTabSettings = () => {
       )}
 
       <ProfileManager />
+      <BlocklistSection />
 
       <ServiceManager />
       {nIf(bookmarks.length, <NouText className="mt-5 mb-1 font-medium">{t('bookmarks.label')}</NouText>)}

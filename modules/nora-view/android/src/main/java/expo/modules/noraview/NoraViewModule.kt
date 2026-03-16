@@ -75,6 +75,10 @@ class NoraViewModule : Module() {
       nouController.settings = settings
     }
 
+    Function("setBlocklist") { blocklist: NoraBlocklist ->
+      nouController.setBlocklist(blocklist)
+    }
+
     Function("setLocaleStrings") { v: JavaScriptObject ->
       v.getPropertyNames().forEach {
         nouController.i18nStrings[it] = v[it]!!.getString()

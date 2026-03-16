@@ -7,6 +7,18 @@
   "bookmarks": {
     "label": "Bookmarks"
   },
+  "blocklist": {
+    "label": "Network blocklist",
+    "description": "Block ads and trackers with EasyList and EasyPrivacy host rules.",
+    "enable": "Enable network blocklist",
+    "statusActive": "Active",
+    "statusInactive": "Downloaded, disabled",
+    "statusFetching": "Fetching blocklist",
+    "statusNotDownloaded": "Not downloaded",
+    "statusError": "Downloaded, but the last refresh failed",
+    "lastUpdated": "Last updated: {{value}}",
+    "refreshNow": "Update blocklist"
+  },
   "buttons": {
     "cancel": "Cancel",
     "closeAll": "Close All",
@@ -87,6 +99,7 @@
     "new": "New tab"
   },
   "toast": {
-    "pinned": "Pinned to new tab page"
+    "pinned": "Pinned to new tab page",
+    "blocklistUpdated": "Blocklist updated"
   }
 }

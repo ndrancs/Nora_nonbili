@@ -68,7 +68,7 @@ export const settings$ = observable<Store>({
   autoHideHeader: false,
   headerPosition: 'top',
   theme: null,
-  openExternalLinkInSystemBrowser: true,
+  openExternalLinkInSystemBrowser: false,
   redirectToOldReddit: false,
   allowHttpWebsite: false,
   inspectable: false,

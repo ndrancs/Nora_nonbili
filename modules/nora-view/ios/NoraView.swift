@@ -10,6 +10,7 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
   var userAgent: String?
   var lastTranslationY: CGFloat = 0
   var currentProfile: String = "default"
+  var appliedBlocklistRuleList: WKContentRuleList?
 
   // MARK: - Profile Data Store
 
@@ -39,6 +40,7 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
 
   required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
+    NouController.shared.register(self)
     setupWebView(profile: "default")
   }
 
@@ -89,6 +91,7 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
     }
 
     addSubview(webView)
+    applyBlocklist(NouController.shared.blocklistRuleList)
 
     // Observe title and URL changes
     webView.addObserver(self, forKeyPath: "title", options: .new, context: nil)
@@ -96,6 +99,7 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
   }
 
   deinit {
+      NouController.shared.unregister(self)
       webView.removeObserver(self, forKeyPath: "title")
       webView.removeObserver(self, forKeyPath: "url")
   }
@@ -121,6 +125,21 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
     if profile == currentProfile { return }
     currentProfile = profile
     setupWebView(profile: profile)
+  }
+
+  func applyBlocklist(_ ruleList: WKContentRuleList?) {
+      guard webView != nil else {
+          appliedBlocklistRuleList = ruleList
+          return
+      }
+      let controller = webView.configuration.userContentController
+      if let current = appliedBlocklistRuleList {
+          controller.remove(current)
+      }
+      appliedBlocklistRuleList = ruleList
+      if let ruleList = ruleList {
+          controller.add(ruleList)
+      }
   }
 
   func load(url: String) {

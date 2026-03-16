@@ -30,6 +30,20 @@ class NoraSettings : Record {
   val internalHosts: List<String> = emptyList()
 }
 
+class NoraBlocklist : Record {
+  @Field
+  val enabled: Boolean = false
+
+  @Field
+  val blockedHosts: String = ""
+
+  @Field
+  val allowedHosts: String = ""
+
+  @Field
+  val revision: Int = 0
+}
+
 typealias LogFn = (String) -> Unit
 
 class NouController {
@@ -37,6 +51,22 @@ class NouController {
   internal var settings = NoraSettings()
   internal var i18nStrings = mutableMapOf<String, String>()
   internal var logFn: LogFn? = null
+  private var blocklistEnabled = false
+  private var blocklistBlockedHosts = emptySet<String>()
+  private var blocklistAllowedHosts = emptySet<String>()
+  internal var blocklistRevision = 0
+
+  private fun decodeHosts(value: String): Set<String> {
+    if (value.isEmpty()) {
+      return emptySet()
+    }
+    return value
+      .lineSequence()
+      .map { it.trim() }
+      .filter { it.isNotEmpty() }
+      .map { it.lowercase() }
+      .toSet()
+  }
 
   fun log(msg: String) {
     logFn?.invoke(msg)
@@ -70,6 +100,40 @@ class NouController {
       fileChooserCallback?.onReceiveValue(null)
     }
     fileChooserCallback = null
+  }
+
+  fun setBlocklist(blocklist: NoraBlocklist) {
+    blocklistEnabled = blocklist.enabled
+    blocklistBlockedHosts = decodeHosts(blocklist.blockedHosts)
+    blocklistAllowedHosts = decodeHosts(blocklist.allowedHosts)
+    blocklistRevision = blocklist.revision
+  }
+
+  fun shouldBlockRequestHost(host: String?): Boolean {
+    if (!blocklistEnabled || host == null) {
+      return false
+    }
+
+    val parts = host.lowercase().split(".")
+    var blockIndex = -1
+    var allowIndex = -1
+    for (index in parts.indices) {
+      val candidate = parts.drop(index).joinToString(".")
+      if (blockIndex == -1 && blocklistBlockedHosts.contains(candidate)) {
+        blockIndex = index
+      }
+      if (allowIndex == -1 && blocklistAllowedHosts.contains(candidate)) {
+        allowIndex = index
+      }
+    }
+
+    if (blockIndex == -1) {
+      return false
+    }
+    if (allowIndex == -1) {
+      return true
+    }
+    return allowIndex > blockIndex
   }
 }
 

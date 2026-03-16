@@ -12,6 +12,8 @@ import { nIf } from '@/lib/utils'
 import NoraViewModule from '@/modules/nora-view'
 import { bookmarks$ } from '@/states/bookmarks'
 import { tabs$ } from '@/states/tabs'
+import { blocklist$ } from '@/states/blocklist'
+import { applyBlocklist, refreshBlocklistIfDue, supportsRuntimeBlocklist, waitForBlocklistPersist } from '@/lib/blocklist'
 
 const getHost = (url: string | undefined) => {
   if (!url) return ''
@@ -97,6 +99,34 @@ export default function HomeScreen() {
     return () => subscription.remove()
   }, [])
 
+  useEffect(() => {
+    let active = true
+
+    const init = async () => {
+      if (!supportsRuntimeBlocklist()) {
+        return
+      }
+      await waitForBlocklistPersist()
+      if (!active) {
+        return
+      }
+      await applyBlocklist()
+      await refreshBlocklistIfDue()
+    }
+
+    void init()
+
+    if (!supportsRuntimeBlocklist()) {
+      return () => {
+        active = false
+      }
+    }
+
+    return () => {
+      active = false
+    }
+  }, [])
+
   useObserveEffect(settings$, () => {
     syncNativeSettings()
   })
@@ -107,6 +137,14 @@ export default function HomeScreen() {
 
   useObserveEffect(tabs$.tabs, () => {
     syncNativeSettings()
+  })
+
+  useObserveEffect(blocklist$, () => {
+    void applyBlocklist()
+  })
+
+  useObserveEffect(settings$.profiles, () => {
+    void applyBlocklist()
   })
 
   return nIf(scriptOnStart, <MainPage contentJs={scriptOnStart} />)
