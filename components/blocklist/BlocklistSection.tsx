@@ -4,6 +4,7 @@ import { blocklist$ } from '@/states/blocklist'
 import { useValue } from '@legendapp/state/react'
 import { t } from 'i18next'
 import { View } from 'react-native'
+import { clsx } from '@/lib/utils'
 import { NouButton } from '../button/NouButton'
 import { NouText } from '../NouText'
 import { NouSwitch } from '../switch/NouSwitch'
@@ -19,7 +20,7 @@ function formatTimestamp(timestamp?: number) {
   }
 }
 
-export const BlocklistSection = () => {
+export const BlocklistSection: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
   const blocklist = useValue(blocklist$)
 
   if (!supportsRuntimeBlocklist()) {
@@ -53,10 +54,10 @@ export const BlocklistSection = () => {
   }
 
   return (
-    <View className="mt-2 mb-9">
+    <View className={clsx(!hideTitle && 'mt-2 mb-9')}>
       <NouSwitch
         className="mb-2"
-        label={<NouText className="font-medium">{t('blocklist.label')}</NouText>}
+        label={<NouText className="font-medium">{hideTitle ? t('blocklist.enable') : t('blocklist.label')}</NouText>}
         value={blocklist.enabled}
         onPress={onToggle}
       />
@@ -65,7 +66,7 @@ export const BlocklistSection = () => {
       {blocklist.lastError ? <NouText className="text-sm text-red-400 mt-2">{blocklist.lastError}</NouText> : null}
       {
         <>
-          <View className="flex-row justify-start mt-4">
+          <View className="items-end mt-1">
             {blocklist.enabled ? (
               <NouButton
                 size="1"
@@ -77,8 +78,8 @@ export const BlocklistSection = () => {
                 {t('blocklist.refreshNow')}
               </NouButton>
             ) : null}
+            {blocklist.enabled && lastUpdatedText ? <NouText className="text-sm text-gray-400 mt-1 text-right">{lastUpdatedText}</NouText> : null}
           </View>
-          {blocklist.enabled && lastUpdatedText ? <NouText className="text-sm text-gray-400 mt-2">{lastUpdatedText}</NouText> : null}
         </>
       }
     </View>

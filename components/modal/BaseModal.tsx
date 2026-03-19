@@ -3,17 +3,23 @@ import { ReactNode } from 'react'
 import { KeyboardAvoidingView, Modal, Pressable, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
-export const BaseModal: React.FC<{ className?: string; children: ReactNode; onClose: () => void }> = ({
+export const BaseModal: React.FC<{
+  className?: string
+  children: ReactNode
+  onClose: () => void
+  onRequestClose?: () => void
+}> = ({
   className,
   children,
   onClose,
+  onRequestClose,
 }) => {
   const insets = useSafeAreaInsets()
   const inner = isWeb ? children : <SafeAreaView className="max-h-full">{children}</SafeAreaView>
 
   if (!isWeb) {
     return (
-      <Modal transparent visible onRequestClose={onClose}>
+      <Modal transparent visible onRequestClose={onRequestClose || onClose}>
         <View className="flex-1">
           <Pressable className="absolute inset-0 bg-gray-600/50" onPress={onClose} />
           <KeyboardAvoidingView

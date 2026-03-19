@@ -2,7 +2,8 @@
   "about": {
     "label": "About",
     "code": "Source code",
-    "donate": "Donate"
+    "donate": "Donate",
+    "hint": "Version info, source code, and support links."
   },
   "bookmarks": {
     "label": "Bookmarks"
@@ -91,7 +92,7 @@
   },
   "sync": {
     "label": "Sync",
-    "hint": "Sync bookmarks and settings across your phones and computers as a premium user.",
+    "hint": "Cross-device bookmarks and settings sync.",
     "currentPlan": "Current plan",
     "managePlan": "Manage plan"
   },

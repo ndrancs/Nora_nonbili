@@ -70,7 +70,7 @@ export const NavModalContent: React.FC<{ index?: number }> = ({ index = 0 }) => 
               !disabledServices.includes(value),
               <TouchableHighlight key={value} onPress={() => onPress(getHomeUrl(value))}>
                 <View className={cls}>
-                  {icon}
+                  {icon()}
                   <Text className="text-sm" numberOfLines={1}>
                     {label}
                   </Text>

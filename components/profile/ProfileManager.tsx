@@ -1,5 +1,5 @@
 import { Pressable, View } from 'react-native'
-import { isWeb, isIos } from '@/lib/utils'
+import { clsx, isWeb, isIos } from '@/lib/utils'
 import { useValue } from '@legendapp/state/react'
 import { NouText } from '../NouText'
 import { settings$, Profile } from '@/states/settings'
@@ -17,7 +17,7 @@ export const ProfileManager = () => {
   }
 
   return (
-    <View className="mt-5 mb-4">
+    <View className="mb-4">
       <View className="flex-row items-center justify-between mb-3">
         <NouText className="font-medium">{t('profiles.label')}</NouText>
         <Pressable onPress={() => ui$.profileModalOpen.set(true)}>
@@ -25,8 +25,16 @@ export const ProfileManager = () => {
         </Pressable>
       </View>
 
-      {profiles.map((profile) => (
-        <View key={profile.id} className="mb-3">
+      {profiles.map((profile, index) => (
+        <View
+          key={profile.id}
+          className={clsx(
+            'border-x border-zinc-800 bg-zinc-900/70 px-4 py-2',
+            index === 0 && 'rounded-t-[20px] border-t',
+            index !== 0 && 'border-t',
+            index === profiles.length - 1 && 'rounded-b-[20px] border-b',
+          )}
+        >
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-3">
               <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: profile.color }} />
@@ -48,4 +56,3 @@ export const ProfileManager = () => {
     </View>
   )
 }
-
