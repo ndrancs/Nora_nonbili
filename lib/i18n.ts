@@ -6,8 +6,8 @@ import enText from '@/locales/en.json'
 import esText from '@/locales/es.json'
 import frText from '@/locales/fr.json'
 import itText from '@/locales/it.json'
-/* import jaText from '@/locales/ja.json' */
 import plText from '@/locales/pl.json'
+import svText from '@/locales/sv.json'
 import trText from '@/locales/tr.json'
 import zhHansText from '@/locales/zh_Hans.json'
 import zhHantText from '@/locales/zh_Hant.json'
@@ -31,11 +31,11 @@ const resources = {
   it: {
     translation: itText,
   },
-  /* ja: {
-   *   translation: jaText,
-   * }, */
   pl: {
     translation: plText,
+  },
+  sv: {
+    translation: svText,
   },
   tr: {
     translation: trText,
