@@ -3,7 +3,7 @@ import { NouText } from '../NouText'
 import { version } from '../../package.json'
 import { version as desktopVersion } from '../../desktop/package.json'
 import { PropsWithChildren, useCallback, useEffect, useState } from 'react'
-import { clsx, isWeb } from '@/lib/utils'
+import { clsx, isIos, isWeb } from '@/lib/utils'
 import { useValue } from '@legendapp/state/react'
 import { settings$ } from '@/states/settings'
 import { ui$ } from '@/states/ui'
@@ -120,6 +120,7 @@ export const SettingsModal = () => {
     theme === 'dark' ? t('settings.theme.dark') : theme === 'light' ? t('settings.theme.light') : t('settings.theme.system')
   const showBlocklist = supportsRuntimeBlocklist()
   const showBrowsing = !isWeb || showBlocklist
+  const showSync = !isIos
   const browsingDescription = !isWeb
     ? 'Tabs, site handling, blocklist controls, and advanced webview settings.'
     : 'Network blocking and advanced browsing controls.'
@@ -259,15 +260,18 @@ export const SettingsModal = () => {
                 description="Manage built-in services and pinned websites."
                 icon="bookmark"
                 onPress={() => pushPage('bookmarks')}
+                isLast={!showSync}
               />
-              <SettingsNavRow
-                title={t('sync.label')}
-                description={user?.email || 'Cross-device bookmarks and settings sync.'}
-                icon="sync"
-                meta={planLabel}
-                onPress={() => pushPage('sync')}
-                isLast
-              />
+              {showSync ? (
+                <SettingsNavRow
+                  title={t('sync.label')}
+                  description={user?.email || 'Cross-device bookmarks and settings sync.'}
+                  icon="sync"
+                  meta={planLabel}
+                  onPress={() => pushPage('sync')}
+                  isLast
+                />
+              ) : null}
             </View>
           </SettingsSection>
 
@@ -292,7 +296,7 @@ export const SettingsModal = () => {
     if (currentPage === 'profiles') return <SettingsProfilesContent />
     if (currentPage === 'bookmarks') return <SettingsBookmarksContent />
 
-    if (currentPage === 'sync') {
+    if (currentPage === 'sync' && showSync) {
       return <SettingsModalTabSync />
     }
 

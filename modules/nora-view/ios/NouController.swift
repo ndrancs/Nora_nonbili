@@ -53,12 +53,16 @@ class NouController {
   }
 
   func register(_ view: NoraView) {
-    registeredViews.add(view)
-    view.applyBlocklist(blocklistRuleList)
+    runOnMain {
+      self.registeredViews.add(view)
+      view.applyBlocklist(self.blocklistRuleList)
+    }
   }
 
   func unregister(_ view: NoraView) {
-    registeredViews.remove(view)
+    runOnMain {
+      self.registeredViews.remove(view)
+    }
   }
 
   func setBlocklist(_ next: NoraBlocklist) {
@@ -70,32 +74,47 @@ class NouController {
 
     let encoded = encodeBlocklist(next)
     let targetRevision = next.revision
-    WKContentRuleListStore.default().compileContentRuleList(
-      forIdentifier: blocklistIdentifier,
-      encodedContentRuleList: encoded
-    ) { [weak self] ruleList, error in
+    runOnMain { [weak self] in
       guard let self = self else { return }
-      guard self.blocklist.revision == targetRevision, self.blocklist.enabled else {
-        return
+      WKContentRuleListStore.default().compileContentRuleList(
+        forIdentifier: self.blocklistIdentifier,
+        encodedContentRuleList: encoded
+      ) { [weak self] ruleList, error in
+        guard let self = self else { return }
+        guard self.blocklist.revision == targetRevision, self.blocklist.enabled else {
+          return
+        }
+        if let error = error {
+          self.log("blocklist compile failed: \(error.localizedDescription)")
+          return
+        }
+        self.blocklistRuleList = ruleList
+        self.applyBlocklist(ruleList)
       }
-      if let error = error {
-        self.log("blocklist compile failed: \(error.localizedDescription)")
-        return
-      }
-      self.blocklistRuleList = ruleList
-      self.applyBlocklist(ruleList)
     }
   }
 
   private func clearBlocklist() {
-    blocklistRuleList = nil
-    applyBlocklist(nil)
-    WKContentRuleListStore.default().removeContentRuleList(forIdentifier: blocklistIdentifier) { _ in }
+    runOnMain {
+      self.blocklistRuleList = nil
+      self.applyBlocklist(nil)
+      WKContentRuleListStore.default().removeContentRuleList(forIdentifier: self.blocklistIdentifier) { _ in }
+    }
   }
 
   private func applyBlocklist(_ ruleList: WKContentRuleList?) {
-    for view in registeredViews.allObjects {
-      view.applyBlocklist(ruleList)
+    runOnMain {
+      for view in self.registeredViews.allObjects {
+        view.applyBlocklist(ruleList)
+      }
+    }
+  }
+
+  private func runOnMain(_ work: @escaping () -> Void) {
+    if Thread.isMainThread {
+      work()
+    } else {
+      DispatchQueue.main.async(execute: work)
     }
   }
 
