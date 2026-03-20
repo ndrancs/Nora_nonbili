@@ -58,6 +58,17 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.1.7" date="2026-03-20">
+      <description>
+        <ul>
+          <li>Support blocklist (EasyList and EasyPrivacy)</li>
+          <li>Redesign settings and cookie modals</li>
+          <li>Support injecting cookies.txt</li>
+          <li>Improve syncing process</li>
+          <li>Support Swedish language</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.6" date="2026-02-19">
       <description>
         <ul>
