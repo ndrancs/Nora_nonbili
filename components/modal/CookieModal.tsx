@@ -1,6 +1,6 @@
 import { NoraView } from '@/modules/nora-view'
 import { getUserAgent } from '@/lib/useragent'
-import { clsx, isIos } from '@/lib/utils'
+import { clsx, isIos, isWeb } from '@/lib/utils'
 import { showToast } from '@/lib/toast'
 import { settings$ } from '@/states/settings'
 import { tabs$ } from '@/states/tabs'
@@ -28,9 +28,29 @@ type TabLike = {
 
 const getCookieEntries = (value: string) =>
   value
-    .split(';')
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.includes('='))
+    .split('\n')
+    .flatMap((line) => {
+      const trimmed = line.trim()
+      if (!trimmed) {
+        return []
+      }
+
+      if (trimmed.includes('\t')) {
+        const parts = trimmed.split('\t')
+        if (parts.length >= 7 && parts[5]) {
+          return [`${parts[5]}=${parts[6] || ''}`]
+        }
+      }
+
+      if (trimmed.startsWith('#')) {
+        return []
+      }
+
+      return trimmed
+        .split(';')
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.includes('='))
+    })
 
 const buildCookieScript = (entries: string[]) => `(() => {
   const entries = ${JSON.stringify(entries)};
@@ -193,10 +213,35 @@ export const CookieModal = () => {
     }
   }, [onClose])
 
+  const onPickFile = useCallback(async () => {
+    if (!isWeb) {
+      showToast('Paste cookies.txt content directly on mobile')
+      return
+    }
+
+    try {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = '.txt,text/plain,text/tab-separated-values'
+
+      input.onchange = async () => {
+        const file = input.files?.[0]
+        if (!file) {
+          return
+        }
+        setText(await file.text())
+      }
+
+      input.click()
+    } catch {
+      showToast('Failed to import cookies.txt')
+    }
+  }, [])
+
   const onSubmit = useCallback(() => {
     const entries = getCookieEntries(text.trim())
     if (!entries.length) {
-      showToast('Invalid cookie header')
+      showToast('Invalid cookie or cookies.txt content')
       return
     }
 
@@ -226,9 +271,10 @@ export const CookieModal = () => {
   return (
     <BaseCenterModal onClose={onClose}>
       <View className="w-full p-5">
-        <NouText className="text-lg font-semibold">Inject cookies into a profile</NouText>
+        <NouText className="text-lg font-semibold">Inject cookies into the webview</NouText>
         <NouText className="mt-2 text-sm leading-6 text-gray-400">
-          Paste a Cookie header and choose which profile should receive it.
+          Paste a Cookie header from your desktop browser, or import a `cookies.txt` export. This is a workaround when
+          sign-in inside the webview does not work.
         </NouText>
 
         <View className="mt-5">
@@ -258,7 +304,7 @@ export const CookieModal = () => {
         </View>
 
         <View className="mt-5">
-          <NouText className="mb-3 text-sm font-medium text-gray-200">Cookie header</NouText>
+          <NouText className="mb-3 text-sm font-medium text-gray-200">Cookie header or cookies.txt export</NouText>
           <TextInput
             autoCapitalize="none"
             autoCorrect={false}
@@ -266,26 +312,28 @@ export const CookieModal = () => {
             editable={!submitting}
             multiline
             onChangeText={setText}
-            placeholder="auth_token=xxx; ct0=xxx"
+            placeholder={'cookie_name=value; other_cookie=value\nor\ncookies.txt export'}
             placeholderTextColor="#71717a"
             style={{ textAlignVertical: 'top' }}
             value={text}
           />
-          <NouText className="mt-2 text-xs leading-5 text-gray-500">
-            Paste the full Cookie request header value from a signed-in browser session.
-          </NouText>
           {!injectionContext?.url ? (
             <NouText className="mt-2 text-xs leading-5 text-amber-300">
-              Open any page once before injecting cookies.
+              Open any page in the app once before injecting cookies.
             </NouText>
           ) : null}
         </View>
 
-        <View className="mt-6 flex-row gap-3">
-          <NouButton className="flex-1" variant="outline" onPress={onClose} disabled={submitting}>
-            Close
-          </NouButton>
-          <NouButton className="flex-1" onPress={onSubmit} disabled={!canSubmit} loading={submitting}>
+        <View className="mt-6 flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2">
+            <NouButton variant="outline" size="1" onPress={onClose} disabled={submitting}>
+              Close
+            </NouButton>
+            <NouButton variant="soft" size="1" onPress={onPickFile} disabled={submitting}>
+              Import
+            </NouButton>
+          </View>
+          <NouButton size="1" onPress={onSubmit} disabled={!canSubmit} loading={submitting}>
             Inject
           </NouButton>
         </View>
