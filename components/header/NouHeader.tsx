@@ -16,8 +16,6 @@ import { MaterialButton } from '../button/IconButtons'
 import { NouButton } from '../button/NouButton'
 import { NouText } from '../NouText'
 import type { SharedValue } from 'react-native-reanimated'
-import { EncodingType, StorageAccessFramework } from 'expo-file-system/legacy'
-import { File, writeAsStringAsync, Directory } from 'expo-file-system'
 import NoraViewModule from '@/modules/nora-view'
 import { share } from '@/lib/share'
 import { isDownloadable } from '@/content/download'
@@ -25,6 +23,7 @@ import { t } from 'i18next'
 import { bookmarks$ } from '@/states/bookmarks'
 import { showToast } from '@/lib/toast'
 import { Directions, Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
+import { executeWebviewJavaScriptQuietly } from '@/lib/webview'
 
 function prevTab() {
   const activeIndex = tabs$.activeTabIndex.get()
@@ -93,7 +92,9 @@ export const NouHeader: React.FC<{}> = ({}) => {
     }
   }, [settings.autoHideHeader, uiState.headerHeight, uiState.headerShown, marginTop, withTimingSafe, isWeb])
 
-  const scrollToTop = () => webview?.executeJavaScript(`window.scrollTo(0, 0, {behavior: 'smooth'})`)
+  const scrollToTop = () => {
+    void executeWebviewJavaScriptQuietly(webview, `window.scrollTo(0, 0, {behavior: 'smooth'})`)
+  }
   const reloadPage = () => {
     if (!webview) {
       return
@@ -103,7 +104,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
       return
     }
     if (typeof webview.executeJavaScript === 'function') {
-      webview.executeJavaScript('document.location.reload()')
+      void executeWebviewJavaScriptQuietly(webview, 'document.location.reload()')
       return
     }
     webview.loadUrl?.(currentTab?.url)
@@ -113,7 +114,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
       webview.goForward()
       return
     }
-    webview?.executeJavaScript?.('history.forward()')
+    void executeWebviewJavaScriptQuietly(webview, 'history.forward()')
   }
 
   const addBookmark = () => {
@@ -185,7 +186,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
                           label: `${t('menus.desktop')} |  ${currentTab?.desktopMode ? t('menus.desktopOn') : t('menus.desktopOff')}`,
                           handler: () => {
                             tabs$.tabs[activeTabIndex].desktopMode.toggle()
-                            webview?.executeJavaScript('document.location.reload()')
+                            void executeWebviewJavaScriptQuietly(webview, 'document.location.reload()')
                           },
                         },
                       ]),

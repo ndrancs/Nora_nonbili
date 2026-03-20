@@ -11,6 +11,7 @@ import { Pressable, TextInput, View } from 'react-native'
 import { NouButton } from '../button/NouButton'
 import { NouText } from '../NouText'
 import { BaseCenterModal } from './BaseCenterModal'
+import { executeWebviewJavaScript, executeWebviewJavaScriptQuietly } from '@/lib/webview'
 
 type InjectionRequest = {
   id: number
@@ -192,12 +193,12 @@ export const CookieModal = () => {
     startedRequestIdRef.current = activeRequest.id
 
     try {
-      await Promise.resolve(injector.executeJavaScript(buildCookieScript(activeRequest.entries)))
+      await executeWebviewJavaScript(injector, buildCookieScript(activeRequest.entries))
 
       const activeProfileId = tabs$.currentTab()?.profile || 'default'
       if (activeProfileId === activeRequest.profileId) {
         const webview = ui$.webview.get()
-        void Promise.resolve(webview?.executeJavaScript?.('document.location.reload()')).catch(() => {})
+        void executeWebviewJavaScriptQuietly(webview, 'document.location.reload()')
       }
 
       const profileName =

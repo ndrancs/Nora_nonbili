@@ -13,6 +13,7 @@ import { settings$ } from '@/states/settings'
 import { delay } from 'es-toolkit'
 import { getUserAgent } from '@/lib/useragent'
 import { parseJson } from '@/content/utils'
+import { executeWebviewJavaScriptQuietly } from '@/lib/webview'
 
 const userAgent = getUserAgent(isIos ? 'ios' : 'android')
 
@@ -74,7 +75,7 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
       case 'onload':
         if (url && !parsingStartedRef.current) {
           parsingStartedRef.current = true
-          webview?.executeJavaScript('window.Nora.getVideoUrl()')
+          void executeWebviewJavaScriptQuietly(webview, 'window.Nora.getVideoUrl()')
         }
         break
       case 'download':

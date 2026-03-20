@@ -10,14 +10,22 @@ const SOURCE_FILENAMES: Record<BlocklistSourceId, string> = {
 }
 
 const hasElectron = () => isWeb && typeof window !== 'undefined' && typeof window.electron !== 'undefined'
-const documentUri = Paths.document.uri
 
-function getNativeBlocklistDirUri() {
+function getNativeDocumentUri() {
+  if (isWeb) {
+    throw new Error('Native blocklist storage is unavailable on web targets')
+  }
+
+  const documentUri = Paths.document.uri
   if (!documentUri) {
     throw new Error('Document directory is unavailable')
   }
 
-  return `${documentUri}${STORAGE_DIR_NAME}`
+  return documentUri
+}
+
+function getNativeBlocklistDirUri() {
+  return `${getNativeDocumentUri()}${STORAGE_DIR_NAME}`
 }
 
 function getNativeBlocklistFileUri(id: BlocklistSourceId) {

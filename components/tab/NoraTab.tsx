@@ -19,6 +19,7 @@ import { NavModalContent } from '../modal/NavModal'
 import { t } from 'i18next'
 import { addBookmark } from '@/lib/bookmark'
 import { getProfileColor } from '@/lib/profile'
+import { executeWebviewJavaScript, executeWebviewJavaScriptQuietly } from '@/lib/webview'
 
 const getRedirectTo = (str: string) => {
   try {
@@ -86,12 +87,8 @@ export const NoraTab: React.FC<{ tab: Tab; index: number }> = ({ tab, index }) =
   const applyContentSettings = useCallback(
     (target?: WebviewTag | any | null) => {
       const webview = target || webviewRef.current || nativeRef.current
-      if (!webview?.executeJavaScript) {
-        return
-      }
-
       const script = `window.Nora?.setSettings?.(${JSON.stringify({ videoEdgeLongPressTo2x })})`
-      void Promise.resolve(webview.executeJavaScript(script)).catch(() => {})
+      void executeWebviewJavaScriptQuietly(webview, script)
     },
     [videoEdgeLongPressTo2x],
   )
@@ -105,7 +102,7 @@ export const NoraTab: React.FC<{ tab: Tab; index: number }> = ({ tab, index }) =
 
       webview.addEventListener('dom-ready', () => {
         ui$.webview.set(ObservableHint.opaque(webview))
-        void Promise.resolve(webview.executeJavaScript(contentJs))
+        void executeWebviewJavaScript(webview, contentJs)
           .catch(() => {})
           .finally(() => applyContentSettings(webview))
         setCanGoBack(webview.canGoBack())
@@ -211,7 +208,7 @@ export const NoraTab: React.FC<{ tab: Tab; index: number }> = ({ tab, index }) =
     if (typeof webview.reload === 'function') {
       webview.reload()
     } else {
-      webview.executeJavaScript('document.location.reload()')
+      void executeWebviewJavaScriptQuietly(webview, 'document.location.reload()')
     }
   }
   const toolbarButtonStyle = { padding: 4, height: 28 }
@@ -237,7 +234,7 @@ export const NoraTab: React.FC<{ tab: Tab; index: number }> = ({ tab, index }) =
         break
       case 'icon': {
         const currentWebview = webviewRef.current || nativeRef.current
-        const meta = parseWebviewMeta(await currentWebview?.executeJavaScript('window.Nora?.getMeta()'))
+        const meta = parseWebviewMeta(await executeWebviewJavaScript(currentWebview, 'window.Nora?.getMeta()'))
         if (meta.title || meta.icon) {
           tabs$.tabs[index].assign({ ...meta })
         }
@@ -280,7 +277,9 @@ export const NoraTab: React.FC<{ tab: Tab; index: number }> = ({ tab, index }) =
               },
               {
                 label: t('menus.scroll'),
-                handler: () => webview?.executeJavaScript(`window.scrollTo(0, 0, {behavior: 'smooth'})`),
+                handler: () => {
+                  void executeWebviewJavaScriptQuietly(webview, `window.scrollTo(0, 0, {behavior: 'smooth'})`)
+                },
               },
               {
                 label: t('menus.addBookmark'),
