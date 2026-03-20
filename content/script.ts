@@ -18,6 +18,8 @@ function runVideoLongPressScript() {
   let pendingVideo: HTMLVideoElement | null = null
   let activeVideo: HTMLVideoElement | null = null
   let timer: number | null = null
+  let suppressedClickVideo: HTMLVideoElement | null = null
+  let suppressedClickUntil = 0
   let startX = 0
   let startY = 0
 
@@ -88,6 +90,22 @@ function runVideoLongPressScript() {
     activeVideo = null
   }
 
+  const suppressClick = (video: HTMLVideoElement | null) => {
+    suppressedClickVideo = video
+    suppressedClickUntil = video ? Date.now() + 750 : 0
+  }
+
+  const shouldSuppressClick = () => {
+    if (!suppressedClickVideo) {
+      return false
+    }
+    if (Date.now() > suppressedClickUntil) {
+      suppressClick(null)
+      return false
+    }
+    return true
+  }
+
   const getVideoFromTarget = (target: EventTarget | null, clientX?: number, clientY?: number) => {
     if (clientX != null && clientY != null) {
       const elements = document.elementsFromPoint(clientX, clientY)
@@ -149,10 +167,6 @@ function runVideoLongPressScript() {
       return
     }
 
-    if (event.pointerType !== 'mouse') {
-      event.preventDefault()
-      event.stopImmediatePropagation()
-    }
     clearTimer()
     pointerId = event.pointerId
     pendingVideo = video
@@ -182,41 +196,42 @@ function runVideoLongPressScript() {
 
   const onPointerEnd = (event: PointerEvent) => {
     if (pointerId === event.pointerId) {
+      if (activeVideo) {
+        suppressClick(activeVideo)
+      }
       resetPlayback()
     }
   }
 
   const onPointerCancel = (event: PointerEvent) => {
-    if (pointerId !== event.pointerId) {
-      return
+    if (pointerId === event.pointerId) {
+      resetPlayback()
     }
-    if (activeVideo) {
-      pointerId = null
-      pendingVideo = null
-      return
-    }
-    cancelPending()
-  }
-
-  const onTouchStart = (event: TouchEvent) => {
-    if (!enabled || event.touches.length !== 1) {
-      return
-    }
-
-    const touch = event.touches[0]
-    const video = getVideoFromTarget(event.target, touch.clientX, touch.clientY)
-    if (!video || !isEdgePress(video, touch.clientX, touch.clientY)) {
-      return
-    }
-
-    event.preventDefault()
-    event.stopImmediatePropagation()
   }
 
   const onTouchEnd = () => {
     if (pendingVideo || activeVideo) {
       resetPlayback()
     }
+  }
+
+  const onTouchCancel = () => {
+    if (pendingVideo || activeVideo) {
+      resetPlayback()
+    }
+  }
+
+  const onClick = (event: MouseEvent) => {
+    if (!shouldSuppressClick()) {
+      return
+    }
+
+    const video = getVideoFromTarget(event.target, event.clientX, event.clientY)
+    if (video && video === suppressedClickVideo) {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+    }
+    suppressClick(null)
   }
 
   window.addEventListener(noraSettingsEvent, (event) => {
@@ -231,8 +246,9 @@ function runVideoLongPressScript() {
   document.addEventListener('pointermove', onPointerMove, true)
   document.addEventListener('pointerup', onPointerEnd, true)
   document.addEventListener('pointercancel', onPointerCancel, true)
-  document.addEventListener('touchstart', onTouchStart, { capture: true, passive: false })
   document.addEventListener('touchend', onTouchEnd, true)
+  document.addEventListener('touchcancel', onTouchCancel, true)
+  document.addEventListener('click', onClick, true)
   document.addEventListener(
     'contextmenu',
     (event) => {
