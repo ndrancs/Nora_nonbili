@@ -176,6 +176,13 @@ export const SettingsAppearanceContent = () => {
                 onPress={() => settings$.showForwardButtonInHeader.toggle()}
               />
             </View>
+            <View className={clsx(rowCls, rowBorderCls)}>
+              <NouSwitch
+                label={<NouText className="font-medium">{t('settings.showReloadButton')}</NouText>}
+                value={settings.showReloadButtonInHeader}
+                onPress={() => settings$.showReloadButtonInHeader.toggle()}
+              />
+            </View>
             <View className={rowCls}>
               <NouSwitch
                 label={<NouText className="font-medium">{t('settings.showScrollButton')}</NouText>}

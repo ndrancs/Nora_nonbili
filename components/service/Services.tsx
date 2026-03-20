@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import {
   IconBluesky,
   IconFacebook,
@@ -62,14 +63,27 @@ export const ServiceManager: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = 
 }
 
 export const ServiceIcon: React.FC<{ url: string; icon?: string }> = ({ url, icon }) => {
+  const size = isWeb ? 20 : 24
+  const fallbackColor = url ? '#52525b' : '#a1a1aa'
+
   if (icon) {
-    const height = isWeb ? 20 : 24
-    return <Image source={icon} style={{ height, width: height }} />
+    return (
+      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        <Image source={icon} style={{ width: size, height: size }} contentFit="contain" />
+      </View>
+    )
   }
+
   let home: any
   try {
     const { host } = new URL(url)
     home = hostHomes[host]
   } catch {}
-  return services[home]?.[1]?.() || <NouText />
+
+  const fallback = services[home]?.[1]?.()
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      {fallback || <MaterialIcons name="language" size={Math.max(16, size - 4)} color={fallbackColor} />}
+    </View>
+  )
 }

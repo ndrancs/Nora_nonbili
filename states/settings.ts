@@ -35,6 +35,7 @@ export interface Settings {
   showNewTabButtonInHeader: boolean
   showBackButtonInHeader: boolean
   showForwardButtonInHeader: boolean
+  showReloadButtonInHeader: boolean
   showScrollButtonInHeader: boolean
   oneHandMode: boolean
   oneTabPerSite: boolean
@@ -61,6 +62,9 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
   if (typeof data.videoEdgeLongPressTo2x !== 'boolean') {
     data.videoEdgeLongPressTo2x = true
   }
+  if (typeof data.showReloadButtonInHeader !== 'boolean') {
+    data.showReloadButtonInHeader = false
+  }
   return data
 }
 
@@ -77,6 +81,7 @@ export const settings$ = observable<Store>({
   showNewTabButtonInHeader: true,
   showBackButtonInHeader: false,
   showForwardButtonInHeader: false,
+  showReloadButtonInHeader: false,
   showScrollButtonInHeader: false,
   oneHandMode: false,
   oneTabPerSite: false,

@@ -51,6 +51,14 @@ const onScroll = (dy: number) => {
   }
 }
 
+const parseWebviewMeta = (value?: string | null) => {
+  const parsed = parseJson(value ?? null, {})
+  if (typeof parsed === 'string') {
+    return parseJson(parsed, {})
+  }
+  return parsed
+}
+
 export const NoraTab: React.FC<{ tab: Tab; index: number }> = ({ tab, index }) => {
   const autoHideHeader = useValue(settings$.autoHideHeader)
   const inspectable = useValue(settings$.inspectable)
@@ -227,12 +235,14 @@ export const NoraTab: React.FC<{ tab: Tab; index: number }> = ({ tab, index }) =
       case '[kotlin]':
         console.log(type, data)
         break
-      case 'icon':
-        const meta = parseJson(await webview?.executeJavaScript('window.Nora?.getMeta()'), {})
+      case 'icon': {
+        const currentWebview = webviewRef.current || nativeRef.current
+        const meta = parseWebviewMeta(await currentWebview?.executeJavaScript('window.Nora?.getMeta()'))
         if (meta.title || meta.icon) {
           tabs$.tabs[index].assign({ ...meta })
         }
         break
+      }
       case 'new-tab':
         tabs$.openTab(forceHttps(data.url))
         break

@@ -94,6 +94,20 @@ export const NouHeader: React.FC<{}> = ({}) => {
   }, [settings.autoHideHeader, uiState.headerHeight, uiState.headerShown, marginTop, withTimingSafe, isWeb])
 
   const scrollToTop = () => webview?.executeJavaScript(`window.scrollTo(0, 0, {behavior: 'smooth'})`)
+  const reloadPage = () => {
+    if (!webview) {
+      return
+    }
+    if (typeof webview.reload === 'function') {
+      webview.reload()
+      return
+    }
+    if (typeof webview.executeJavaScript === 'function') {
+      webview.executeJavaScript('document.location.reload()')
+      return
+    }
+    webview.loadUrl?.(currentTab?.url)
+  }
   const goForward = () => {
     if (typeof webview?.goForward === 'function') {
       webview.goForward()
@@ -134,6 +148,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
           !isWeb && settings.showForwardButtonInHeader,
           <MaterialButton name="arrow-forward" onPress={goForward} />,
         )}
+        {nIf(!isWeb && settings.showReloadButtonInHeader, <MaterialButton name="refresh" onPress={reloadPage} />)}
         {nIf(!isWeb && settings.showScrollButtonInHeader, <MaterialButton name="arrow-upward" onPress={scrollToTop} />)}
       </View>
       <View className={'flex-row items-center justify-end gap-1'}>
@@ -157,7 +172,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
               : [
                   {
                     label: t('menus.reload'),
-                    handler: () => webview?.loadUrl(currentTab?.url),
+                    handler: reloadPage,
                   },
                   {
                     label: t('menus.scroll'),
