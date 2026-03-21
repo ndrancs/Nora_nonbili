@@ -20,6 +20,7 @@ import { NavModalContent } from '../modal/NavModal'
 import { t } from 'i18next'
 import { addBookmark } from '@/lib/bookmark'
 import { getProfileColor } from '@/lib/profile'
+import { getProfileViewKey } from '@/lib/profile-view'
 import { executeWebviewJavaScript, executeWebviewJavaScriptQuietly } from '@/lib/webview'
 
 const getRedirectTo = (str: string) => {
@@ -80,6 +81,7 @@ export const NoraTab: React.FC<{
   const contentJs = useContentJs()
   const profileColor = getProfileColor(tab.profile)
   const isActive = activeTabIndex === index
+  const viewKey = getProfileViewKey(tab)
 
   const setPageUrl = useCallback(
     (url: string) => {
@@ -178,6 +180,11 @@ export const NoraTab: React.FC<{
 
     return () => clearTimeout(timer)
   }, [tab.url])
+
+  useEffect(() => {
+    pageUrlRef.current = ''
+    setCanGoBack(false)
+  }, [viewKey])
 
   useEffect(() => {
     const webview = nativeRef.current
@@ -328,7 +335,7 @@ export const NoraTab: React.FC<{
           useragent={getUserAgent(window.electron.process.platform, true)}
           inspectable={inspectable}
           allowpopups="true"
-          key={tab.id}
+          key={viewKey}
         />
         {nIf(!tab.url, <NavModalContent index={index} />)}
       </View>
@@ -341,6 +348,7 @@ export const NoraTab: React.FC<{
       style={[StyleSheet.absoluteFillObject, { opacity: isActive ? 1 : 0, zIndex: isActive ? 1 : 0 }]}
     >
       <NoraView
+        key={viewKey}
         ref={onNativeRef}
         className={clsx(!tab.url && 'hidden')}
         style={StyleSheet.absoluteFillObject}
