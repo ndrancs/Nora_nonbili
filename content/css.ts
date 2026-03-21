@@ -1,3 +1,6 @@
+import { getEnabledUserStyleCss } from '../lib/user-styles'
+import { noraSettingsEvent, noraUserStylesEvent } from './nora'
+
 export const hostHomes: Record<string, string> = {
   'bsky.app': 'bluesky',
   'm.facebook.com': 'facebook',
@@ -16,8 +19,8 @@ export const hostHomes: Record<string, string> = {
 
 const css = (raw: ArrayLike<string>, ...values: any[]) => String.raw({ raw }, ...values)
 
-const styles: Record<string, string> = {
-  base: css`
+const styles: Record<string, (settings: any) => string> = {
+  base: (settings) => css`
     ._nora_hidden_ {
       display: none !important;
     }
@@ -27,7 +30,7 @@ const styles: Record<string, string> = {
     }
   `,
 
-  facebook: css`
+  facebook: (settings) => css`
     .native-text,
     .native-text * {
       user-select: text !important;
@@ -35,7 +38,7 @@ const styles: Record<string, string> = {
     }
   `,
 
-  instagram: css`
+  instagram: (settings) => css`
     /* Open in app */
     ._acc8._abpk,
     ._acc8._ag6v {
@@ -47,7 +50,7 @@ const styles: Record<string, string> = {
     }
   `,
 
-  reddit: css`
+  reddit: (settings) => css`
     .promotedlink,
     .sitetable .rank,
     #xpromo-small-header,
@@ -62,7 +65,7 @@ const styles: Record<string, string> = {
     }
   `,
 
-  threads: css`
+  threads: (settings) => css`
     /* Open in app */
     .x6s0dn4.x78zum5.xdt5ytf.x1mk1bxn.xaw7rza.xvc5jky,
     /* Suggested for you */
@@ -71,7 +74,7 @@ const styles: Record<string, string> = {
     }
   `,
 
-  tiktok: css`
+  tiktok: (settings) => css`
     /* layout */
     div[class*='DivSideNavPlaceholderContainer'] {
       width: 3rem !important;
@@ -99,7 +102,7 @@ const styles: Record<string, string> = {
     }
   `,
 
-  x: css`
+  x: (settings) => css`
     /* Upgrade */
     [data-testid='super-upsell-UpsellButtonRenderProperties'] {
       display: none !important;
@@ -107,12 +110,31 @@ const styles: Record<string, string> = {
   `,
 }
 
+export const getCoreCss = (host: string, settings: any) => {
+  const key = hostHomes[host]
+  return styles.base(settings) + (styles[key]?.(settings) || '')
+}
+
+export const getInjectedCss = (host: string, settings: any, userStyles: any) => {
+  const coreCss = getCoreCss(host, settings)
+  const userStyleCss = getEnabledUserStyleCss(host, userStyles)
+  return [coreCss, userStyleCss].filter(Boolean).join('\n\n')
+}
+
 export function injectCSS() {
   const style = document.createElement('style')
   const { host } = document.location
-  const key = hostHomes[host]
-  const content = styles.base + (styles[key] || '')
+
+  const update = () => {
+    const settings = window.Nora?.getSettings?.() || {}
+    const userStyles = window.Nora?.getUserStyles?.()
+    const content = getInjectedCss(host, settings, userStyles)
+    style.textContent = content
+  }
+
   style.type = 'text/css'
-  style.textContent = content
+  update()
   document.head.appendChild(style)
+  window.addEventListener(noraSettingsEvent, () => update())
+  window.addEventListener(noraUserStylesEvent, () => update())
 }

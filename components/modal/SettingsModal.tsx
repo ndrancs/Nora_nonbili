@@ -14,6 +14,7 @@ import {
   SettingsProfilesContent,
   SettingsBookmarksContent,
 } from './SettingsModalTabSettings'
+import { SettingsUserStylesContent } from './SettingsUserStylesContent'
 import { t } from 'i18next'
 import { SettingsModalTabSync } from './SettingsModalTabSync'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
@@ -32,7 +33,7 @@ const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zin
 const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-500'
 const iconWrapCls = 'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950'
 
-type SettingsPage = 'home' | 'browsing' | 'appearance' | 'profiles' | 'bookmarks' | 'sync' | 'about'
+type SettingsPage = 'home' | 'browsing' | 'styles' | 'appearance' | 'profiles' | 'bookmarks' | 'sync' | 'about'
 
 const SettingsSection = ({ label, children }: PropsWithChildren<{ label?: string }>) => {
   return (
@@ -211,6 +212,7 @@ export const SettingsModal = () => {
   const pageMeta: Record<SettingsPage, string> = {
     home: t('settings.label'),
     browsing: 'Browsing',
+    styles: t('settings.userStyles.label'),
     appearance: 'Appearance',
     profiles: 'Profiles & Sessions',
     bookmarks: 'Bookmarks',
@@ -222,30 +224,35 @@ export const SettingsModal = () => {
     if (currentPage === 'home') {
       return (
         <View className="gap-8">
-          {showBrowsing ? (
-            <SettingsSection label="Experience">
-              <View className={surfaceCls}>
-                {showBrowsing ? (
-                  <SettingsNavRow
-                    title="Browsing"
-                    description={browsingDescription}
-                    icon="tune"
-                    onPress={() => pushPage('browsing')}
-                  />
-                ) : null}
-                {!isWeb ? (
-                  <SettingsNavRow
-                    title="Appearance"
-                    description="Theme plus toolbar layout, placement, and button visibility."
-                    icon="palette"
-                    meta={themeLabel}
-                    onPress={() => pushPage('appearance')}
-                    isLast
-                  />
-                ) : null}
-              </View>
-            </SettingsSection>
-          ) : null}
+          <SettingsSection label="Experience">
+            <View className={surfaceCls}>
+              {showBrowsing ? (
+                <SettingsNavRow
+                  title="Browsing"
+                  description={browsingDescription}
+                  icon="tune"
+                  onPress={() => pushPage('browsing')}
+                  isLast={isWeb}
+                />
+              ) : null}
+              {!isWeb ? (
+                <SettingsNavRow
+                  title="Appearance"
+                  description="Theme plus toolbar layout, placement, and button visibility."
+                  icon="palette"
+                  meta={themeLabel}
+                  onPress={() => pushPage('appearance')}
+                />
+              ) : null}
+              <SettingsNavRow
+                title={t('settings.userStyles.label')}
+                description={t('settings.userStyles.hint')}
+                icon="brush"
+                onPress={() => pushPage('styles')}
+                isLast
+              />
+            </View>
+          </SettingsSection>
 
           <SettingsSection label="Accounts & Data">
             <View className={surfaceCls}>
@@ -292,6 +299,7 @@ export const SettingsModal = () => {
     }
 
     if (currentPage === 'browsing') return <SettingsBrowsingContent />
+    if (currentPage === 'styles') return <SettingsUserStylesContent />
     if (currentPage === 'appearance') return <SettingsAppearanceContent />
     if (currentPage === 'profiles') return <SettingsProfilesContent />
     if (currentPage === 'bookmarks') return <SettingsBookmarksContent />

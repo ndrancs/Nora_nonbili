@@ -2,14 +2,17 @@ import { emit, log, parseJson, waitUntil } from './utils'
 import { delay, retry } from 'es-toolkit'
 import { isDownloadable } from './download'
 import { getService } from './services/manager'
+import { createDefaultUserStylesSnapshot, type UserStylesSnapshot } from '../lib/user-styles'
 
 export const noraSettingsEvent = 'nora:settings'
+export const noraUserStylesEvent = 'nora:user-styles'
 
 const defaultSettings = {
   videoEdgeLongPressTo2x: false,
 }
 
 let settings = { ...defaultSettings }
+let userStyles = createDefaultUserStylesSnapshot()
 
 function getMeta(url: string) {
   const icon = document.querySelector('link[rel*=icon]')?.getAttribute('href') || 'favicon.ico'
@@ -116,6 +119,16 @@ function setSettings(next: Partial<typeof defaultSettings> = {}) {
   return settings
 }
 
+function getUserStyles() {
+  return userStyles
+}
+
+function setUserStyles(next?: UserStylesSnapshot) {
+  userStyles = next || createDefaultUserStylesSnapshot()
+  window.dispatchEvent(new CustomEvent(noraUserStylesEvent, { detail: userStyles }))
+  return userStyles
+}
+
 export function initNora() {
   return {
     getMeta,
@@ -123,5 +136,7 @@ export function initNora() {
     getVideoUrl,
     getSettings,
     setSettings,
+    getUserStyles,
+    setUserStyles,
   }
 }

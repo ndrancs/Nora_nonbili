@@ -22,6 +22,7 @@ import { addBookmark } from '@/lib/bookmark'
 import { getProfileColor } from '@/lib/profile'
 import { getProfileViewKey } from '@/lib/profile-view'
 import { executeWebviewJavaScript, executeWebviewJavaScriptQuietly } from '@/lib/webview'
+import { getUserStylesSnapshot, userStyles$ } from '@/states/user-styles'
 
 const getRedirectTo = (str: string) => {
   try {
@@ -73,6 +74,7 @@ export const NoraTab: React.FC<{
   const autoHideHeader = useValue(settings$.autoHideHeader)
   const inspectable = useValue(settings$.inspectable)
   const videoEdgeLongPressTo2x = useValue(settings$.videoEdgeLongPressTo2x)
+  const userStyles = useValue(userStyles$)
   const nativeRef = useRef<any>(null)
   const webviewRef = useRef<WebviewTag>(null)
   const { activeTabIndex } = useValue(tabs$)
@@ -113,13 +115,15 @@ export const NoraTab: React.FC<{
     [index],
   )
 
-  const applyContentSettings = useCallback(
+  const applyContentState = useCallback(
     (target?: WebviewTag | any | null) => {
       const webview = target || webviewRef.current || nativeRef.current
-      const script = `window.Nora?.setSettings?.(${JSON.stringify({ videoEdgeLongPressTo2x })})`
-      void executeWebviewJavaScriptQuietly(webview, script)
+      const settingsScript = `window.Nora?.setSettings?.(${JSON.stringify({ videoEdgeLongPressTo2x })})`
+      const userStylesScript = `window.Nora?.setUserStyles?.(${JSON.stringify(getUserStylesSnapshot(userStyles))})`
+      void executeWebviewJavaScriptQuietly(webview, settingsScript)
+      void executeWebviewJavaScriptQuietly(webview, userStylesScript)
     },
-    [videoEdgeLongPressTo2x],
+    [userStyles, videoEdgeLongPressTo2x],
   )
 
   const noraViewRef = useCallback(
@@ -135,7 +139,7 @@ export const NoraTab: React.FC<{
         }
         void executeWebviewJavaScript(webview, contentJs)
           .catch(() => {})
-          .finally(() => applyContentSettings(webview))
+          .finally(() => applyContentState(webview))
         void refreshCanGoBack(webview)
       })
       webview.addEventListener('did-navigate', (e) => {
@@ -151,7 +155,7 @@ export const NoraTab: React.FC<{
       })
       webview.addEventListener('ipc-message', (e) => {})
     },
-    [applyContentSettings, contentJs, index, refreshCanGoBack, setPageUrl],
+    [applyContentState, contentJs, index, refreshCanGoBack, setPageUrl],
   )
 
   const setActiveNativeWebview = useCallback(
@@ -230,8 +234,8 @@ export const NoraTab: React.FC<{
   }, [canGoBack, isActive])
 
   useEffect(() => {
-    applyContentSettings()
-  }, [applyContentSettings])
+    applyContentState()
+  }, [applyContentState])
 
   useEffect(() => {
     return () => {
@@ -282,7 +286,7 @@ export const NoraTab: React.FC<{
         ui$.activeCanGoBack.set(nextCanGoBack)
       }
     }
-    applyContentSettings()
+    applyContentState()
   }
 
   const onMessage = async (e: { nativeEvent: { payload: string | object } }) => {

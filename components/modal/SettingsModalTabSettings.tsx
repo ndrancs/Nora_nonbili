@@ -26,7 +26,7 @@ const rowCls = 'px-4 py-4'
 const rowBorderCls = 'border-b border-zinc-800'
 const iconWrapCls = 'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950'
 
-export const SettingsBrowsingContent = () => {
+export const SettingsBrowsingContent: React.FC = () => {
   const settings = useValue(settings$)
 
   return (
@@ -51,16 +51,16 @@ export const SettingsBrowsingContent = () => {
             </View>
             <View className={clsx(rowCls, rowBorderCls)}>
               <NouSwitch
-                label={<NouText className="font-medium">{t('settings.redirectToOldReddit')}</NouText>}
-                value={settings.redirectToOldReddit}
-                onPress={() => settings$.redirectToOldReddit.toggle()}
+                label={<NouText className="font-medium">{t('settings.videoEdgeLongPressTo2x')}</NouText>}
+                value={settings.videoEdgeLongPressTo2x}
+                onPress={() => settings$.videoEdgeLongPressTo2x.toggle()}
               />
             </View>
             <View className={rowCls}>
               <NouSwitch
-                label={<NouText className="font-medium">{t('settings.videoEdgeLongPressTo2x')}</NouText>}
-                value={settings.videoEdgeLongPressTo2x}
-                onPress={() => settings$.videoEdgeLongPressTo2x.toggle()}
+                label={<NouText className="font-medium">{t('settings.redirectToOldReddit')}</NouText>}
+                value={settings.redirectToOldReddit}
+                onPress={() => settings$.redirectToOldReddit.toggle()}
               />
             </View>
           </View>

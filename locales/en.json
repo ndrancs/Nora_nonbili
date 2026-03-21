@@ -24,8 +24,10 @@
     "cancel": "Cancel",
     "closeAll": "Close All",
     "download": "Download",
+    "edit": "Edit",
     "openUrl": "Open URL",
-    "open": "Open"
+    "open": "Open",
+    "save": "Save"
   },
   "menus": {
     "close": "Close",
@@ -69,6 +71,42 @@
     "inspectable": "Make webview inspectable",
     "videoEdgeLongPressTo2x": "Long press on edge to 2x playback",
     "hideHeader": "Hide toolbar on scroll",
+    "userStyles": {
+      "label": "User Styles",
+      "hint": "Toggle builtin CSS tweaks and add your own host-based styles.",
+      "copyCss": "Copy CSS",
+      "cssCopied": "CSS copied",
+      "copyFailed": "Failed to copy CSS",
+      "importCss": "Import CSS",
+      "importFailed": "Failed to import CSS",
+      "add": "Add style",
+      "addTitle": "Add custom style",
+      "editTitle": "Edit custom style",
+      "deleteConfirm": "Are you sure you want to delete this custom style?",
+      "nameLabel": "Name",
+      "namePlaceholder": "Style name",
+      "hostGlobs": {
+        "label": "Host globs",
+        "placeholder": "*.reddit.com, x.com (comma separated)"
+      },
+      "validation": {
+        "hostGlobs": "Add at least one valid host glob",
+        "css": "Add CSS before saving"
+      },
+      "builtin": {
+        "label": "Builtin Styles",
+        "hideRedditGame": {
+          "label": "Hide Reddit game posts"
+        },
+        "hideXBottomNav": {
+          "label": "Hide X bottom nav bar on scroll"
+        }
+      },
+      "custom": {
+        "label": "Custom Styles",
+        "empty": "No custom styles yet. Add one to inject your own CSS on matching hosts."
+      }
+    },
     "headerPosition": {
       "label": "Toolbar position",
       "top": "Top",
