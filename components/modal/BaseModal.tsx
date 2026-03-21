@@ -15,7 +15,7 @@ export const BaseModal: React.FC<{
   onRequestClose,
 }) => {
   const insets = useSafeAreaInsets()
-  const inner = isWeb ? children : <SafeAreaView className="max-h-full">{children}</SafeAreaView>
+  const inner = isWeb ? children : <SafeAreaView className="flex-1 max-h-full">{children}</SafeAreaView>
 
   if (!isWeb) {
     return (
@@ -24,7 +24,7 @@ export const BaseModal: React.FC<{
           <Pressable className="absolute inset-0 bg-gray-600/50" onPress={onClose} />
           <KeyboardAvoidingView
             behavior={isIos ? 'padding' : undefined}
-            className="bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw]"
+            className="bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw] flex-1"
             style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
           >
             {inner}
@@ -39,7 +39,7 @@ export const BaseModal: React.FC<{
       <Pressable className="absolute inset-0 bg-gray-600/50" onPress={onClose} />
       <KeyboardAvoidingView
         behavior={isIos ? 'padding' : undefined}
-        className="bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw]"
+        className="bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw] flex-1"
       >
         {inner}
       </KeyboardAvoidingView>
