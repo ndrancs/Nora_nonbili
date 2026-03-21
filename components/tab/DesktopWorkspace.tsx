@@ -69,7 +69,7 @@ const SlotTabPicker: React.FC<{
       label: getTabLabel(tab),
       handler: () => {
         savedViews$.assignSlotTab(view.id, slotIndex, tab.id)
-        tabs$.setActiveTabById(tab.id)
+        tabs$.setActiveTabById(tab.id, 'user')
       },
     })),
   ]
@@ -104,10 +104,10 @@ const EmptySlot: React.FC<{
   const canCloseSlot = isSplit && slotIndex >= 2 && view.slotTabIds.length > 2
 
   const createTabInSlot = (url: string, profileId: string) => {
-    const tabId = openDesktopTab(url, profileId)
+    const tabId = openDesktopTab(url, { profile: profileId })
     if (tabId) {
       savedViews$.assignSlotTab(view.id, slotIndex, tabId)
-      tabs$.setActiveTabById(tabId)
+      tabs$.setActiveTabById(tabId, 'open')
     }
   }
 
@@ -210,7 +210,7 @@ const SortableDesktopTab: React.FC<{
             : 'border-l-2 border-l-sky-500 pl-2'),
       )}
       style={style}
-      onMouseDown={() => tabs$.activeTabIndex.set(index)}
+      onMouseDown={() => tabs$.setActiveTabIndex(index, 'user')}
       {...(isDeck ? attributes : {})}
       {...(isDeck ? listeners : {})}
     >
@@ -256,7 +256,7 @@ export const DesktopWorkspace: React.FC = () => {
 
     const fallbackTabId = visibleTabIds.find((tabId) => tabIdSet.has(tabId))
     if (fallbackTabId) {
-      tabs$.setActiveTabById(fallbackTabId)
+      tabs$.setActiveTabById(fallbackTabId, 'system')
     }
   }, [activeTabIndex, activeViewId, isDeck, savedViews, tabIdsKey, visibleTabIds.join('|')])
 
@@ -300,7 +300,7 @@ export const DesktopWorkspace: React.FC = () => {
   const createDeckTab = () => {
     const tabId = openDesktopTab('')
     if (tabId) {
-      tabs$.setActiveTabById(tabId)
+      tabs$.setActiveTabById(tabId, 'open')
     }
   }
 

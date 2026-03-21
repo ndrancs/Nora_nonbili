@@ -1,6 +1,7 @@
 import { StyleProp } from 'react-native'
 
 export type OnLoadEventPayload = {
+  canGoBack?: boolean
   url?: string
   title?: string
   icon?: string

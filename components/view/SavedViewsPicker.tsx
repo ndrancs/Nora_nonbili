@@ -63,7 +63,7 @@ export const SavedViewsPicker = () => {
     savedViews$.setActiveView(viewId)
     const tabId = getFirstVisibleTabId(viewId, viewTabIds, orderedTabIds)
     if (tabId) {
-      tabs$.setActiveTabById(tabId)
+      tabs$.setActiveTabById(tabId, 'user')
     }
   }
 
@@ -71,7 +71,7 @@ export const SavedViewsPicker = () => {
     const viewId = createDesktopSavedView(layout, orderedTabIds)
     const tabId = getFirstVisibleTabId(viewId, viewTabIds, orderedTabIds) || orderedTabIds[0]
     if (tabId) {
-      tabs$.setActiveTabById(tabId)
+      tabs$.setActiveTabById(tabId, 'system')
     }
   }
 
@@ -86,7 +86,7 @@ export const SavedViewsPicker = () => {
       return
     }
 
-    tabs$.setActiveTabById(tabId)
+    tabs$.setActiveTabById(tabId, 'open')
   }
 
   const onClose = () => {

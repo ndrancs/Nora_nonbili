@@ -29,13 +29,13 @@ import { SavedViewsPicker } from '../view/SavedViewsPicker'
 function prevTab() {
   const activeIndex = tabs$.activeTabIndex.get()
   const newIndex = activeIndex > 0 ? activeIndex - 1 : tabs$.tabs.length - 1
-  tabs$.activeTabIndex.set(newIndex)
+  tabs$.setActiveTabIndex(newIndex, 'user')
 }
 
 function nextTab() {
   const activeIndex = tabs$.activeTabIndex.get()
   const newIndex = activeIndex < tabs$.tabs.length - 1 ? activeIndex + 1 : 0
-  tabs$.activeTabIndex.set(newIndex)
+  tabs$.setActiveTabIndex(newIndex, 'user')
 }
 
 export const NouHeader: React.FC<{}> = ({}) => {

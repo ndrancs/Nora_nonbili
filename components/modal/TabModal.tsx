@@ -24,7 +24,7 @@ export const TabModal = () => {
   }
 
   const onPress = (index: number) => {
-    tabs$.activeTabIndex.set(index)
+    tabs$.setActiveTabIndex(index, 'user')
     ui$.assign({ tabModalOpen: false })
   }
 
@@ -69,7 +69,7 @@ export const TabModal = () => {
           )}
         </View>
         {tabs.map((tab, index) => (
-          <View className="flex-row items-center justify-between" key={tab.id}>
+          <View className="flex-row items-center justify-between" key={tab.id || index}>
             <TouchableHighlight className="w-[80%]" onPress={() => onPress(index)}>
               <View
                 className={clsx(

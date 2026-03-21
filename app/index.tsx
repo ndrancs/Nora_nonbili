@@ -1,7 +1,6 @@
 import { BackHandler } from 'react-native'
 import { useEffect, useState } from 'react'
-import { useValue, useObserveEffect } from '@legendapp/state/react'
-import { ui$ } from '@/states/ui'
+import { useObserveEffect } from '@legendapp/state/react'
 import { homeUrls, openSharedUrl } from '@/lib/page'
 import { Asset } from 'expo-asset'
 import { settings$ } from '@/states/settings'
@@ -56,7 +55,6 @@ const syncNativeSettings = () => {
 }
 
 export default function HomeScreen() {
-  const uiState = useValue(ui$)
   const [scriptOnStart, setScriptOnStart] = useState('')
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent()
   const linkingUrl = useLinkingURL()
@@ -91,7 +89,10 @@ export default function HomeScreen() {
     })
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      uiState.webview?.goBack()
+      if (tabs$.handleBackPress()) {
+        return true
+      }
+      BackHandler.exitApp()
       return true
     })
 

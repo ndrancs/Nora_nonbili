@@ -82,6 +82,25 @@ export const NoraTab: React.FC<{
   const profileColor = getProfileColor(tab.profile)
   const isActive = activeTabIndex === index
   const viewKey = getProfileViewKey(tab)
+  const refreshCanGoBack = useCallback(
+    async (target?: any) => {
+      const webview = target || webviewRef.current || nativeRef.current
+      if (!webview || typeof webview.canGoBack !== 'function') {
+        return
+      }
+
+      const nextCanGoBack = await Promise.resolve(webview.canGoBack())
+      if (typeof nextCanGoBack !== 'boolean') {
+        return
+      }
+
+      setCanGoBack(nextCanGoBack)
+      if (isActive) {
+        ui$.activeCanGoBack.set(nextCanGoBack)
+      }
+    },
+    [isActive],
+  )
 
   const setPageUrl = useCallback(
     (url: string) => {
@@ -117,31 +136,32 @@ export const NoraTab: React.FC<{
         void executeWebviewJavaScript(webview, contentJs)
           .catch(() => {})
           .finally(() => applyContentSettings(webview))
-        setCanGoBack(webview.canGoBack())
+        void refreshCanGoBack(webview)
       })
       webview.addEventListener('did-navigate', (e) => {
         setPageUrl(e.url)
-        setCanGoBack(webview.canGoBack())
+        void refreshCanGoBack(webview)
       })
       webview.addEventListener('did-navigate-in-page', (e) => {
         setPageUrl(e.url)
-        setCanGoBack(webview.canGoBack())
+        void refreshCanGoBack(webview)
       })
       webview.addEventListener('page-favicon-updated', (e) => {
         tabs$.tabs[index].assign({ title: webview.getTitle(), icon: e.favicons.at(-1) })
       })
       webview.addEventListener('ipc-message', (e) => {})
     },
-    [applyContentSettings, contentJs, index, setPageUrl],
+    [applyContentSettings, contentJs, index, refreshCanGoBack, setPageUrl],
   )
 
   const setActiveNativeWebview = useCallback(
     (webview: any) => {
       if (webview && nativeRef.current === webview && isActive) {
         ui$.webview.set(ObservableHint.opaque(webview))
+        void refreshCanGoBack(webview)
       }
     },
-    [isActive],
+    [isActive, refreshCanGoBack],
   )
 
   const clearActiveNativeWebview = useCallback((webview: any) => {
@@ -199,7 +219,15 @@ export const NoraTab: React.FC<{
       return
     }
     ui$.webview.set(ObservableHint.opaque(webviewRef.current))
-  }, [isActive])
+    void refreshCanGoBack(webviewRef.current)
+  }, [isActive, refreshCanGoBack])
+
+  useEffect(() => {
+    if (!isActive) {
+      return
+    }
+    ui$.activeCanGoBack.set(canGoBack)
+  }, [canGoBack, isActive])
 
   useEffect(() => {
     applyContentSettings()
@@ -207,10 +235,13 @@ export const NoraTab: React.FC<{
 
   useEffect(() => {
     return () => {
-      clearActiveNativeWebview(nativeRef.current)
-      nativeRef.current = null
+      const native = nativeRef.current
+      clearActiveNativeWebview(native)
+      if (isActive && ui$.webview.get() === native) {
+        ui$.activeCanGoBack.set(false)
+      }
     }
-  }, [clearActiveNativeWebview])
+  }, [clearActiveNativeWebview, isActive])
 
   const onNativeRef = useCallback(
     (ref: any) => {
@@ -238,12 +269,18 @@ export const NoraTab: React.FC<{
   const toolbarButtonStyle = { padding: 4, height: 28 }
 
   const onLoad = async (e: { nativeEvent: any }) => {
-    const { url, title, icon } = e.nativeEvent
+    const { url, title, icon, canGoBack: nextCanGoBack } = e.nativeEvent
     if (url) {
       setPageUrl(url)
     }
     if (title || icon) {
       tabs$.tabs[index].assign({ title, icon })
+    }
+    if (typeof nextCanGoBack === 'boolean') {
+      setCanGoBack(nextCanGoBack)
+      if (isActive) {
+        ui$.activeCanGoBack.set(nextCanGoBack)
+      }
     }
     applyContentSettings()
   }
@@ -267,7 +304,7 @@ export const NoraTab: React.FC<{
         break
       }
       case 'new-tab':
-        tabs$.openTab(forceHttps(data.url))
+        tabs$.openTab(forceHttps(data.url), { parentTabId: tab.id, source: 'child' })
         break
       case 'save-file':
         webview?.saveFile(data.content, data.fileName, data.mimeType)

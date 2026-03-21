@@ -123,6 +123,10 @@ class NoraViewModule : Module() {
         }
       }
 
+      AsyncFunction("canGoBack") { view: NoraView ->
+        view.webView.canGoBack()
+      }
+
       AsyncFunction("goForward") { view: NoraView ->
         val webView = view.webView
         if (webView.canGoForward()) {

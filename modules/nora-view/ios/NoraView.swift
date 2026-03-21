@@ -152,6 +152,7 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
       if keyPath == "title" || keyPath == "url" {
           onLoad([
+            "canGoBack": webView.canGoBack,
             "title": webView.title ?? "",
             "url": webView.url?.absoluteString ?? ""
           ])
@@ -220,6 +221,7 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
       let title = webView.title ?? ""
 
       onLoad([
+        "canGoBack": webView.canGoBack,
         "url": url,
         "title": title
       ])

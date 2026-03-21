@@ -234,6 +234,7 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
             pageUrl = url
             onLoad(
               mapOf(
+                "canGoBack" to view.canGoBack(),
                 "url" to pageUrl
               )
             )
@@ -288,6 +289,7 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
         override fun onReceivedTitle(view: WebView, title: String) {
           onLoad(
             mapOf(
+              "canGoBack" to view.canGoBack(),
               "title" to title
             )
           )

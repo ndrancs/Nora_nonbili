@@ -35,7 +35,7 @@ export function openSharedUrl(url: string, replace = false) {
     if (replace) {
       tabs$.updateTabUrl(newUrl)
     } else {
-      tabs$.openTab(newUrl)
+      tabs$.openTab(newUrl, { source: 'shared' })
     }
   } catch (e) {
     console.error(e)

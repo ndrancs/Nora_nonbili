@@ -114,6 +114,10 @@ public class NoraViewModule: Module {
         }
       }
 
+      AsyncFunction("canGoBack") { (view: NoraView) in
+        view.webView.canGoBack
+      }
+
       AsyncFunction("goForward") { (view: NoraView) in
         if view.webView.canGoForward {
           view.webView.goForward()

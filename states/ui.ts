@@ -22,6 +22,7 @@ interface Store {
   urlModalOpen: boolean
 
   // webview
+  activeCanGoBack: boolean
   webview: any
 }
 
@@ -47,5 +48,6 @@ export const ui$ = observable<Store>({
   lastSelectedProfileId: 'default',
 
   // webview
+  activeCanGoBack: false,
   webview: undefined,
 })

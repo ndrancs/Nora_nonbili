@@ -6,8 +6,19 @@ import { ui$ } from './ui'
 import { settings$ } from './settings'
 import { savedViews$ } from './saved-views'
 import { sortBy } from 'es-toolkit'
+import {
+  consumeChildBackTarget,
+  getChildBackTarget,
+  invalidateChildBackTargetOnUserSwitch,
+  pruneChildBackParentByTabId,
+  pruneRecentTabIds,
+  resolveCloseTarget,
+  updateRecentTabIds,
+  type ChildBackParentByTabId,
+} from '@/lib/tab-behavior'
 
 import { removeTrackingParams } from '@/lib/url'
+import { DECK_VIEW_ID } from './saved-views'
 
 export interface Tab {
   id: string
@@ -26,14 +37,26 @@ interface Store {
   currentTab: () => Tab | undefined
   // currentUrl: () => string
 
-  openTab: (url: string, profile?: string) => string | undefined
+  openTab: (url: string, options?: OpenTabOptions) => string | undefined
   closeTab: (index: number) => void
   closeAll: () => void
   updateTabUrl: (url: string, index?: number) => void
-  setActiveTabById: (tabId: string) => void
+  setActiveTabIndex: (index: number, reason?: TabActivationReason) => void
+  setActiveTabById: (tabId: string, reason?: TabActivationReason) => void
+  handleBackPress: () => boolean
 }
 
 let lastOpenedUrl = ''
+let recentTabIds: string[] = []
+let childBackParentByTabId: ChildBackParentByTabId = {}
+
+export type OpenTabOptions = {
+  parentTabId?: string
+  profile?: string
+  source?: 'manual' | 'child' | 'shared' | 'reuse'
+}
+
+export type TabActivationReason = 'user' | 'open' | 'close' | 'back' | 'system'
 
 export const getOrderedTabIds = (tabs: Pick<Tab, 'id'>[], orders: Record<string, number>) => {
   const existingIds = new Set(tabs.map((tab) => tab.id))
@@ -57,7 +80,62 @@ export const sortTabsByOrder = <T extends Pick<Tab, 'id'>>(tabs: T[], orders: Re
     .filter((tab): tab is T => tab != null)
 }
 
-export const openDesktopTab = (url: string, profile?: string) => tabs$.openTab(url, profile) as string | undefined
+const getActiveTabId = () => {
+  const index = tabs$.activeTabIndex.get()
+  return tabs$.tabs[index]?.id.get()
+}
+
+const syncRuntimeTabMetadata = () => {
+  const existingTabIds = tabs$.tabs.get().map((tab) => tab.id)
+  recentTabIds = pruneRecentTabIds(recentTabIds, existingTabIds)
+  childBackParentByTabId = pruneChildBackParentByTabId(childBackParentByTabId, existingTabIds)
+}
+
+const getClosePreferredTabIds = (availableTabIds: string[]) => {
+  const activeViewId = savedViews$.activeViewId.get()
+  if (activeViewId === DECK_VIEW_ID) {
+    return undefined
+  }
+
+  const activeView = savedViews$.savedViews.get().find((view) => view.id === activeViewId)
+  if (!activeView) {
+    return undefined
+  }
+
+  const availableTabIdSet = new Set(availableTabIds)
+  return activeView.slotTabIds.filter((tabId): tabId is string => typeof tabId === 'string' && availableTabIdSet.has(tabId))
+}
+
+const setActiveTabIndexInternal = (index: number, reason: TabActivationReason = 'user') => {
+  const tabs = tabs$.tabs.get()
+  if (index < 0 || index >= tabs.length) {
+    return
+  }
+
+  const activeIndex = tabs$.activeTabIndex.get()
+  const previousTabId = tabs[activeIndex]?.id
+  const nextTabId = tabs[index]?.id
+  if (!nextTabId) {
+    return
+  }
+
+  if (reason === 'user') {
+    childBackParentByTabId = invalidateChildBackTargetOnUserSwitch(childBackParentByTabId, previousTabId, nextTabId)
+  }
+
+  const shouldTrackRecentTabs = reason === 'user' || reason === 'open' || reason === 'back'
+  if (previousTabId !== nextTabId) {
+    if (shouldTrackRecentTabs) {
+      recentTabIds = updateRecentTabIds(recentTabIds, previousTabId, nextTabId)
+    }
+    ui$.activeCanGoBack.set(false)
+  }
+
+  tabs$.activeTabIndex.set(index)
+}
+
+export const openDesktopTab = (url: string, options?: OpenTabOptions) =>
+  tabs$.openTab(url, options) as string | undefined
 
 export const tabs$: Observable<Store> = observable<Store>({
   tabs: [],
@@ -71,7 +149,7 @@ export const tabs$: Observable<Store> = observable<Store>({
   },
   // currentUrl: (): string => tabs$.tabs[tabs$.activeTabIndex.get()].get()?.url,
 
-  openTab: (url, profile): string | undefined => {
+  openTab: (url, options): string | undefined => {
     const cleaned = removeTrackingParams(url.replace('nora://', 'https://'))
     if (cleaned && cleaned === lastOpenedUrl) {
       return undefined
@@ -96,7 +174,7 @@ export const tabs$: Observable<Store> = observable<Store>({
           })
 
           if (existingTabIndex !== -1) {
-            tabs$.activeTabIndex.set(existingTabIndex)
+            tabs$.setActiveTabIndex(existingTabIndex, 'open')
             tabs$.tabs[existingTabIndex].url.set(url)
             return tabs$.tabs[existingTabIndex].id.get()
           }
@@ -106,9 +184,12 @@ export const tabs$: Observable<Store> = observable<Store>({
       }
     }
 
-    const tab: Tab = { id: genId(), url, profile: profile || ui$.lastSelectedProfileId.get() }
+    const tab: Tab = { id: genId(), url, profile: options?.profile || ui$.lastSelectedProfileId.get() }
     tabs$.tabs.push(tab)
-    tabs$.activeTabIndex.set(tabs$.tabs.length - 1)
+    if (options?.source === 'child' && options.parentTabId && options.parentTabId !== tab.id) {
+      childBackParentByTabId[tab.id] = options.parentTabId
+    }
+    tabs$.setActiveTabIndex(tabs$.tabs.length - 1, 'open')
     return tab.id
   },
 
@@ -120,28 +201,47 @@ export const tabs$: Observable<Store> = observable<Store>({
     }
 
     const activeIndex = tabs$.activeTabIndex.get()
+    const activeTabId = tabs[activeIndex]?.id
+    const remainingTabIds = tabs.filter((_, tabIndex) => tabIndex !== index).map((tab) => tab.id)
+    const adjacentTabId = tabs[index + 1]?.id || tabs[index - 1]?.id
+    const preferredTabIds = getClosePreferredTabIds(remainingTabIds)
+    const nextActiveTabId = resolveCloseTarget({
+      activeTabId,
+      closingTabId: tabId,
+      recentTabIds,
+      availableTabIds: remainingTabIds,
+      preferredTabIds,
+      adjacentTabId,
+    })
+
     tabs$.tabs.splice(index, 1)
     savedViews$.cleanupClosedTabIds([tabId])
+    syncRuntimeTabMetadata()
 
     const remainingTabs = tabs$.tabs.get()
     if (!remainingTabs.length) {
       tabs$.activeTabIndex.set(0)
+      ui$.activeCanGoBack.set(false)
       return
     }
 
-    if (activeIndex > index) {
-      tabs$.activeTabIndex.set(activeIndex - 1)
-      return
+    if (activeTabId && nextActiveTabId === activeTabId) {
+      const nextIndex = remainingTabs.findIndex((tab) => tab.id === activeTabId)
+      if (nextIndex !== -1) {
+        tabs$.activeTabIndex.set(nextIndex)
+        return
+      }
     }
 
-    if (activeIndex === index) {
-      tabs$.activeTabIndex.set(Math.min(index, remainingTabs.length - 1))
-    }
+    tabs$.setActiveTabById(nextActiveTabId || remainingTabs[0].id, 'close')
   },
 
   closeAll: () => {
     const closedTabIds = tabs$.tabs.get().map((tab) => tab.id)
     tabs$.assign({ tabs: [{ id: genId(), url: '' }], activeTabIndex: 0 })
+    recentTabIds = []
+    childBackParentByTabId = {}
+    ui$.activeCanGoBack.set(false)
     savedViews$.cleanupClosedTabIds(closedTabIds)
   },
 
@@ -156,11 +256,56 @@ export const tabs$: Observable<Store> = observable<Store>({
     }
   },
 
-  setActiveTabById: (tabId) => {
+  setActiveTabIndex: (index, reason = 'user') => {
+    setActiveTabIndexInternal(index, reason)
+  },
+
+  setActiveTabById: (tabId, reason = 'user') => {
     const index = tabs$.tabs.get().findIndex((tab) => tab?.id === tabId)
     if (index !== -1) {
-      tabs$.activeTabIndex.set(index)
+      setActiveTabIndexInternal(index, reason)
     }
+  },
+
+  handleBackPress: () => {
+    const activeTabId = getActiveTabId()
+    const webview = ui$.webview.get()
+    const canGoBack = ui$.activeCanGoBack.get()
+    if (canGoBack) {
+      webview?.goBack?.()
+      return true
+    }
+
+    const targetTabId = getChildBackTarget(
+      childBackParentByTabId,
+      activeTabId,
+      canGoBack,
+      tabs$.tabs.get().map((tab) => tab.id),
+    )
+    if (!targetTabId) {
+      return false
+    }
+
+    childBackParentByTabId = consumeChildBackTarget(childBackParentByTabId, activeTabId)
+    const activeIndex = tabs$.tabs.get().findIndex((tab) => tab?.id === activeTabId)
+    if (activeIndex === -1) {
+      return false
+    }
+
+    tabs$.tabs.splice(activeIndex, 1)
+    savedViews$.cleanupClosedTabIds(activeTabId ? [activeTabId] : [])
+    syncRuntimeTabMetadata()
+    ui$.webview.set(undefined)
+    ui$.activeCanGoBack.set(false)
+
+    const remainingTabs = tabs$.tabs.get()
+    if (!remainingTabs.length) {
+      tabs$.assign({ tabs: [{ id: genId(), url: '' }], activeTabIndex: 0 })
+      return true
+    }
+
+    tabs$.setActiveTabById(targetTabId, 'back')
+    return true
   },
 })
 
@@ -171,11 +316,19 @@ syncObservable(tabs$, {
     transform: {
       load: (data: Store) => {
         if (data?.tabs) {
-          data.tabs = data.tabs.filter((tab) => tab != null)
+          const seenIds = new Set<string>()
+          data.tabs = data.tabs
+            .filter((tab) => tab != null)
+            .map((tab) => {
+              if (!tab.id || seenIds.has(tab.id)) {
+                tab.id = genId()
+              }
+              seenIds.add(tab.id)
+              return tab
+            })
           if (!data.tabs.length) {
             data.tabs = [{ id: genId(), url: '' }]
-          }
-          if (typeof data.activeTabIndex !== 'number' || data.activeTabIndex < 0) {
+          }          if (typeof data.activeTabIndex !== 'number' || data.activeTabIndex < 0) {
             data.activeTabIndex = 0
           }
           if (data.activeTabIndex >= data.tabs.length) {

@@ -52,7 +52,7 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
       ) : tabs.length ? (
         <View className="flex-1">
           {tabs.map((tab, index) => (
-            <NoraTab tab={tab} index={index} key={tab.id} />
+            <NoraTab tab={tab} index={index} key={tab.id || index} />
           ))}
         </View>
       ) : (
