@@ -5,11 +5,13 @@ import type { Item } from './NouMenu'
 import { ReactNode } from 'react'
 
 export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigger, items }) => {
-  const menuItems = items.map((item, index) => (
-    <Button key={index} color={colors.text} onPress={item.handler}>
-      {item.label}
-    </Button>
-  ))
+  const menuItems = items
+    .filter((item) => item.kind !== 'label' && item.kind !== 'separator')
+    .map((item, index) => (
+      <Button key={index} color={colors.text} onPress={item.handler}>
+        {item.label}
+      </Button>
+    ))
 
   return (
     <Host matchContents>

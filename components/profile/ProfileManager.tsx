@@ -44,7 +44,7 @@ export const ProfileManager = () => {
             <NouMenu
               trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
               items={[
-                { label: t('profiles.edit'), handler: () => startEdit(profile) },
+                { label: t('common.edit'), handler: () => startEdit(profile) },
                 ...(profile.isDefault
                   ? []
                   : [{ label: t('menus.delete'), handler: () => settings$.deleteProfile(profile.id) }]),

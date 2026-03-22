@@ -215,7 +215,7 @@ export const SettingsModal = () => {
     profiles: t('settings.pages.profiles'),
     bookmarks: t('settings.pages.bookmarks'),
     sync: t('sync.label'),
-    about: t('about.label'),
+    about: t('common.about'),
   }
 
   const renderPage = () => {
@@ -280,10 +280,10 @@ export const SettingsModal = () => {
             </View>
           </SettingsSection>
 
-          <SettingsSection label={t('settings.sections.about')}>
+          <SettingsSection label={t('common.about')}>
             <View className={surfaceCls}>
               <SettingsNavRow
-                title={t('about.label')}
+                title={t('common.about')}
                 description={t('about.hint')}
                 icon="info-outline"
                 meta={`v${appVersion}`}

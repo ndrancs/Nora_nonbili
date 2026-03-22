@@ -84,7 +84,7 @@ export const ProfileEditModal = () => {
     <BaseCenterModal onClose={onClose}>
       <View className="p-4 w-full">
         <NouText className="text-lg font-bold mb-4">
-          {editingProfileId ? t('profiles.edit') : t('profiles.add')}
+          {editingProfileId ? t('common.edit') : t('profiles.add')}
         </NouText>
         <TextInput
           className="border border-gray-600 text-white px-3 py-2 rounded-md mb-2"
@@ -100,7 +100,7 @@ export const ProfileEditModal = () => {
             {t('buttons.cancel')}
           </NouButton>
           <NouButton className="flex-1" onPress={handleSave}>
-            {editingProfileId ? t('profiles.save') : t('profiles.add')}
+            {editingProfileId ? t('common.save') : t('profiles.add')}
           </NouButton>
         </View>
       </View>

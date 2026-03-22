@@ -362,7 +362,7 @@ export const SettingsUserStylesContent = () => {
                   onPress={onSave}
                   className="rounded-full bg-indigo-600 px-8 py-2.5 active:bg-indigo-700"
                 >
-                  <NouText className="text-sm font-bold text-white">{t('buttons.save')}</NouText>
+                  <NouText className="text-sm font-bold text-white">{t('common.save')}</NouText>
                 </Pressable>
               </View>
             </View>

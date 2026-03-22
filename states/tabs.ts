@@ -29,10 +29,15 @@ export interface Tab {
   profile?: string
 }
 
+export interface ClosedTab extends Tab {
+  closedAt: number
+}
+
 interface Store {
   tabs: Tab[]
   activeTabIndex: number
   orders: Record<string, number>
+  recentlyClosedTabs: ClosedTab[]
 
   currentTab: () => Tab | undefined
   // currentUrl: () => string
@@ -40,6 +45,7 @@ interface Store {
   openTab: (url: string, options?: OpenTabOptions) => string | undefined
   closeTab: (index: number) => void
   closeAll: () => void
+  reopenClosedTab: (tabId: string) => string | undefined
   updateTabUrl: (url: string, index?: number) => void
   setActiveTabIndex: (index: number, reason?: TabActivationReason) => void
   setActiveTabById: (tabId: string, reason?: TabActivationReason) => void
@@ -49,6 +55,21 @@ interface Store {
 let lastOpenedUrl = ''
 let recentTabIds: string[] = []
 let childBackParentByTabId: ChildBackParentByTabId = {}
+const MAX_RECENTLY_CLOSED_TABS = 10
+
+const pushRecentlyClosedTabs = (closedTabs: Tab[]) => {
+  const nextClosedTabs = closedTabs
+    .filter((tab): tab is Tab => tab != null)
+    .map((tab) => ({ ...tab, closedAt: Date.now() }))
+
+  if (!nextClosedTabs.length) {
+    return
+  }
+
+  const history = tabs$.recentlyClosedTabs.get()
+  const nextHistory = [...nextClosedTabs.reverse(), ...history]
+  tabs$.recentlyClosedTabs.set(nextHistory.slice(0, MAX_RECENTLY_CLOSED_TABS))
+}
 
 export type OpenTabOptions = {
   parentTabId?: string
@@ -141,6 +162,7 @@ export const tabs$: Observable<Store> = observable<Store>({
   tabs: [],
   activeTabIndex: 0,
   orders: {},
+  recentlyClosedTabs: [],
 
   currentTab: (): Tab | undefined => {
     const index = tabs$.activeTabIndex.get()
@@ -195,7 +217,8 @@ export const tabs$: Observable<Store> = observable<Store>({
 
   closeTab: (index) => {
     const tabs = tabs$.tabs.get()
-    const tabId = tabs[index]?.id
+    const closedTab = tabs[index]
+    const tabId = closedTab?.id
     if (!tabId) {
       return
     }
@@ -215,6 +238,7 @@ export const tabs$: Observable<Store> = observable<Store>({
     })
 
     tabs$.tabs.splice(index, 1)
+    pushRecentlyClosedTabs(closedTab ? [closedTab] : [])
     savedViews$.cleanupClosedTabIds([tabId])
     syncRuntimeTabMetadata()
 
@@ -237,12 +261,29 @@ export const tabs$: Observable<Store> = observable<Store>({
   },
 
   closeAll: () => {
-    const closedTabIds = tabs$.tabs.get().map((tab) => tab.id)
+    const closedTabs = tabs$.tabs.get()
+    const closedTabIds = closedTabs.map((tab) => tab.id)
+    pushRecentlyClosedTabs(closedTabs)
     tabs$.assign({ tabs: [{ id: genId(), url: '' }], activeTabIndex: 0 })
     recentTabIds = []
     childBackParentByTabId = {}
     ui$.activeCanGoBack.set(false)
     savedViews$.cleanupClosedTabIds(closedTabIds)
+  },
+
+  reopenClosedTab: (tabId) => {
+    const recentlyClosedTabs = tabs$.recentlyClosedTabs.get()
+    const closedTab = recentlyClosedTabs.find((tab) => tab.id === tabId)
+    if (!closedTab) {
+      return undefined
+    }
+
+    tabs$.recentlyClosedTabs.set(recentlyClosedTabs.filter((tab) => tab.id !== tabId))
+    const { id: _closedTabId, closedAt: _closedAt, ...rest } = closedTab
+    const reopenedTab: Tab = { ...rest, id: genId() }
+    tabs$.tabs.push(reopenedTab)
+    tabs$.setActiveTabIndex(tabs$.tabs.length - 1, 'open')
+    return reopenedTab.id
   },
 
   updateTabUrl: (url, index) => {
@@ -292,7 +333,9 @@ export const tabs$: Observable<Store> = observable<Store>({
       return false
     }
 
+    const closedTab = tabs$.tabs[activeIndex].get()
     tabs$.tabs.splice(activeIndex, 1)
+    pushRecentlyClosedTabs(closedTab ? [closedTab] : [])
     savedViews$.cleanupClosedTabIds(activeTabId ? [activeTabId] : [])
     syncRuntimeTabMetadata()
     ui$.webview.set(undefined)
@@ -334,6 +377,16 @@ syncObservable(tabs$, {
           if (data.activeTabIndex >= data.tabs.length) {
             data.activeTabIndex = data.tabs.length - 1
           }
+        }
+        if (data?.recentlyClosedTabs) {
+          data.recentlyClosedTabs = data.recentlyClosedTabs
+            .filter((tab): tab is ClosedTab => tab != null && typeof tab.url === 'string')
+            .map((tab) => ({
+              ...tab,
+              id: tab.id || genId(),
+              closedAt: typeof tab.closedAt === 'number' ? tab.closedAt : Date.now(),
+            }))
+            .slice(0, MAX_RECENTLY_CLOSED_TABS)
         }
         return data
       },

@@ -5,6 +5,14 @@
     "donate": "Donate",
     "hint": "Version info, source code, and support links."
   },
+  "common": {
+    "about": "About",
+    "edit": "Edit",
+    "off": "Off",
+    "on": "On",
+    "save": "Save",
+    "theme": "Theme"
+  },
   "blocklist": {
     "label": "Network blocklist",
     "description": "Block ads and trackers with EasyList and EasyPrivacy host rules.",
@@ -16,7 +24,6 @@
   "buttons": {
     "cancel": "Cancel",
     "closeAll": "Close All",
-    "edit": "Edit",
     "openUrl": "Open URL",
     "open": "Open",
     "save": "Save"
@@ -160,7 +167,9 @@
     "managePlan": "Manage plan"
   },
   "tabs": {
-    "new": "New tab"
+    "new": "New tab",
+    "recentlyClosed": "Recently closed",
+    "noRecentlyClosed": "No recently closed tabs"
   },
   "toast": {
     "pinned": "Pinned to new tab page",

@@ -19,9 +19,13 @@ export const NouMenu: React.FC<{ items: Item[] }> = ({ items }) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const triggerRef = useRef<View>(null)
-  const menuWidth = 220
-  const itemHeight = 44
-  const menuHeight = items.length * itemHeight + 16
+  const menuWidth = 280
+  const getRowHeight = (item: Item) => {
+    if (item.kind === 'separator') return 9
+    if (item.kind === 'label') return 32
+    return item.description ? 56 : 44
+  }
+  const menuHeight = items.reduce((total, item) => total + getRowHeight(item), 16)
 
   const openMenu = () => {
     triggerRef.current?.measureInWindow((x, y, width, height) => {
@@ -62,7 +66,7 @@ export const NouMenu: React.FC<{ items: Item[] }> = ({ items }) => {
         <View className="flex-1" pointerEvents="box-none">
           <Pressable className="absolute inset-0" onPress={closeMenu} />
           <View
-            className="absolute rounded-xl py-2"
+            className="absolute rounded-xl py-2 border border-zinc-700"
             style={{
               top,
               left,
@@ -70,20 +74,46 @@ export const NouMenu: React.FC<{ items: Item[] }> = ({ items }) => {
               backgroundColor: colors.bg,
             }}
           >
-            {items.map((item, index) => (
-              <Pressable
-                key={index}
-                className="px-4 justify-center"
-                style={{ minHeight: itemHeight }}
-                android_ripple={{ color: colors.underlay }}
-                onPress={() => {
-                  closeMenu()
-                  item.handler()
-                }}
-              >
-                <NouText>{item.label}</NouText>
-              </Pressable>
-            ))}
+            {items.map((item, index) => {
+              if (item.kind === 'separator') {
+                return <View key={index} className="mx-3 my-1 h-px bg-zinc-700" />
+              }
+
+              if (item.kind === 'label') {
+                return (
+                  <View key={index} className="px-4 pt-2 pb-1">
+                    <NouText className="text-[11px] uppercase tracking-[1px] text-zinc-500">{item.label}</NouText>
+                  </View>
+                )
+              }
+
+              return (
+                <Pressable
+                  key={index}
+                  className="px-4 flex-row items-center gap-3"
+                  style={{ minHeight: getRowHeight(item) }}
+                  android_ripple={{ color: colors.underlay }}
+                  disabled={item.disabled}
+                  onPress={() => {
+                    closeMenu()
+                    item.handler()
+                  }}
+                >
+                  {item.icon ? <View className="shrink-0">{item.icon}</View> : null}
+                  <View className="flex-1 min-w-0 py-2">
+                    <NouText className="text-sm" numberOfLines={1}>
+                      {item.label}
+                    </NouText>
+                    {item.description ? (
+                      <NouText className="text-xs text-zinc-500" numberOfLines={1}>
+                        {item.description}
+                      </NouText>
+                    ) : null}
+                  </View>
+                  {item.meta ? <View className="shrink-0">{item.meta}</View> : null}
+                </Pressable>
+              )
+            })}
           </View>
         </View>
       </Modal>
