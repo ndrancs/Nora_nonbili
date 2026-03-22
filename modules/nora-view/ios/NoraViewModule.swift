@@ -70,6 +70,10 @@ public class NoraViewModule: Module {
       }
     }
 
+    AsyncFunction("clearProfileData") { (profile: String, promise: Promise) in
+      NoraView.clearProfileData(profile, promise: promise)
+    }
+
     View(NoraView.self) {
       Prop("scriptOnStart") { (view: NoraView, script: String) in
         view.setScriptOnStart(script)

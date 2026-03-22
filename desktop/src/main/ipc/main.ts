@@ -13,6 +13,13 @@ const interfaces = {
   clearData: () => {
     session.fromPartition('persist:webview').clearData()
   },
+  clearProfileData: (profile: string) => {
+    if (!profile || profile === 'default') {
+      return
+    }
+
+    return session.fromPartition(`persist:${profile}`).clearData()
+  },
   fetchText: async (url: string, headers: Record<string, string> = {}) => {
     const res = await fetch(url, { headers })
     return {

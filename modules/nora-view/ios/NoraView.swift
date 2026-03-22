@@ -26,6 +26,10 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
     return uuid
   }
 
+  private static func profileIdentifierKey(for profile: String) -> String {
+    "nora_profile_uuid_\(profile)"
+  }
+
   private static func dataStore(for profile: String) -> WKWebsiteDataStore {
     if profile == "default" {
       return WKWebsiteDataStore.default()
@@ -36,6 +40,29 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
     } else {
       return WKWebsiteDataStore.default()
     }
+  }
+
+  static func clearProfileData(_ profile: String, promise: Promise) {
+    if profile == "default" {
+      promise.resolve(nil)
+      return
+    }
+
+    if #available(iOS 17.0, *) {
+      let identifier = profileIdentifier(for: profile)
+      WKWebsiteDataStore.removeDataStore(forIdentifier: identifier) { error in
+        if let error {
+          promise.reject(error)
+          return
+        }
+
+        UserDefaults.standard.removeObject(forKey: profileIdentifierKey(for: profile))
+        promise.resolve(nil)
+      }
+      return
+    }
+
+    promise.resolve(nil)
   }
 
   required init(appContext: AppContext? = nil) {

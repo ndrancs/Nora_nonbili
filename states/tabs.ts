@@ -45,6 +45,7 @@ interface Store {
   openTab: (url: string, options?: OpenTabOptions) => string | undefined
   closeTab: (index: number) => void
   closeAll: () => void
+  deleteProfileData: (profileId: string) => void
   reopenClosedTab: (tabId: string) => string | undefined
   updateTabUrl: (url: string, index?: number) => void
   setActiveTabIndex: (index: number, reason?: TabActivationReason) => void
@@ -269,6 +270,44 @@ export const tabs$: Observable<Store> = observable<Store>({
     childBackParentByTabId = {}
     ui$.activeCanGoBack.set(false)
     savedViews$.cleanupClosedTabIds(closedTabIds)
+  },
+
+  deleteProfileData: (profileId) => {
+    if (!profileId || profileId === 'default') {
+      return
+    }
+
+    const tabs = tabs$.tabs.get()
+    const activeTabId = tabs[tabs$.activeTabIndex.get()]?.id
+    const removedTabs = tabs.filter((tab) => tab?.profile === profileId)
+    const removedTabIds = removedTabs.map((tab) => tab.id)
+    const nextRecentlyClosedTabs = tabs$.recentlyClosedTabs.get().filter((tab) => tab?.profile !== profileId)
+
+    if (!removedTabIds.length && nextRecentlyClosedTabs.length === tabs$.recentlyClosedTabs.get().length) {
+      return
+    }
+
+    if (removedTabIds.length) {
+      const removedTabIdSet = new Set(removedTabIds)
+      const remainingTabs = tabs.filter((tab) => tab?.profile !== profileId)
+      const nextOrders = Object.fromEntries(Object.entries(tabs$.orders.get()).filter(([tabId]) => !removedTabIdSet.has(tabId)))
+
+      tabs$.orders.set(nextOrders)
+      tabs$.tabs.set(remainingTabs.length ? remainingTabs : [{ id: genId(), url: '' }])
+      savedViews$.cleanupClosedTabIds(removedTabIds)
+      syncRuntimeTabMetadata()
+
+      const activeDeleted = activeTabId != null && removedTabIdSet.has(activeTabId)
+      const nextTabs = tabs$.tabs.get()
+      const nextActiveIndex = activeDeleted ? 0 : Math.max(0, nextTabs.findIndex((tab) => tab.id === activeTabId))
+      tabs$.activeTabIndex.set(nextActiveIndex)
+      if (activeDeleted) {
+        ui$.webview.set(undefined)
+        ui$.activeCanGoBack.set(false)
+      }
+    }
+
+    tabs$.recentlyClosedTabs.set(nextRecentlyClosedTabs)
   },
 
   reopenClosedTab: (tabId) => {

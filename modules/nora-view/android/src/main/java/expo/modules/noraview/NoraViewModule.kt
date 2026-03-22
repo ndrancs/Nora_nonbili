@@ -8,6 +8,8 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.webkit.WebView
 import android.widget.Toast
+import androidx.webkit.ProfileStore
+import androidx.webkit.WebViewFeature
 import expo.modules.kotlin.functions.Coroutine
 import expo.modules.kotlin.jni.JavaScriptObject
 import expo.modules.kotlin.modules.Module
@@ -82,6 +84,28 @@ class NoraViewModule : Module() {
     Function("setLocaleStrings") { v: JavaScriptObject ->
       v.getPropertyNames().forEach {
         nouController.i18nStrings[it] = v[it]!!.getString()
+      }
+    }
+
+    AsyncFunction("clearProfileData") { profile: String ->
+      if (profile == "default") {
+        return@AsyncFunction
+      }
+
+      try {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE)) {
+          return@AsyncFunction
+        }
+
+        val profileStore = ProfileStore.getInstance()
+        val targetProfile = profileStore.getProfile(profile) ?: return@AsyncFunction
+        targetProfile.cookieManager.removeAllCookies(null)
+        targetProfile.cookieManager.flush()
+        targetProfile.webStorage.deleteAllData()
+        targetProfile.geolocationPermissions.clearAll()
+        profileStore.deleteProfile(profile)
+      } catch (e: Exception) {
+        log("clearProfileData failed: ${e.message}")
       }
     }
 
