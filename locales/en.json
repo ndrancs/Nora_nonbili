@@ -5,25 +5,17 @@
     "donate": "Donate",
     "hint": "Version info, source code, and support links."
   },
-  "bookmarks": {
-    "label": "Bookmarks"
-  },
   "blocklist": {
     "label": "Network blocklist",
     "description": "Block ads and trackers with EasyList and EasyPrivacy host rules.",
     "enable": "Enable network blocklist",
-    "statusActive": "Active",
-    "statusInactive": "Downloaded, disabled",
     "statusFetching": "Fetching blocklist",
-    "statusNotDownloaded": "Not downloaded",
-    "statusError": "Downloaded, but the last refresh failed",
     "lastUpdated": "Last updated: {{value}}",
     "refreshNow": "Update blocklist"
   },
   "buttons": {
     "cancel": "Cancel",
     "closeAll": "Close All",
-    "download": "Download",
     "edit": "Edit",
     "openUrl": "Open URL",
     "open": "Open",
@@ -36,7 +28,6 @@
     "desktopOn": "On",
     "desktopOff": "Off",
     "addBookmark": "Add bookmark",
-    "pin": "Pin to new tab page",
     "reload": "Reload",
     "scroll": "Scroll to top",
     "share": "Share",
@@ -71,6 +62,39 @@
     "inspectable": "Make webview inspectable",
     "videoEdgeLongPressTo2x": "Long press on edge to 2x playback",
     "hideHeader": "Hide toolbar on scroll",
+    "sections": {
+      "experience": "Experience",
+      "accounts": "Accounts & Data",
+      "advanced": "Advanced",
+      "about": "About"
+    },
+    "pages": {
+      "browsing": "Browsing",
+      "appearance": "Appearance",
+      "profiles": "Profiles & Sessions",
+      "bookmarks": "Bookmarks"
+    },
+    "browsing": {
+      "descriptionNative": "Tabs, site handling, blocklist controls, and advanced webview settings.",
+      "descriptionWeb": "Network blocking and advanced browsing controls.",
+      "features": "Features"
+    },
+    "appearance": {
+      "description": "Theme plus toolbar layout, placement, and button visibility.",
+      "theme": "Theme",
+      "toolbar": "Toolbar"
+    },
+    "profiles": {
+      "description": "Multiple accounts with separate cookies and browsing state.",
+      "injectCookie": "Inject Cookie",
+      "injectCookieHint": "Paste a Cookie header from another browser to restore a session manually."
+    },
+    "bookmarks": {
+      "description": "Manage built-in services and pinned websites.",
+      "builtin": "Built-In Services",
+      "saved": "Saved Bookmarks",
+      "empty": "No bookmarks yet."
+    },
     "userStyles": {
       "label": "User Styles",
       "hint": "Toggle builtin CSS tweaks and add your own host-based styles.",

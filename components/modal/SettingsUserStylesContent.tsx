@@ -301,6 +301,9 @@ export const SettingsUserStylesContent = () => {
               </View>
 
               <View className="mt-6">
+                <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                  CSS
+                </NouText>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="rounded-2xl border border-zinc-800 bg-zinc-950">
                   <TextInput
                     className="min-h-[300px] p-4 text-xs text-white"

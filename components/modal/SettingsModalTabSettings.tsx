@@ -33,7 +33,7 @@ export const SettingsBrowsingContent: React.FC = () => {
     <View className="pb-4">
       {!isWeb ? (
         <>
-          <NouText className={subheaderCls}>Features</NouText>
+          <NouText className={subheaderCls}>{t('settings.browsing.features')}</NouText>
           <View className={surfaceCls}>
             <View className={clsx(rowCls, rowBorderCls)}>
               <NouSwitch
@@ -68,7 +68,7 @@ export const SettingsBrowsingContent: React.FC = () => {
       ) : null}
 
       <View className={clsx(!isWeb && 'mt-10')}>
-        <NouText className={subheaderCls}>Network Blocklist</NouText>
+        <NouText className={subheaderCls}>{t('blocklist.label')}</NouText>
         <View className={surfaceCls}>
           <View className={rowCls}>
             <BlocklistSection hideTitle />
@@ -78,7 +78,7 @@ export const SettingsBrowsingContent: React.FC = () => {
 
       {!isWeb ? (
         <View className="mt-10">
-          <NouText className={subheaderCls}>Advanced</NouText>
+          <NouText className={subheaderCls}>{t('settings.sections.advanced')}</NouText>
           <View className={surfaceCls}>
             {nIf(
               isAndroid,
@@ -112,7 +112,7 @@ export const SettingsAppearanceContent = () => {
       {nIf(
         !isWeb,
         <View className="pb-4">
-          <NouText className={subheaderCls}>Theme</NouText>
+          <NouText className={subheaderCls}>{t('settings.appearance.theme')}</NouText>
           <View className={surfaceCls}>
             <View className="px-4 py-4">
               <View className="flex-row items-start gap-3">
@@ -137,7 +137,7 @@ export const SettingsAppearanceContent = () => {
             </View>
           </View>
 
-          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-gray-500">Toolbar</NouText>
+          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-gray-500">{t('settings.appearance.toolbar')}</NouText>
           <View className={surfaceCls}>
             <View className={clsx('items-center flex-row justify-between', rowCls, rowBorderCls)}>
               <NouText className="font-medium">{t('settings.headerPosition.label')}</NouText>
@@ -204,11 +204,11 @@ export const SettingsProfilesContent = () => {
       {nIf(
         !isWeb,
         <View className="mt-10">
-          <NouText className={subheaderCls}>Inject Cookie</NouText>
+          <NouText className={subheaderCls}>{t('settings.profiles.injectCookie')}</NouText>
           <View className={surfaceCls}>
             <View className="px-4 py-4">
               <NouText className="text-sm leading-6 text-gray-400">
-                Paste a Cookie header from another browser to restore a session manually.
+                {t('settings.profiles.injectCookieHint')}
               </NouText>
               <View className="mt-5 flex-row justify-end">
                 <NouButton variant="outline" onPress={() => ui$.cookieModalOpen.set(true)}>
@@ -229,15 +229,15 @@ export const SettingsBookmarksContent = () => {
   return (
     <View className="pb-4">
       <View>
-        <NouText className={subheaderCls}>Built-In Services</NouText>
+        <NouText className={subheaderCls}>{t('settings.bookmarks.builtin')}</NouText>
         <View className={surfaceCls}>
           <ServiceManager hideTitle />
         </View>
       </View>
       <View className="mt-10">
-        <NouText className={subheaderCls}>Saved Bookmarks</NouText>
+        <NouText className={subheaderCls}>{t('settings.bookmarks.saved')}</NouText>
         <View className={surfaceCls}>
-          {!bookmarks.length ? <NouText className="px-4 py-4 text-sm text-gray-500">No bookmarks yet.</NouText> : null}
+          {!bookmarks.length ? <NouText className="px-4 py-4 text-sm text-gray-500">{t('settings.bookmarks.empty')}</NouText> : null}
           {bookmarks.map((bookmark, index) => (
             <View className={clsx('flex-row items-center justify-between gap-5 px-4 py-4', index !== bookmarks.length - 1 && 'border-b border-zinc-800')} key={index}>
               <View className="flex-row items-center gap-2 w-[70%]">

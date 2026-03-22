@@ -122,9 +122,7 @@ export const SettingsModal = () => {
   const showBlocklist = supportsRuntimeBlocklist()
   const showBrowsing = !isWeb || showBlocklist
   const showSync = !isIos
-  const browsingDescription = !isWeb
-    ? 'Tabs, site handling, blocklist controls, and advanced webview settings.'
-    : 'Network blocking and advanced browsing controls.'
+  const browsingDescription = !isWeb ? t('settings.browsing.descriptionNative') : t('settings.browsing.descriptionWeb')
 
   useEffect(() => {
     if (!settingsModalOpen) {
@@ -211,11 +209,11 @@ export const SettingsModal = () => {
 
   const pageMeta: Record<SettingsPage, string> = {
     home: t('settings.label'),
-    browsing: 'Browsing',
+    browsing: t('settings.pages.browsing'),
     styles: t('settings.userStyles.label'),
-    appearance: 'Appearance',
-    profiles: 'Profiles & Sessions',
-    bookmarks: 'Bookmarks',
+    appearance: t('settings.pages.appearance'),
+    profiles: t('settings.pages.profiles'),
+    bookmarks: t('settings.pages.bookmarks'),
     sync: t('sync.label'),
     about: t('about.label'),
   }
@@ -224,11 +222,11 @@ export const SettingsModal = () => {
     if (currentPage === 'home') {
       return (
         <View className="gap-8">
-          <SettingsSection label="Experience">
+          <SettingsSection label={t('settings.sections.experience')}>
             <View className={surfaceCls}>
               {showBrowsing ? (
                 <SettingsNavRow
-                  title="Browsing"
+                  title={t('settings.pages.browsing')}
                   description={browsingDescription}
                   icon="tune"
                   onPress={() => pushPage('browsing')}
@@ -237,8 +235,8 @@ export const SettingsModal = () => {
               ) : null}
               {!isWeb ? (
                 <SettingsNavRow
-                  title="Appearance"
-                  description="Theme plus toolbar layout, placement, and button visibility."
+                  title={t('settings.pages.appearance')}
+                  description={t('settings.appearance.description')}
                   icon="palette"
                   meta={themeLabel}
                   onPress={() => pushPage('appearance')}
@@ -254,17 +252,17 @@ export const SettingsModal = () => {
             </View>
           </SettingsSection>
 
-          <SettingsSection label="Accounts & Data">
+          <SettingsSection label={t('settings.sections.accounts')}>
             <View className={surfaceCls}>
               <SettingsNavRow
-                title="Profiles & Sessions"
-                description="Multiple accounts with separate cookies and browsing state."
+                title={t('settings.pages.profiles')}
+                description={t('settings.profiles.description')}
                 icon="people"
                 onPress={() => pushPage('profiles')}
               />
               <SettingsNavRow
-                title="Bookmarks"
-                description="Manage built-in services and pinned websites."
+                title={t('settings.pages.bookmarks')}
+                description={t('settings.bookmarks.description')}
                 icon="bookmark"
                 onPress={() => pushPage('bookmarks')}
                 isLast={!showSync}
@@ -272,7 +270,7 @@ export const SettingsModal = () => {
               {showSync ? (
                 <SettingsNavRow
                   title={t('sync.label')}
-                  description={user?.email || 'Cross-device bookmarks and settings sync.'}
+                  description={user?.email || t('sync.hint')}
                   icon="sync"
                   meta={planLabel}
                   onPress={() => pushPage('sync')}
@@ -282,7 +280,7 @@ export const SettingsModal = () => {
             </View>
           </SettingsSection>
 
-          <SettingsSection label="ABOUT">
+          <SettingsSection label={t('settings.sections.about')}>
             <View className={surfaceCls}>
               <SettingsNavRow
                 title={t('about.label')}
