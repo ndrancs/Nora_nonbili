@@ -33,20 +33,24 @@ export const TabModal = () => {
 
   const menuItems = [
     {
-      label: t('settings.oneHandMode'),
+      label: isIos
+        ? `${t('settings.oneHandMode')} (${oneHandMode ? t('common.on') : t('common.off')})`
+        : t('settings.oneHandMode'),
       icon: <MaterialIcons name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'} size={18} color={oneHandMode ? '#818cf8' : '#71717a'} />,
-      meta: (
-        <View
-          className={clsx(
-            'rounded-full px-2 py-1',
-            oneHandMode ? 'bg-indigo-500/20 border border-indigo-400/40' : 'bg-zinc-800 border border-zinc-700',
-          )}
-        >
-          <Text className={clsx('text-[11px] font-medium', oneHandMode ? 'text-indigo-200' : 'text-zinc-400')}>
-            {oneHandMode ? t('common.on') : t('common.off')}
-          </Text>
-        </View>
-      ),
+      meta: isIos
+        ? undefined
+        : (
+            <View
+              className={clsx(
+                'rounded-full px-2 py-1',
+                oneHandMode ? 'bg-indigo-500/20 border border-indigo-400/40' : 'bg-zinc-800 border border-zinc-700',
+              )}
+            >
+              <Text className={clsx('text-[11px] font-medium', oneHandMode ? 'text-indigo-200' : 'text-zinc-400')}>
+                {oneHandMode ? t('common.on') : t('common.off')}
+              </Text>
+            </View>
+          ),
       handler: () => settings$.oneHandMode.toggle(),
     },
     {

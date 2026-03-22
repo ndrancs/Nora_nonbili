@@ -277,8 +277,15 @@ export const NoraTab: React.FC<{
     if (url) {
       setPageUrl(url)
     }
-    if (title || icon) {
-      tabs$.tabs[index].assign({ title, icon })
+    if (typeof title === 'string' || typeof icon === 'string') {
+      const nextMeta: Partial<Pick<Tab, 'title' | 'icon'>> = {}
+      if (typeof title === 'string') {
+        nextMeta.title = title
+      }
+      if (typeof icon === 'string') {
+        nextMeta.icon = icon
+      }
+      tabs$.tabs[index].assign(nextMeta)
     }
     if (typeof nextCanGoBack === 'boolean') {
       setCanGoBack(nextCanGoBack)

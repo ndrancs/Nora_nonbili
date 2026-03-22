@@ -49,13 +49,8 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
     }
 
     if #available(iOS 17.0, *) {
-      let identifier = profileIdentifier(for: profile)
-      WKWebsiteDataStore.removeDataStore(forIdentifier: identifier) { error in
-        if let error {
-          promise.reject(error)
-          return
-        }
-
+      let dataStore = dataStore(for: profile)
+      dataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) {
         UserDefaults.standard.removeObject(forKey: profileIdentifierKey(for: profile))
         promise.resolve(nil)
       }

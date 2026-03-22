@@ -22,6 +22,9 @@ import { auth$ } from '@/states/auth'
 import { capitalize } from 'es-toolkit'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { supportsRuntimeBlocklist } from '@/lib/blocklist'
+import { SettingsChangelogContent } from './SettingsModalTabChangelog'
+import { queryClient } from '@/lib/query/client'
+import { getReleaseFeedQuery } from '@/lib/query/changelog'
 
 const repo = 'https://github.com/nonbili/Nora'
 const donateLinks = [
@@ -33,7 +36,7 @@ const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zin
 const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-500'
 const iconWrapCls = 'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950'
 
-type SettingsPage = 'home' | 'browsing' | 'styles' | 'appearance' | 'profiles' | 'bookmarks' | 'sync' | 'about'
+type SettingsPage = 'home' | 'browsing' | 'styles' | 'appearance' | 'profiles' | 'bookmarks' | 'sync' | 'about' | 'changelog'
 
 const SettingsSection = ({ label, children }: PropsWithChildren<{ label?: string }>) => {
   return (
@@ -127,7 +130,10 @@ export const SettingsModal = () => {
   useEffect(() => {
     if (!settingsModalOpen) {
       setPageStack(['home'])
+      return
     }
+
+    void queryClient.prefetchQuery(getReleaseFeedQuery())
   }, [settingsModalOpen])
 
   const closeSettingsChildren = useCallback(() => {
@@ -216,6 +222,7 @@ export const SettingsModal = () => {
     bookmarks: t('settings.pages.bookmarks'),
     sync: t('sync.label'),
     about: t('common.about'),
+    changelog: t('changelog.label'),
   }
 
   const renderPage = () => {
@@ -288,6 +295,12 @@ export const SettingsModal = () => {
                 icon="info-outline"
                 meta={`v${appVersion}`}
                 onPress={() => pushPage('about')}
+              />
+              <SettingsNavRow
+                title={t('changelog.label')}
+                description={t('changelog.hint')}
+                icon="history"
+                onPress={() => pushPage('changelog')}
                 isLast
               />
             </View>
@@ -301,6 +314,7 @@ export const SettingsModal = () => {
     if (currentPage === 'appearance') return <SettingsAppearanceContent />
     if (currentPage === 'profiles') return <SettingsProfilesContent />
     if (currentPage === 'bookmarks') return <SettingsBookmarksContent />
+    if (currentPage === 'changelog') return <SettingsChangelogContent />
 
     if (currentPage === 'sync' && showSync) {
       return <SettingsModalTabSync />
