@@ -50,6 +50,7 @@ export const MainPage: React.FC<{ contentJs: string }> = ({ contentJs }) => {
       auth$.assign({
         loaded: true,
         userId: session?.user.id,
+        userEmail: session?.user.email,
         user: session?.user.user_metadata,
         accessToken: session?.access_token,
       })

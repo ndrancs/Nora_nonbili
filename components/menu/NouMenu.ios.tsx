@@ -2,7 +2,7 @@ import { colors } from '@/lib/colors'
 import { Button, ContextMenu, Divider, Host, Section } from '@expo/ui/swift-ui'
 import { frame } from '@expo/ui/swift-ui/modifiers'
 import type { Item } from './NouMenu'
-import { ReactNode } from 'react'
+import { Fragment, ReactNode } from 'react'
 
 export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigger, items }) => {
   const groups = items.reduce<Item[][]>((acc, item) => {
@@ -35,10 +35,10 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
     )
 
     return (
-      <>
+      <Fragment key={`group-${groupIndex}`}>
         {groupIndex > 0 ? <Divider key={`divider-${groupIndex}`} /> : null}
         {content}
-      </>
+      </Fragment>
     )
   })
 

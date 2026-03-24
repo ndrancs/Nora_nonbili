@@ -124,7 +124,7 @@ export const SettingsModal = () => {
     theme === 'dark' ? t('settings.theme.dark') : theme === 'light' ? t('settings.theme.light') : t('settings.theme.system')
   const showBlocklist = supportsRuntimeBlocklist()
   const showBrowsing = !isWeb || showBlocklist
-  const showSync = !isIos
+  const showSync = true
   const browsingDescription = !isWeb ? t('settings.browsing.descriptionNative') : t('settings.browsing.descriptionWeb')
 
   useEffect(() => {

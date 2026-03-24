@@ -34,6 +34,8 @@
   "buttons": {
     "cancel": "Cancel",
     "closeAll": "Close All",
+    "confirm": "Confirm",
+    "continue": "Continue",
     "openUrl": "Open URL",
     "open": "Open",
     "save": "Save"
@@ -174,7 +176,21 @@
     "label": "Sync",
     "hint": "Cross-device bookmarks and settings sync.",
     "currentPlan": "Current plan",
-    "managePlan": "Manage plan"
+    "managePlan": "Manage plan",
+    "buy": "Subscribe on iPhone",
+    "restore": "Restore purchases",
+    "manageIos": "Manage in App Store",
+    "purchaseTitle": "Bind subscription",
+    "purchaseConfirm": "This subscription will be linked to {{email}} and unlock sync anywhere you log into this Nora account.",
+    "priceLoading": "Loading App Store price...",
+    "activeViaIos": "Active via App Store",
+    "freePlan": "Free",
+    "purchasePending": "Purchase pending approval.",
+    "restoreConflict": "This App Store subscription is already linked to {{email}}.",
+    "signOutSwitch": "Sign out and switch account",
+    "signedInAs": "Signed in as {{email}}",
+    "productUnavailable": "The App Store product is not available yet.",
+    "expiresAt": "Renews or expires: {{value}}"
   },
   "tabs": {
     "new": "New tab",

@@ -5,7 +5,7 @@ import { getMeQuery } from '@/lib/query'
 
 export const useMe = () => {
   const userId = use$(auth$.userId)
-  const { data: me } = useQuery(getMeQuery({ enabled: !!userId }))
+  const query = useQuery(getMeQuery({ enabled: !!userId }))
 
-  return { userId, me }
+  return { userId, me: query.data, refetchMe: query.refetch }
 }

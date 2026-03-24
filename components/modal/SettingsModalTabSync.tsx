@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { Alert, View } from 'react-native'
 import { NouText } from '../NouText'
 import { Image } from 'expo-image'
 import { use$ } from '@legendapp/state/react'
@@ -10,9 +10,16 @@ import { NouMenu } from '../menu/NouMenu'
 import { capitalize } from 'es-toolkit'
 import { t } from 'i18next'
 import { MaterialButton } from '../button/IconButtons'
+import { NouButton } from '../button/NouButton'
+import NoraBilling from '@/modules/nora-billing'
+import { useEffect, useMemo, useState } from 'react'
+import { prepareIosPurchase, syncIosTransaction } from '@/lib/query'
+import { queryClient } from '@/lib/query/client'
+import { useMe } from '@/lib/hooks/useMe'
 
 const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900/70'
 const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-500'
+const IOS_SYNC_PRODUCT_ID = 'jp.nonbili.nora.sync'
 
 const SettingsBadge: React.FC<{ label: string }> = ({ label }) => {
   return (
@@ -23,8 +30,125 @@ const SettingsBadge: React.FC<{ label: string }> = ({ label }) => {
 }
 
 export const SettingsModalTabSync = () => {
-  const { user, plan } = use$(auth$)
+  const { user, userEmail, plan } = use$(auth$)
+  const { me, refetchMe } = useMe()
   const syncHint = t('sync.hint')
+  const [loadingProduct, setLoadingProduct] = useState(isIos)
+  const [productPrice, setProductPrice] = useState<string>()
+  const [actionError, setActionError] = useState<string>()
+  const [busyAction, setBusyAction] = useState<'buy' | 'restore' | 'manage' | null>(null)
+
+  useEffect(() => {
+    if (!isIos) {
+      return
+    }
+
+    let active = true
+    const loadProduct = async () => {
+      try {
+        const products = await NoraBilling.getProducts([IOS_SYNC_PRODUCT_ID])
+        if (!active) {
+          return
+        }
+        setProductPrice(products[0]?.displayPrice)
+      } catch (error) {
+        if (active) {
+          setActionError(error instanceof Error ? error.message : String(error))
+        }
+      } finally {
+        if (active) {
+          setLoadingProduct(false)
+        }
+      }
+    }
+
+    void loadProduct()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const planLabel = plan ? capitalize(plan) : t('sync.freePlan')
+  const restoreConflict = actionError?.startsWith('This App Store subscription is already linked to')
+  const iosStatusText = useMemo(() => {
+    if (!me?.ios?.expiresAt) {
+      return null
+    }
+    const value = new Date(me.ios.expiresAt).toLocaleString()
+    return t('sync.expiresAt', { value })
+  }, [me?.ios?.expiresAt])
+
+  const refreshEntitlement = async () => {
+    await Promise.all([refetchMe(), queryClient.invalidateQueries({ queryKey: ['me'] })])
+  }
+
+  const withBusyAction = async (action: 'buy' | 'restore' | 'manage', run: () => Promise<void>) => {
+    setBusyAction(action)
+    setActionError(undefined)
+    try {
+      await run()
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : String(error))
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  const confirmAccountBinding = () =>
+    new Promise<boolean>((resolve) => {
+      Alert.alert(
+        t('sync.purchaseTitle'),
+        t('sync.purchaseConfirm', { email: userEmail || user?.email || 'unknown' }),
+        [
+          {
+            text: t('buttons.cancel'),
+            style: 'cancel',
+            onPress: () => resolve(false),
+          },
+          {
+            text: t('buttons.confirm'),
+            onPress: () => resolve(true),
+          },
+        ],
+      )
+    })
+
+  const onPurchase = () =>
+    withBusyAction('buy', async () => {
+      if (!userEmail) {
+        throw new Error('Missing Nora account email')
+      }
+      if (!(await confirmAccountBinding())) {
+        return
+      }
+      const prepared = await prepareIosPurchase()
+      const result = await NoraBilling.purchase(IOS_SYNC_PRODUCT_ID, prepared.appAccountToken)
+      await syncIosTransaction(result.signedTransactionInfo)
+      await refreshEntitlement()
+    })
+
+  const onRestore = () =>
+    withBusyAction('restore', async () => {
+      if (!userEmail) {
+        throw new Error('Missing Nora account email')
+      }
+      if (!(await confirmAccountBinding())) {
+        return
+      }
+      await prepareIosPurchase()
+      const entitlements = await NoraBilling.restore()
+      const syncEntitlement = entitlements.find((entry) => entry.productId === IOS_SYNC_PRODUCT_ID)
+      if (!syncEntitlement) {
+        throw new Error('No Nora Sync purchase found to restore')
+      }
+      await syncIosTransaction(syncEntitlement.signedTransactionInfo)
+      await refreshEntitlement()
+    })
+
+  const onManageSubscriptions = () =>
+    withBusyAction('manage', async () => {
+      await NoraBilling.manageSubscriptions()
+    })
 
   if (!user) {
     return (
@@ -63,9 +187,9 @@ export const SettingsModalTabSync = () => {
               contentFit="cover"
             />
             <View className="flex-1">
-              <NouText className="font-medium">{user.email}</NouText>
+              <NouText className="font-medium">{userEmail || user.email}</NouText>
               <NouText className="mt-1 text-sm text-zinc-400">
-                {t('sync.currentPlan')}: {plan ? capitalize(plan) : 'Free'}
+                {t('sync.currentPlan')}: {planLabel}
               </NouText>
             </View>
             <NouMenu
@@ -81,17 +205,70 @@ export const SettingsModalTabSync = () => {
         <View className={surfaceCls}>
           <View className="px-5 py-5">
             <View className="flex-row flex-wrap gap-2">
-              <SettingsBadge label={plan ? capitalize(plan) : 'Free'} />
+              <SettingsBadge label={planLabel} />
+              {me?.source === 'app_store' ? <SettingsBadge label={t('sync.activeViaIos')} /> : null}
             </View>
             <NouText className="mt-4 text-sm leading-6 text-zinc-400">{syncHint}</NouText>
-            <View className="mt-5">
-              <NouLink
-                className="rounded-full border border-zinc-700 bg-zinc-950 px-5 py-2.5 text-center text-sm text-zinc-100"
-                href="https://nora.inks.page/app"
-              >
-                {t('sync.managePlan')}
-              </NouLink>
-            </View>
+            {iosStatusText ? <NouText className="mt-3 text-xs text-zinc-500">{iosStatusText}</NouText> : null}
+            {actionError ? <NouText className="mt-3 text-sm text-red-400">{actionError}</NouText> : null}
+            {restoreConflict ? (
+              <View className="mt-3">
+                <NouButton variant="outline" onPress={signOut}>
+                  {t('sync.signOutSwitch')}
+                </NouButton>
+              </View>
+            ) : null}
+            {isIos ? (
+              <View className="mt-5 gap-3">
+                <NouText className="text-sm text-zinc-400">
+                  {productPrice
+                    ? `${t('sync.buy')}: ${productPrice}`
+                    : loadingProduct
+                      ? t('sync.priceLoading')
+                      : t('sync.productUnavailable')}
+                </NouText>
+                {me?.source === 'app_store' && me?.plan === 'sync' ? (
+                  <>
+                    <NouButton
+                      variant="outline"
+                      loading={busyAction === 'manage'}
+                      onPress={() => void onManageSubscriptions()}
+                    >
+                      {t('sync.manageIos')}
+                    </NouButton>
+                    <NouButton variant="outline" loading={busyAction === 'restore'} onPress={() => void onRestore()}>
+                      {t('sync.restore')}
+                    </NouButton>
+                  </>
+                ) : (
+                  <>
+                    <NouButton
+                      loading={busyAction === 'buy'}
+                      disabled={loadingProduct || !productPrice}
+                      onPress={() => void onPurchase()}
+                    >
+                      {productPrice ? `${t('sync.buy')} ${productPrice}` : t('sync.buy')}
+                    </NouButton>
+                    <NouButton variant="outline" loading={busyAction === 'restore'} onPress={() => void onRestore()}>
+                      {t('sync.restore')}
+                    </NouButton>
+                  </>
+                )}
+              </View>
+            ) : (
+              <View className="mt-5">
+                {me?.source === 'app_store' ? (
+                  <NouText className="text-sm text-zinc-400">{t('sync.activeViaIos')}</NouText>
+                ) : (
+                  <NouLink
+                    className="rounded-full border border-zinc-700 bg-zinc-950 px-5 py-2.5 text-center text-sm text-zinc-100"
+                    href="https://nora.inks.page/app"
+                  >
+                    {t('sync.managePlan')}
+                  </NouLink>
+                )}
+              </View>
+            )}
           </View>
         </View>
       </View>
