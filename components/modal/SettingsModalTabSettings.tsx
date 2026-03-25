@@ -1,4 +1,5 @@
-import { View } from 'react-native'
+import { useState, useEffect } from 'react'
+import { View, TextInput } from 'react-native'
 import { NouButton } from '../button/NouButton'
 import { ui$ } from '@/states/ui'
 import { ServiceManager } from '../service/Services'
@@ -106,9 +107,59 @@ export const SettingsBrowsingContent: React.FC = () => {
 
 export const SettingsAppearanceContent = () => {
   const settings = useValue(settings$)
+  const [deckTabWidthInput, setDeckTabWidthInput] = useState(settings.deckTabWidth.toString())
+
+  useEffect(() => {
+    setDeckTabWidthInput(settings.deckTabWidth.toString())
+  }, [settings.deckTabWidth])
+
+  const submitDeckTabWidth = () => {
+    const parsed = parseInt(deckTabWidthInput, 10)
+    if (!isNaN(parsed) && parsed > 0) {
+      settings$.deckTabWidth.set(parsed)
+      setDeckTabWidthInput(parsed.toString())
+    } else {
+      setDeckTabWidthInput(settings.deckTabWidth.toString())
+    }
+  }
 
   return (
     <>
+      {isWeb ? (
+        <View className="pb-4">
+          <NouText className={subheaderCls}>{t('settings.appearance.toolbar')}</NouText>
+          <View className={surfaceCls}>
+            <View className={clsx('items-center flex-row justify-between', rowCls)}>
+              <View>
+                <NouText className="font-medium">{t('settings.deckTabWidth', 'Deck Tab Width')}</NouText>
+                <NouText className="mt-1 text-sm leading-5 text-zinc-400">Current: {settings.deckTabWidth}px</NouText>
+              </View>
+              <View className="flex-row items-center gap-2">
+                <TextInput
+                  className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white w-24 text-center"
+                  value={deckTabWidthInput}
+                  onChangeText={setDeckTabWidthInput}
+                  onEndEditing={submitDeckTabWidth}
+                  onSubmitEditing={submitDeckTabWidth}
+                  keyboardType="numeric"
+                  returnKeyType="done"
+                />
+                <NouMenu
+                  trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
+                  items={[
+                    {
+                      label: t('common.reset', 'Reset'),
+                      handler: () => {
+                        settings$.deckTabWidth.set(400)
+                      },
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+      ) : null}
       {nIf(
         !isWeb,
         <View className="pb-4">

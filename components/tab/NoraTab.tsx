@@ -336,10 +336,13 @@ export const NoraTab: React.FC<{
     }
   }
 
+  const deckTabWidth = useValue(settings$.deckTabWidth)
+
   if (isWeb) {
     return (
       <View
-        className={clsx('flex h-full min-h-0 min-w-0 flex-col', desktopVariant === 'deck' ? 'w-[25rem] shrink-0' : 'w-full')}
+        className={clsx('flex h-full min-h-0 min-w-0 flex-col', desktopVariant === 'deck' ? 'shrink-0' : 'w-full')}
+        style={desktopVariant === 'deck' ? { width: deckTabWidth } : undefined}
       >
         <View
           className="flex-row items-center justify-between gap-2 bg-zinc-800 pl-2 pr-1"

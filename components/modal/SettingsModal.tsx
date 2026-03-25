@@ -237,18 +237,15 @@ export const SettingsModal = () => {
                   description={browsingDescription}
                   icon="tune"
                   onPress={() => pushPage('browsing')}
-                  isLast={isWeb}
                 />
               ) : null}
-              {!isWeb ? (
-                <SettingsNavRow
-                  title={t('settings.pages.appearance')}
-                  description={t('settings.appearance.description')}
-                  icon="palette"
-                  meta={themeLabel}
-                  onPress={() => pushPage('appearance')}
-                />
-              ) : null}
+              <SettingsNavRow
+                title={t('settings.pages.appearance')}
+                description={t('settings.appearance.description')}
+                icon="palette"
+                meta={themeLabel}
+                onPress={() => pushPage('appearance')}
+              />
               <SettingsNavRow
                 title={t('settings.userStyles.label')}
                 description={t('settings.userStyles.hint')}

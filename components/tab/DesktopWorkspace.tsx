@@ -6,6 +6,7 @@ import { useValue } from '@legendapp/state/react'
 import { clsx } from '@/lib/utils'
 import { NoraTab } from './NoraTab'
 import { Tab, getOrderedTabIds, openDesktopTab, sortTabsByOrder, tabs$ } from '@/states/tabs'
+import { settings$ } from '@/states/settings'
 import { CustomSavedView, DECK_VIEW_ID, savedViews$ } from '@/states/saved-views'
 import { NouMenu } from '../menu/NouMenu'
 import { NouText } from '../NouText'
@@ -18,15 +19,15 @@ import { getProfileColor } from '@/lib/profile'
 import { ui$ } from '@/states/ui'
 
 const SLOT_GAP = 8
-const hiddenTabStyle: CSSProperties = {
+const getHiddenTabStyle = (width: number | string): CSSProperties => ({
   position: 'absolute',
   left: '-200vw',
   top: 0,
-  width: '25rem',
+  width,
   height: '100%',
   opacity: 0,
   pointerEvents: 'none',
-}
+})
 
 const getTabLabel = (tab?: Pick<Tab, 'title' | 'url'> | null) => tab?.title || tab?.url || t('tabs.new')
 
@@ -185,7 +186,7 @@ const SortableDesktopTab: React.FC<{
   } else if (viewLayout && slotIndex != null) {
     style = getSlotStyle(viewLayout, slotIndex)
   } else {
-    style = hiddenTabStyle
+    style = getHiddenTabStyle(settings$.deckTabWidth.get())
   }
 
   return (

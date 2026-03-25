@@ -26,12 +26,7 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
     }
 
     return (
-      <DropdownMenu.Item
-        key={index}
-        onClick={item.handler}
-        disabled={item.disabled}
-        className="min-w-[280px] px-3 py-2"
-      >
+      <DropdownMenu.Item key={index} onClick={item.handler} disabled={item.disabled} className="px-3 py-2">
         <div className="flex min-w-0 flex-row items-center gap-3">
           {item.icon ? <div className="shrink-0">{item.icon}</div> : null}
           <div className="min-w-0 flex-1">
@@ -47,9 +42,7 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        <div className="flex shrink min-w-0 items-center justify-center">
-          {trigger}
-        </div>
+        <div className="flex shrink min-w-0 items-center justify-center">{trigger}</div>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content variant="soft" className="rounded-xl">
         {menuItems}

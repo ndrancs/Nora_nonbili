@@ -40,6 +40,8 @@ export interface Settings {
   oneHandMode: boolean
   oneTabPerSite: boolean
 
+  deckTabWidth: number
+
   disabledServicesArr: string[]
   profiles: Profile[]
 }
@@ -65,6 +67,9 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
   if (typeof data.showReloadButtonInHeader !== 'boolean') {
     data.showReloadButtonInHeader = false
   }
+  if (typeof data.deckTabWidth !== 'number') {
+    data.deckTabWidth = 400
+  }
   return data
 }
 
@@ -85,6 +90,8 @@ export const settings$ = observable<Store>({
   showScrollButtonInHeader: false,
   oneHandMode: false,
   oneTabPerSite: false,
+
+  deckTabWidth: 400,
 
   disabledServicesArr: [],
   profiles: [DEFAULT_PROFILE],
