@@ -125,7 +125,8 @@ export const SettingsAppearanceContent = () => {
 
   return (
     <>
-      {isWeb ? (
+      {nIf(
+        isWeb,
         <View className="pb-4">
           <NouText className={subheaderCls}>{t('settings.appearance.toolbar')}</NouText>
           <View className={surfaceCls}>
@@ -160,8 +161,8 @@ export const SettingsAppearanceContent = () => {
               </View>
             </View>
           </View>
-        </View>
-      ) : null}
+        </View>,
+      )}
       {nIf(
         !isWeb,
         <View className="pb-4">

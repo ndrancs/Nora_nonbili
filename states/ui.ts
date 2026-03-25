@@ -21,6 +21,9 @@ interface Store {
   tabModalOpen: boolean
   toolsModalOpen: boolean
   urlModalOpen: boolean
+  userStyleModalOpen: boolean
+  editingUserStyleId: string | null
+  previewBuiltinId: string | null
 
   // webview
   activeCanGoBack: boolean
@@ -47,6 +50,9 @@ export const ui$ = observable<Store>({
   tabModalOpen: false,
   toolsModalOpen: false,
   urlModalOpen: false,
+  userStyleModalOpen: false,
+  editingUserStyleId: null,
+  previewBuiltinId: null,
   lastSelectedProfileId: 'default',
 
   // webview

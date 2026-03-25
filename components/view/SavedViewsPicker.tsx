@@ -1,14 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native'
+import { useMemo, useState } from 'react'
+import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native'
 import { useValue } from '@legendapp/state/react'
-import { BaseCenterModal } from '../modal/BaseCenterModal'
-import { NouButton } from '../button/NouButton'
 import { NouMenu } from '../menu/NouMenu'
 import { NouText } from '../NouText'
 import { DECK_VIEW_ID, type CustomSavedViewLayout, createDesktopSavedView, savedViews$ } from '@/states/saved-views'
 import { openDesktopTab, sortTabsByOrder, tabs$ } from '@/states/tabs'
 import { ui$ } from '@/states/ui'
-import { clsx } from '@/lib/utils'
+import { clsx, nIf } from '@/lib/utils'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { NouContextMenu, type ContextItem } from '../menu/NouContextMenu'
 
@@ -133,7 +131,8 @@ export const SavedViewsPicker = () => {
                   >
                     <ViewTypeIcon layout={view.layout} color={isActive ? '#f4f4f5' : '#a1a1aa'} size={22} />
                   </View>
-                  {isVertical && view.label ? (
+                  {nIf(
+                    isVertical && view.label,
                     <NouText
                       className={clsx(
                         'mt-1 max-w-[48px] text-xs text-center text-zinc-500',
@@ -142,8 +141,9 @@ export const SavedViewsPicker = () => {
                       numberOfLines={1}
                     >
                       {view.label}
-                    </NouText>
-                  ) : null}                </View>
+                    </NouText>,
+                  )}
+                </View>
               </Pressable>
             )
 
