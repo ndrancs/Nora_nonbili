@@ -33,7 +33,7 @@ const getTabLabel = (tab?: Pick<Tab, 'title' | 'url'> | null) => tab?.title || t
 
 const getSlotStyle = (layout: CustomSavedView['layout'], slotIndex: number): CSSProperties => {
   const half = `calc((100% - ${SLOT_GAP}px) / 2)`
-  if (layout === 'two-col') {
+  if (layout === 'split-view') {
     return {
       position: 'absolute',
       top: 0,
@@ -80,7 +80,7 @@ const SlotTabPicker: React.FC<{
       trigger={
         <div className="flex max-w-[14rem] min-w-0 h-[22px] flex-row items-center justify-center px-3 gap-1 bg-zinc-950/40 hover:bg-zinc-900/60 border border-zinc-700/30 rounded-full transition-all group cursor-pointer overflow-hidden">
           <NouText
-            className="text-xs font-bold text-zinc-500 group-hover:text-zinc-300 flex-1 text-center uppercase tracking-tight"
+            className="text-xs font-bold text-zinc-500 group-hover:text-zinc-300 flex-1 text-center tracking-tight"
             numberOfLines={1}
           >
             {currentTabId && tabIdSet.has(currentTabId) ? getTabLabel(currentTab) : t('tabs.new')}
@@ -131,7 +131,7 @@ const EmptySlot: React.FC<{
           </View>
           <View className="flex-1 min-w-0 flex-row items-center justify-center">
             {slotSwitcher || (
-              <NouText className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider text-center px-2">
+              <NouText className="text-[11px] font-bold text-zinc-500 tracking-wider text-center px-2">
                 {t('tabs.new')}
               </NouText>
             )}
@@ -297,7 +297,7 @@ export const DesktopWorkspace: React.FC = () => {
     })
   }
 
-  const isSplit = activeView?.layout === 'two-col'
+  const isSplit = activeView?.layout === 'split-view'
   const createDeckTab = () => {
     const tabId = openDesktopTab('')
     if (tabId) {

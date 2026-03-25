@@ -7,6 +7,7 @@ import { NouMenu } from '../menu/NouMenu'
 import { NouText } from '../NouText'
 import { DECK_VIEW_ID, type CustomSavedViewLayout, createDesktopSavedView, savedViews$ } from '@/states/saved-views'
 import { openDesktopTab, sortTabsByOrder, tabs$ } from '@/states/tabs'
+import { ui$ } from '@/states/ui'
 import { clsx } from '@/lib/utils'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { NouContextMenu, type ContextItem } from '../menu/NouContextMenu'
@@ -20,7 +21,7 @@ const getFirstVisibleTabId = (viewId: string, viewTabIds: Record<string, string[
 
 const ViewTypeIcon = ({ layout, size = 20, color = '#71717a' }: { layout: string; size?: number; color?: string }) => {
   let name: React.ComponentProps<typeof MaterialIcons>['name'] = 'view-column'
-  if (layout === 'two-col') name = 'view-week'
+  if (layout === 'split-view') name = 'view-week'
   if (layout === 'grid-4') name = 'grid-view'
   if (layout === 'deck') name = 'home'
 
@@ -31,9 +32,6 @@ export const SavedViewsPicker = () => {
   const { activeViewId, savedViews } = useValue(savedViews$)
   const { tabs, orders } = useValue(tabs$)
   const { width } = useWindowDimensions()
-  const [renameOpen, setRenameOpen] = useState(false)
-  const [draftName, setDraftName] = useState('')
-  const [targetViewId, setTargetViewId] = useState<string | null>(null)
   const activeView = savedViews.find((view) => view.id === activeViewId) || null
   const isVertical = width >= 1024
 
@@ -50,14 +48,6 @@ export const SavedViewsPicker = () => {
       ),
     [savedViews, tabIdSet],
   )
-
-  useEffect(() => {
-    if (!renameOpen || !targetViewId) {
-      return
-    }
-    const view = savedViews.find((v) => v.id === targetViewId)
-    setDraftName(view?.name || '')
-  }, [renameOpen, targetViewId, savedViews])
 
   const focusView = (viewId: string) => {
     savedViews$.setActiveView(viewId)
@@ -76,7 +66,7 @@ export const SavedViewsPicker = () => {
   }
 
   const createTabForCurrentView = () => {
-    if (activeView?.layout === 'two-col') {
+    if (activeView?.layout === 'split-view') {
       savedViews$.appendSplitViewSlot(activeView.id)
       return
     }
@@ -89,19 +79,13 @@ export const SavedViewsPicker = () => {
     tabs$.setActiveTabById(tabId, 'open')
   }
 
-  const onClose = () => {
-    setRenameOpen(false)
-    setDraftName('')
-    setTargetViewId(null)
-  }
-
   const quickViews = [
-    { id: DECK_VIEW_ID, label: 'Deck', layout: 'deck', meta: 'All tabs' },
+    { id: DECK_VIEW_ID, label: '', layout: 'deck', meta: '' },
     ...savedViews.map((view) => ({
       id: view.id,
       label: view.name,
       layout: view.layout,
-      meta: view.layout === 'two-col' ? '2-col' : '4-tabs grid',
+      meta: view.layout === 'split-view' ? 'Split view' : '4-tabs grid',
     })),
   ]
 
@@ -125,8 +109,7 @@ export const SavedViewsPicker = () => {
                       label: 'Rename',
                       icon: <MaterialIcons name="edit" size={14} color="#71717a" />,
                       handler: () => {
-                        setTargetViewId(view.id)
-                        setRenameOpen(true)
+                        ui$.renameViewModalTargetViewId.set(view.id)
                       },
                     },
                     {
@@ -137,9 +120,9 @@ export const SavedViewsPicker = () => {
                     },
                   ]
 
-            return (
-              <NouContextMenu key={view.id} items={contextItems}>
-                <Pressable onPress={() => focusView(view.id)}>
+            const content = (
+              <Pressable onPress={() => focusView(view.id)}>
+                <View className="items-center">
                   <View
                     className={clsx(
                       'w-10 h-10 items-center justify-center rounded-xl transition-all duration-200',
@@ -150,7 +133,25 @@ export const SavedViewsPicker = () => {
                   >
                     <ViewTypeIcon layout={view.layout} color={isActive ? '#f4f4f5' : '#a1a1aa'} size={22} />
                   </View>
-                </Pressable>
+                  {isVertical && view.label ? (
+                    <NouText
+                      className={clsx(
+                        'mt-1 max-w-[48px] text-xs text-center text-zinc-500',
+                        isActive && 'text-zinc-300',
+                      )}
+                      numberOfLines={1}
+                    >
+                      {view.label}
+                    </NouText>
+                  ) : null}                </View>
+              </Pressable>
+            )
+
+            if (!contextItems.length) return <View key={view.id}>{content}</View>
+
+            return (
+              <NouContextMenu key={view.id} items={contextItems}>
+                {content}
               </NouContextMenu>
             )
           })}
@@ -170,15 +171,15 @@ export const SavedViewsPicker = () => {
                 ? []
                 : [
                     {
-                      label: activeView?.layout === 'two-col' ? 'Add pane' : 'New tab',
+                      label: 'New tab',
                       icon: <MaterialIcons name="add" size={14} color="#71717a" />,
                       handler: createTabForCurrentView,
                     },
                   ]),
               {
                 label: 'New split view',
-                icon: <ViewTypeIcon layout="two-col" size={14} />,
-                handler: () => createView('two-col'),
+                icon: <ViewTypeIcon layout="split-view" size={14} />,
+                handler: () => createView('split-view'),
               },
               {
                 label: 'New grid view',
@@ -189,37 +190,6 @@ export const SavedViewsPicker = () => {
           />
         </ScrollView>
       </View>
-
-      {renameOpen && targetViewId ? (
-        <BaseCenterModal onClose={onClose}>
-          <View className="p-4 w-full">
-            <NouText className="text-lg font-bold mb-4">Rename view</NouText>
-            <TextInput
-              className="border border-zinc-700 text-white px-3 py-2 rounded-md mb-2 bg-zinc-900"
-              value={draftName}
-              onChangeText={setDraftName}
-              placeholder="View name"
-              placeholderTextColor="#9ca3af"
-              autoFocus
-            />
-            <View className="flex-row gap-4 mt-6">
-              <NouButton className="flex-1" variant="outline" onPress={onClose}>
-                Cancel
-              </NouButton>
-              <NouButton
-                className="flex-1"
-                disabled={!draftName.trim()}
-                onPress={() => {
-                  savedViews$.renameView(targetViewId, draftName)
-                  onClose()
-                }}
-              >
-                Save
-              </NouButton>
-            </View>
-          </View>
-        </BaseCenterModal>
-      ) : null}
     </>
   )
 }

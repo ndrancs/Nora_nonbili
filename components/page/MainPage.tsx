@@ -14,6 +14,7 @@ import { DownloadVideoModal } from '../modal/DownloadVideoModal'
 import { UrlModal } from '../modal/UrlModal'
 import { ToolsModal } from '../modal/ToolsModal'
 import { ProfileEditModal } from '../modal/ProfileEditModal'
+import { RenameViewModal } from '../modal/RenameViewModal'
 import { ContentJsContext } from '@/lib/hooks/useContentJs'
 import { Locale, useLocales } from 'expo-localization'
 import { useTranslation } from 'react-i18next'
@@ -68,6 +69,7 @@ export const MainPage: React.FC<{ contentJs: string }> = ({ contentJs }) => {
         <UrlModal />
         <ToolsModal />
         <ProfileEditModal />
+        <RenameViewModal />
         {nIf(
           !isWeb,
           <>

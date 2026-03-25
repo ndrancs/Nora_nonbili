@@ -5,7 +5,7 @@ import { genId } from '@/lib/utils'
 
 export const DECK_VIEW_ID = 'deck'
 
-export type CustomSavedViewLayout = 'two-col' | 'grid-4'
+export type CustomSavedViewLayout = 'split-view' | 'grid-4'
 export type SavedViewLayout = 'deck' | CustomSavedViewLayout
 
 export interface CustomSavedView {
@@ -30,14 +30,13 @@ interface Store {
 }
 
 const savedViewSlotCounts: Record<CustomSavedViewLayout, number> = {
-  'two-col': 2,
+  'split-view': 2,
   'grid-4': 4,
 }
 
-const getSavedViewDefaultName = (layout: CustomSavedViewLayout, index: number) =>
-  layout === 'two-col' ? `2-col ${index}` : `Grid ${index}`
+const getSavedViewDefaultName = (layout: CustomSavedViewLayout, index: number) => ''
 
-const getSanitizedLayout = (layout?: string): CustomSavedViewLayout => (layout === 'grid-4' ? 'grid-4' : 'two-col')
+const getSanitizedLayout = (layout?: string): CustomSavedViewLayout => (layout === 'grid-4' ? 'grid-4' : 'split-view')
 
 const getSlotCount = (layout: CustomSavedViewLayout) => savedViewSlotCounts[layout]
 
@@ -45,7 +44,7 @@ const getInitialSeedTabIds = (layout: CustomSavedViewLayout, seedTabIds: string[
 
 const sanitizeSlotTabIds = (layout: CustomSavedViewLayout, slotTabIds?: (string | null)[]) => {
   const minimumCount = getSlotCount(layout)
-  const sanitizedSource = layout === 'two-col' ? slotTabIds || [] : (slotTabIds || []).slice(0, minimumCount)
+  const sanitizedSource = layout === 'split-view' ? slotTabIds || [] : (slotTabIds || []).slice(0, minimumCount)
   const sanitized = sanitizedSource.map((tabId) => (typeof tabId === 'string' && tabId ? tabId : null))
 
   while (sanitized.length < minimumCount) {
@@ -61,7 +60,7 @@ const normalizeSavedViews = <T extends Partial<Store> | undefined>(data: T) => {
   }
 
   const layoutCounts: Record<CustomSavedViewLayout, number> = {
-    'two-col': 0,
+    'split-view': 0,
     'grid-4': 0,
   }
 
@@ -179,7 +178,7 @@ export const savedViews$: Observable<Store> = observable<Store>({
     }
 
     const view$ = savedViews$.savedViews[index]
-    if (view$.layout.get() !== 'two-col') {
+    if (view$.layout.get() !== 'split-view') {
       return
     }
 
@@ -193,12 +192,12 @@ export const savedViews$: Observable<Store> = observable<Store>({
     }
 
     const view$ = savedViews$.savedViews[index]
-    if (view$.layout.get() !== 'two-col') {
+    if (view$.layout.get() !== 'split-view') {
       return
     }
 
     const slotCount = view$.slotTabIds.get().length
-    if (slotCount <= getSlotCount('two-col') || slotIndex < getSlotCount('two-col') || slotIndex >= slotCount) {
+    if (slotCount <= getSlotCount('split-view') || slotIndex < getSlotCount('split-view') || slotIndex >= slotCount) {
       return
     }
 
@@ -220,7 +219,7 @@ export const savedViews$: Observable<Store> = observable<Store>({
       }
 
       const nextSlotTabIds =
-        layout === 'two-col'
+        layout === 'split-view'
           ? sanitizeSlotTabIds(
               layout,
               slotTabIds.filter((tabId): tabId is string => typeof tabId === 'string' && !closedTabIdSet.has(tabId)),

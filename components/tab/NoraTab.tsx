@@ -355,7 +355,7 @@ export const NoraTab: React.FC<{
           <View className="flex-1 min-w-0 flex-row items-center justify-center">
             {slotSwitcher || (
               <NouText
-                className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider text-center px-2"
+                className="text-[11px] font-bold text-zinc-500 tracking-wider text-center px-2"
                 numberOfLines={1}
               >
                 {getTabLabel(tab)}

@@ -26,11 +26,20 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
     }
 
     return (
-      <DropdownMenu.Item key={index} onClick={item.handler} disabled={item.disabled} className="px-3 py-2">
-        <div className="flex min-w-0 flex-row items-center gap-3">
-          {item.icon ? <div className="shrink-0">{item.icon}</div> : null}
+      <DropdownMenu.Item
+        key={index}
+        onClick={item.handler}
+        disabled={item.disabled}
+        className="min-w-[160px] max-w-[320px] px-3 py-2"
+      >
+        <div className="flex min-w-0 flex-row items-center gap-3 leading-none">
+          {item.icon ? (
+            <div className="flex shrink-0 items-center justify-center h-5 w-5">
+              {item.icon}
+            </div>
+          ) : null}
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm">{item.label}</div>
+            <div className="truncate text-[13px] leading-[20px]">{item.label}</div>
             {item.description ? <div className="truncate text-xs text-zinc-500">{item.description}</div> : null}
           </div>
           {item.meta ? <div className="shrink-0">{item.meta}</div> : null}

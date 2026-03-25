@@ -131,8 +131,10 @@ export const SettingsAppearanceContent = () => {
           <View className={surfaceCls}>
             <View className={clsx('items-center flex-row justify-between', rowCls)}>
               <View>
-                <NouText className="font-medium">{t('settings.deckTabWidth', 'Deck Tab Width')}</NouText>
-                <NouText className="mt-1 text-sm leading-5 text-zinc-400">Current: {settings.deckTabWidth}px</NouText>
+                <NouText className="font-medium">{t('settings.appearance.deckTabWidth')}</NouText>
+                <NouText className="mt-1 text-sm leading-5 text-zinc-400">
+                  {t('settings.appearance.deckTabWidthHint', { value: settings.deckTabWidth })}
+                </NouText>
               </View>
               <View className="flex-row items-center gap-2">
                 <TextInput
@@ -148,7 +150,7 @@ export const SettingsAppearanceContent = () => {
                   trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
                   items={[
                     {
-                      label: t('common.reset', 'Reset'),
+                      label: t('common.reset'),
                       handler: () => {
                         settings$.deckTabWidth.set(400)
                       },

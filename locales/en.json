@@ -20,8 +20,13 @@
     "edit": "Edit",
     "off": "Off",
     "on": "On",
+    "reset": "Reset",
     "save": "Save",
     "theme": "Theme"
+  },
+  "views": {
+    "rename": "Rename view",
+    "namePlaceholder": "View name"
   },
   "blocklist": {
     "label": "Network blocklist",
@@ -101,7 +106,9 @@
     "appearance": {
       "description": "Theme plus toolbar layout, placement, and button visibility.",
       "theme": "Theme",
-      "toolbar": "Toolbar"
+      "toolbar": "Toolbar",
+      "deckTabWidth": "Deck tab width",
+      "deckTabWidthHint": "Current: {{value}}px"
     },
     "profiles": {
       "description": "Multiple accounts with separate cookies and browsing state.",
