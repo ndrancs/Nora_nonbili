@@ -11,6 +11,7 @@ const PARSE_YIELD_EVERY = 4_000
 const yieldToMainThread = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
 function normalizeHost(host: string): string | null {
+  'worklet'
   const trimmed = host.trim().replace(/^\.+|\.+$/g, '').toLowerCase()
   if (!trimmed || trimmed.includes(':')) {
     return null
@@ -39,6 +40,7 @@ function normalizeHost(host: string): string | null {
 }
 
 function extractHost(rawLine: string) {
+  'worklet'
   let line = rawLine.trim()
   if (!line || line.startsWith('!') || line.startsWith('[')) {
     return null
@@ -76,6 +78,7 @@ function extractHost(rawLine: string) {
 }
 
 function addHostEntry(rawLine: string, blockedHosts: Set<string>, allowedHosts: Set<string>) {
+  'worklet'
   const entry = extractHost(rawLine)
   if (!entry) {
     return
@@ -88,6 +91,7 @@ function addHostEntry(rawLine: string, blockedHosts: Set<string>, allowedHosts: 
 }
 
 function finalizeHosts(blockedHosts: Set<string>, allowedHosts: Set<string>, sort = true) {
+  'worklet'
   const nextBlockedHosts = Array.from(blockedHosts)
   const nextAllowedHosts = Array.from(allowedHosts)
   if (sort) {
@@ -102,6 +106,7 @@ function finalizeHosts(blockedHosts: Set<string>, allowedHosts: Set<string>, sor
 }
 
 export function getAdvertisedExpiryMs(text: string) {
+  'worklet'
   const match = text.match(/^!\s*Expires:\s*(\d+)\s*(hour|hours|day|days)\b/im)
   if (!match) {
     return DEFAULT_BLOCKLIST_EXPIRY_MS
@@ -116,6 +121,7 @@ export function getAdvertisedExpiryMs(text: string) {
 }
 
 export function parseFilterList(text: string): ParsedFilterList {
+  'worklet'
   const blockedHosts = new Set<string>()
   const allowedHosts = new Set<string>()
 
@@ -127,6 +133,39 @@ export function parseFilterList(text: string): ParsedFilterList {
     ...finalizeHosts(blockedHosts, allowedHosts, true),
     expiresInMs: getAdvertisedExpiryMs(text),
   }
+}
+
+function collectHosts(text: string, blockedHosts: Set<string>, allowedHosts: Set<string>) {
+  'worklet'
+  let lineStart = 0
+
+  for (let index = 0; index <= text.length; index += 1) {
+    const charCode = text.charCodeAt(index)
+    const isEnd = index === text.length
+    const isNewline = charCode === 10 || charCode === 13
+    if (!isEnd && !isNewline) {
+      continue
+    }
+
+    addHostEntry(text.slice(lineStart, index), blockedHosts, allowedHosts)
+
+    if (charCode === 13 && text.charCodeAt(index + 1) === 10) {
+      index += 1
+    }
+    lineStart = index + 1
+  }
+}
+
+export function mergeFilterLists(texts: string[], { sort = false }: { sort?: boolean } = {}) {
+  'worklet'
+  const blockedHosts = new Set<string>()
+  const allowedHosts = new Set<string>()
+
+  for (const text of texts) {
+    collectHosts(text, blockedHosts, allowedHosts)
+  }
+
+  return finalizeHosts(blockedHosts, allowedHosts, sort)
 }
 
 async function collectHostsAsync(text: string, blockedHosts: Set<string>, allowedHosts: Set<string>) {
@@ -168,6 +207,7 @@ export async function mergeFilterListsAsync(texts: string[], { sort = false }: {
 }
 
 export function hostCandidates(host: string) {
+  'worklet'
   const normalized = normalizeHost(host)
   if (!normalized) {
     return []
@@ -177,6 +217,7 @@ export function hostCandidates(host: string) {
 }
 
 export function shouldBlockHost(host: string, blockedHosts: Set<string>, allowedHosts: Set<string>) {
+  'worklet'
   const candidates = hostCandidates(host)
   if (!candidates.length) {
     return false
@@ -196,5 +237,6 @@ export function shouldBlockHost(host: string, blockedHosts: Set<string>, allowed
 }
 
 export function hostSpecificity(host: string) {
+  'worklet'
   return host.split('.').length
 }

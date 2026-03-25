@@ -91,7 +91,12 @@ export const NoraTab: React.FC<{
         return
       }
 
-      const nextCanGoBack = await Promise.resolve(webview.canGoBack())
+      let nextCanGoBack
+      try {
+        nextCanGoBack = await Promise.resolve(webview.canGoBack())
+      } catch (err) {
+        return
+      }
       if (typeof nextCanGoBack !== 'boolean') {
         return
       }

@@ -1,10 +1,11 @@
 import { syncState, when } from '@legendapp/state'
 import NoraViewModule from '@/modules/nora-view'
-import { isWeb } from '@/lib/utils'
+import { isWeb, isIos, isAndroid } from '@/lib/utils'
 import { settings$ } from '@/states/settings'
 import { blocklist$ } from '@/states/blocklist'
-import { mergeFilterListsAsync } from './parser'
+import { mergeFilterLists, mergeFilterListsAsync } from './parser'
 import { shouldAutoRefresh } from './policy'
+import { createWorkletRuntime, runOnRuntime, type WorkletRuntime } from 'react-native-worklets'
 import {
   deleteBlocklistSourceFiles,
   hasBlocklistSourceFiles,
@@ -33,6 +34,15 @@ let payloadCache:
       payload: BlocklistPayload
     }
   | undefined
+
+let workletRuntime: WorkletRuntime | undefined
+if (isIos || isAndroid) {
+  try {
+    workletRuntime = createWorkletRuntime('blocklist')
+  } catch (err) {
+    console.error('[blocklist] Failed to create worklet runtime', err)
+  }
+}
 
 const readHeader = (headers: Record<string, string | undefined>, key: string) =>
   headers[key] || headers[key.toLowerCase()] || headers[key.toUpperCase()]
@@ -95,13 +105,20 @@ function setPayloadCache(matcherData: BlocklistMatcherData) {
   }
 }
 
+async function mergeFilterListsInBackground(bodies: string[]): Promise<{ blockedHosts: string[]; allowedHosts: string[] }> {
+  if (workletRuntime) {
+    return runOnRuntime(workletRuntime, mergeFilterLists)(bodies)
+  }
+  return mergeFilterListsAsync(bodies)
+}
+
 async function readMergedPayloadFromFiles(revision: number): Promise<BlocklistMatcherData | null> {
   const bodies = await Promise.all(BLOCKLIST_SOURCE_IDS.map((id) => readBlocklistSourceFile(id)))
   if (bodies.some((body) => !body)) {
     return null
   }
 
-  const { blockedHosts, allowedHosts } = await mergeFilterListsAsync(bodies.map((body) => body || ''))
+  const { blockedHosts, allowedHosts } = await mergeFilterListsInBackground(bodies.map((body) => body || ''))
 
   if (!blockedHosts.length && !allowedHosts.length) {
     return null
@@ -295,7 +312,7 @@ export async function refreshBlocklist({ manual = false } = {}) {
 
   const payloadRevision = current.revision + 1
   const nextMatcherData = await (async () => {
-    const { blockedHosts, allowedHosts } = await mergeFilterListsAsync(sourceBodies)
+    const { blockedHosts, allowedHosts } = await mergeFilterListsInBackground(sourceBodies)
     if (!blockedHosts.length && !allowedHosts.length) {
       return null
     }
