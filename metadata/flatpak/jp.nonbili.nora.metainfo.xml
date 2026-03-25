@@ -58,6 +58,16 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.1.8" date="2026-03-25">
+      <description>
+        <ul>
+          <li>Support customizing tab width in deck view</li>
+          <li>Support split view and grid view</li>
+          <li>Support injecting user CSS into webview</li>
+          <li>Add in-app changelog</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.7" date="2026-03-20">
       <description>
         <ul>

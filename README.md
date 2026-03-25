@@ -31,6 +31,7 @@ Install from F-Droid, Google Play, or download APK from GitHub.
 - Select text
 - Zoom
 - Remove tracking url query params
+- Customize with CSS
 
 ## Supported SNS
 
