@@ -75,7 +75,7 @@ export const SettingsModalTabSync = () => {
       return null
     }
     const value = new Date(me.ios.expiresAt).toLocaleString()
-    return t('sync.expiresAt', { value })
+    return t('sync.expiresAt', { value, interpolation: { escapeValue: false } })
   }, [me?.ios?.expiresAt])
 
   const refreshEntitlement = async () => {
@@ -150,6 +150,16 @@ export const SettingsModalTabSync = () => {
       await NoraBilling.manageSubscriptions()
     })
 
+  const accountMenuItems = [
+    ...(isIos
+      ? me?.source === 'app_store' && me?.plan === 'sync'
+        ? [{ label: t('sync.manageIos'), handler: () => void onManageSubscriptions() }]
+        : [] 
+      : []),
+    ...(isIos ? [{ label: t('sync.restore'), handler: () => void onRestore() }] : []),
+    { label: t('menus.signOut'), handler: signOut },
+  ]
+
   if (!user) {
     return (
       <View className="gap-6">
@@ -194,7 +204,7 @@ export const SettingsModalTabSync = () => {
             </View>
             <NouMenu
               trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
-              items={[{ label: t('menus.signOut'), handler: signOut }]}
+              items={accountMenuItems}
             />
           </View>
         </View>
@@ -228,18 +238,11 @@ export const SettingsModalTabSync = () => {
                       : t('sync.productUnavailable')}
                 </NouText>
                 {me?.source === 'app_store' && me?.plan === 'sync' ? (
-                  <>
-                    <NouButton
-                      variant="outline"
-                      loading={busyAction === 'manage'}
-                      onPress={() => void onManageSubscriptions()}
-                    >
-                      {t('sync.manageIos')}
-                    </NouButton>
-                    <NouButton variant="outline" loading={busyAction === 'restore'} onPress={() => void onRestore()}>
-                      {t('sync.restore')}
-                    </NouButton>
-                  </>
+                  busyAction === 'manage' || busyAction === 'restore' ? (
+                    <NouText className="text-sm text-zinc-400">
+                      {busyAction === 'manage' ? t('sync.manageIos') : t('sync.restore')}
+                    </NouText>
+                  ) : null
                 ) : (
                   <>
                     <NouButton
@@ -249,9 +252,7 @@ export const SettingsModalTabSync = () => {
                     >
                       {productPrice ? `${t('sync.buy')} ${productPrice}` : t('sync.buy')}
                     </NouButton>
-                    <NouButton variant="outline" loading={busyAction === 'restore'} onPress={() => void onRestore()}>
-                      {t('sync.restore')}
-                    </NouButton>
+                    {busyAction === 'restore' ? <NouText className="text-sm text-zinc-400">{t('sync.restore')}</NouText> : null}
                   </>
                 )}
               </View>

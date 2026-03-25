@@ -1,7 +1,6 @@
 import { observable } from '@legendapp/state'
 import { syncObservable } from '@legendapp/state/sync'
 import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv'
-import { deleteProfileData } from '@/lib/profile-data'
 import { genId } from '@/lib/utils'
 
 export interface Profile {
@@ -112,7 +111,11 @@ export const settings$ = observable<Store>({
     const index = profiles.findIndex((p) => p?.id === id)
     if (index !== -1 && profiles[index] && !profiles[index].isDefault) {
       settings$.profiles.splice(index, 1)
-      deleteProfileData(id)
+      void import('@/lib/profile-data')
+        .then(({ deleteProfileData }) => deleteProfileData(id))
+        .catch((error) => {
+          console.warn('Failed to delete profile data', error)
+        })
     }
   },
 })

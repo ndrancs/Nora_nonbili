@@ -107,7 +107,15 @@ function setPayloadCache(matcherData: BlocklistMatcherData) {
 
 async function mergeFilterListsInBackground(bodies: string[]): Promise<{ blockedHosts: string[]; allowedHosts: string[] }> {
   if (workletRuntime) {
-    return runOnRuntime(workletRuntime, mergeFilterLists)(bodies)
+    try {
+      const result = await runOnRuntime(workletRuntime, mergeFilterLists)(bodies)
+      if (result && Array.isArray(result.blockedHosts) && Array.isArray(result.allowedHosts)) {
+        return result
+      }
+      console.warn('[blocklist] Invalid worklet merge result, falling back to async parser')
+    } catch (error) {
+      console.warn('[blocklist] Worklet merge failed, falling back to async parser', error)
+    }
   }
   return mergeFilterListsAsync(bodies)
 }

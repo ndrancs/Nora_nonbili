@@ -33,8 +33,8 @@ const defaultEntitlement: NoraEntitlement = {
   source: 'none',
 }
 
-function getErrorMessage(payload: any) {
-  return payload?.error?.json?.message || payload?.message || 'Request failed'
+function getErrorMessage(payload: any, fallback?: string) {
+  return payload?.error?.json?.message || payload?.message || fallback || 'Request failed'
 }
 
 async function callNoraApi<T>(path: string, init?: RequestInit): Promise<T> {
@@ -43,7 +43,8 @@ async function callNoraApi<T>(path: string, init?: RequestInit): Promise<T> {
   if (authorization) {
     headers.set('authorization', authorization)
   }
-  if (init?.body && !headers.has('content-type')) {
+  const method = init?.method?.toUpperCase()
+  if ((init?.body || (method && method !== 'GET' && method !== 'HEAD')) && !headers.has('content-type')) {
     headers.set('content-type', 'application/json')
   }
 
@@ -52,9 +53,17 @@ async function callNoraApi<T>(path: string, init?: RequestInit): Promise<T> {
     headers,
   })
 
-  const payload = await res.json().catch(() => null)
+  const rawText = await res.text()
+  const payload = (() => {
+    try {
+      return rawText ? JSON.parse(rawText) : null
+    } catch {
+      return null
+    }
+  })()
   if (!res.ok || payload?.error) {
-    throw new Error(getErrorMessage(payload))
+    const fallback = rawText ? `HTTP ${res.status}: ${rawText.slice(0, 200)}` : `HTTP ${res.status}`
+    throw new Error(getErrorMessage(payload, fallback))
   }
   return payload?.result?.data as T
 }
