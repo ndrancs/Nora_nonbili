@@ -16,8 +16,8 @@ describe('resolveXHomeTabsDecision', () => {
   it('switches to the configured timeline before hiding', () => {
     expect(
       resolveXHomeTabsDecision(
-        { xDefaultHomeTimeline: 'following', hideXHomeTimelineTabs: true },
-        { activeTimeline: 'for-you', tabsHidden: false },
+        { xDefaultHomeTimeline: 'following' },
+        { activeTimeline: 'for-you', tabsHidden: false, shouldHideTabs: true },
       ),
     ).toEqual({
       revealTabs: false,
@@ -29,8 +29,8 @@ describe('resolveXHomeTabsDecision', () => {
   it('reveals tabs before switching if they are currently hidden', () => {
     expect(
       resolveXHomeTabsDecision(
-        { xDefaultHomeTimeline: 'following', hideXHomeTimelineTabs: true },
-        { activeTimeline: 'for-you', tabsHidden: true },
+        { xDefaultHomeTimeline: 'following' },
+        { activeTimeline: 'for-you', tabsHidden: true, shouldHideTabs: true },
       ),
     ).toEqual({
       revealTabs: true,
@@ -42,8 +42,8 @@ describe('resolveXHomeTabsDecision', () => {
   it('hides tabs once the configured timeline is active', () => {
     expect(
       resolveXHomeTabsDecision(
-        { xDefaultHomeTimeline: 'following', hideXHomeTimelineTabs: true },
-        { activeTimeline: 'following', tabsHidden: false },
+        { xDefaultHomeTimeline: 'following' },
+        { activeTimeline: 'following', tabsHidden: false, shouldHideTabs: true },
       ),
     ).toEqual({
       revealTabs: false,
@@ -55,8 +55,8 @@ describe('resolveXHomeTabsDecision', () => {
   it('keeps tabs visible when hiding is disabled', () => {
     expect(
       resolveXHomeTabsDecision(
-        { xDefaultHomeTimeline: 'for-you', hideXHomeTimelineTabs: false },
-        { activeTimeline: 'for-you', tabsHidden: false },
+        { xDefaultHomeTimeline: 'for-you' },
+        { activeTimeline: 'for-you', tabsHidden: false, shouldHideTabs: false },
       ),
     ).toEqual({
       revealTabs: false,

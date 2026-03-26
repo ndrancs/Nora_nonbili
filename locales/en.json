@@ -82,7 +82,6 @@
     "label": "Settings",
     "openExternalLink": "Open external link in system browser",
     "redirectToOldReddit": "Redirect to Old Reddit",
-    "hideXHomeTimelineTabs": "Hide \"For you | Following\" tabs",
     "allowHttpWebsite": "Allow HTTP websites",
     "inspectable": "Make webview inspectable",
     "videoEdgeLongPressTo2x": "Long press on edge to 2x playback",
@@ -111,7 +110,7 @@
     },
     "appearance": {
       "description": "Theme plus toolbar layout, placement, and button visibility.",
-      "theme": "Theme",
+      "theme": "Webview Theme",
       "toolbar": "Toolbar",
       "deckTabWidth": "Deck tab width",
       "deckTabWidthHint": "Current: {{value}}px"
@@ -156,6 +155,9 @@
         },
         "hideXBottomNav": {
           "label": "Hide X bottom nav bar on scroll"
+        },
+        "hideXHomeTabs": {
+          "label": "Hide X home timeline tabs"
         }
       },
       "custom": {
@@ -177,17 +179,18 @@
     "oneTabPerSite": "One tab per site when opening shared link",
     "services": "Services",
     "theme": {
-      "label": "Theme",
+      "label": "Webview theme",
       "system": "System",
       "dark": "Dark",
       "light": "Light",
-      "hint": "Restart manually if change not reflected in webview."
+      "hint": "Controls the website/webview theme, not the app UI. Restart manually if the change is not reflected in the webview."
     },
     "injectCookie": "Inject cookie"
   },
   "sync": {
     "label": "Sync",
-    "hint": "Cross-device bookmarks and settings sync.",
+    "hint": "Bookmarks and settings sync across devices.",
+    "upgradeHint": "Upgrade to sync bookmarks and settings across devices.",
     "currentPlan": "Current plan",
     "managePlan": "Manage plan",
     "buy": "Subscribe on iPhone",

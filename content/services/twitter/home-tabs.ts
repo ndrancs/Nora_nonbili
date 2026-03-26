@@ -1,4 +1,5 @@
-import { noraSettingsEvent } from '../../nora'
+import { builtinUserStyleIds, createDefaultBuiltinUserStyles, type UserStylesSnapshot } from '../../../lib/user-styles'
+import { noraSettingsEvent, noraUserStylesEvent } from '../../nora'
 import {
   normalizeXHomeTimeline,
   resolveXHomeTabsDecision,
@@ -8,8 +9,14 @@ import {
 
 const HIDDEN_CLASS = '_nora_hidden_'
 const SWITCH_RETRY_MS = 1200
+const HIDE_X_HOME_TABS_STYLE_ID = builtinUserStyleIds.find((id) => id === 'hide-x-home-tabs')!
 
 const normalizeLabel = (value?: string | null) => value?.replace(/\s+/g, ' ').trim().toLowerCase() || ''
+
+const shouldHideHomeTabs = (snapshot?: UserStylesSnapshot | null) => {
+  const builtins = snapshot?.builtins || createDefaultBuiltinUserStyles()
+  return builtins[HIDE_X_HOME_TABS_STYLE_ID]?.enabled !== false
+}
 
 const getTimelineFromElement = (element: Element | null): XHomeTimeline | null => {
   if (!element) {
@@ -89,10 +96,10 @@ export function runXHomeTabsController() {
   }
   root.__noraXHomeTabsInit = true
 
-  let settings: XHomeTabsSettings = {
+  let settings = {
     xDefaultHomeTimeline: normalizeXHomeTimeline(window.Nora?.getSettings?.().xDefaultHomeTimeline),
-    hideXHomeTimelineTabs: Boolean(window.Nora?.getSettings?.().hideXHomeTimelineTabs),
   }
+  let hideTabs = shouldHideHomeTabs(window.Nora?.getUserStyles?.())
   let scheduled = false
   let hiddenTarget: HTMLElement | null = null
   let pendingTimeline: XHomeTimeline | null = null
@@ -139,6 +146,7 @@ export function runXHomeTabsController() {
     const decision = resolveXHomeTabsDecision(settings, {
       activeTimeline,
       tabsHidden: hideTarget.classList.contains(HIDDEN_CLASS),
+      shouldHideTabs: hideTabs,
     })
 
     if (decision.revealTabs) {
@@ -174,8 +182,12 @@ export function runXHomeTabsController() {
     const detail = (event as CustomEvent<XHomeTabsSettings>).detail
     settings = {
       xDefaultHomeTimeline: normalizeXHomeTimeline(detail?.xDefaultHomeTimeline),
-      hideXHomeTimelineTabs: Boolean(detail?.hideXHomeTimelineTabs),
     }
+    scheduleApply()
+  })
+
+  window.addEventListener(noraUserStylesEvent, (event) => {
+    hideTabs = shouldHideHomeTabs((event as CustomEvent<UserStylesSnapshot>).detail)
     scheduleApply()
   })
 

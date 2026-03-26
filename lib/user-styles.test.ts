@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'bun:test'
 import { getInjectedCss } from '../content/css'
 import {
-  createDefaultUserStylesSnapshot,
   getEnabledUserStyleCss,
   matchesAnyHostGlob,
   matchesHostGlob,
   normalizeUserStyles,
 } from './user-styles'
+
+const withBuiltinEnabled = (id: 'hide-reddit-game' | 'hide-x-bottom-nav' | 'hide-x-home-tabs') =>
+  normalizeUserStyles({
+    builtins: {
+      [id]: { enabled: true },
+    } as any,
+    customStyles: [],
+  })
 
 describe('user style host matching', () => {
   it('matches exact hosts and wildcards', () => {
@@ -55,6 +62,7 @@ describe('normalizeUserStyles', () => {
 
     expect(snapshot.builtins['hide-reddit-game'].enabled).toBe(false)
     expect(snapshot.builtins['hide-x-bottom-nav'].enabled).toBe(true)
+    expect(snapshot.builtins['hide-x-home-tabs'].enabled).toBe(false)
     expect(snapshot.customStyles).toHaveLength(1)
     expect(snapshot.customStyles[0]).toMatchObject({
       id: 'one',
@@ -66,14 +74,18 @@ describe('normalizeUserStyles', () => {
 
 describe('user style css composition', () => {
   it('includes builtin css only on matching hosts', () => {
-    const snapshot = createDefaultUserStylesSnapshot()
+    const snapshot = withBuiltinEnabled('hide-reddit-game')
 
     expect(getEnabledUserStyleCss('www.reddit.com', snapshot)).toContain("ssr-post-content-header")
+    expect(getEnabledUserStyleCss('x.com', snapshot)).not.toContain("[role='tablist']")
     expect(getEnabledUserStyleCss('example.com', snapshot)).not.toContain("ssr-post-content-header")
   })
 
   it('appends matching custom css after builtin css', () => {
     const snapshot = normalizeUserStyles({
+      builtins: {
+        'hide-reddit-game': { enabled: true },
+      } as any,
       customStyles: [
         {
           id: 'custom',
@@ -96,6 +108,7 @@ describe('user style css composition', () => {
       builtins: {
         'hide-reddit-game': { enabled: false },
         'hide-x-bottom-nav': { enabled: false },
+        'hide-x-home-tabs': { enabled: false },
       },
       customStyles: [],
     })
@@ -103,5 +116,11 @@ describe('user style css composition', () => {
     const css = getInjectedCss('www.instagram.com', {}, snapshot)
     expect(css).toContain('._acc8._abpk')
     expect(css).not.toContain("ssr-post-content-header")
+  })
+
+  it('includes x home tab css when the builtin is enabled', () => {
+    const snapshot = withBuiltinEnabled('hide-x-home-tabs')
+
+    expect(getEnabledUserStyleCss('x.com', snapshot)).toContain("[role='tablist']")
   })
 })

@@ -32,7 +32,7 @@ const SettingsBadge: React.FC<{ label: string }> = ({ label }) => {
 export const SettingsModalTabSync = () => {
   const { user, userEmail, plan } = use$(auth$)
   const { me, refetchMe } = useMe()
-  const syncHint = t('sync.hint')
+  const syncHint = user && !plan ? t('sync.upgradeHint') : t('sync.hint')
   const [loadingProduct, setLoadingProduct] = useState(isIos)
   const [productPrice, setProductPrice] = useState<string>()
   const [actionError, setActionError] = useState<string>()

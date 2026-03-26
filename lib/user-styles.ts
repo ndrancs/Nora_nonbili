@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid'
 
 export const USER_STYLES_SCHEMA_VERSION = 1
 
-export const builtinUserStyleIds = ['hide-reddit-game', 'hide-x-bottom-nav'] as const
+export const builtinUserStyleIds = ['hide-reddit-game', 'hide-x-bottom-nav', 'hide-x-home-tabs'] as const
 
 export type BuiltinUserStyleId = (typeof builtinUserStyleIds)[number]
 
@@ -56,6 +56,23 @@ export const builtinUserStyleDefinitions: BuiltinUserStyleDefinition[] = [
       }
     `,
   },
+  {
+    id: 'hide-x-home-tabs',
+    labelKey: 'settings.userStyles.builtin.hideXHomeTabs.label',
+    hostGlobs: ['x.com'],
+    css: css`
+      /* Home timeline tabs wrapper */
+      [role='tablist']:has([role='tab'][aria-label*='For you'], [role='tab'][data-testid*='For you'], [role='tab'][aria-label*='Following'], [role='tab'][data-testid*='Following']),
+      [role='tablist']:has([role='tab'][aria-label*='for you'], [role='tab'][data-testid*='for you'], [role='tab'][aria-label*='following'], [role='tab'][data-testid*='following']) {
+        display: none !important;
+      }
+
+      [role='tablist']:has([role='tab'][aria-label*='For you'], [role='tab'][data-testid*='For you'], [role='tab'][aria-label*='Following'], [role='tab'][data-testid*='Following']) > *,
+      [role='tablist']:has([role='tab'][aria-label*='for you'], [role='tab'][data-testid*='for you'], [role='tab'][aria-label*='following'], [role='tab'][data-testid*='following']) > * {
+        display: none !important;
+      }
+    `,
+  },
 ]
 
 export const builtinUserStyleDefinitionById = builtinUserStyleDefinitions.reduce(
@@ -69,6 +86,7 @@ export const builtinUserStyleDefinitionById = builtinUserStyleDefinitions.reduce
 export const createDefaultBuiltinUserStyles = (): Record<BuiltinUserStyleId, BuiltinUserStyleState> => ({
   'hide-reddit-game': { enabled: false },
   'hide-x-bottom-nav': { enabled: true },
+  'hide-x-home-tabs': { enabled: false },
 })
 
 export const createDefaultUserStylesSnapshot = (): UserStylesSnapshot => ({

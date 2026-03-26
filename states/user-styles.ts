@@ -1,6 +1,7 @@
 import { observable } from '@legendapp/state'
 import { syncObservable } from '@legendapp/state/sync'
 import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv'
+import { settings$ } from '@/states/settings'
 import {
   builtinUserStyleIds,
   createNormalizedCustomUserStyle,
@@ -19,6 +20,22 @@ interface Store extends UserStylesSnapshot {
   updateCustomStyle: (id: string, input: Omit<CustomUserStyle, 'id'>) => void
   toggleCustomStyle: (id: string) => void
   deleteCustomStyle: (id: string) => void
+}
+
+const applyLegacyBuiltins = (data: Store) => {
+  if (data?.builtins?.['hide-x-home-tabs']) {
+    return data
+  }
+
+  return {
+    ...data,
+    builtins: {
+      ...(data?.builtins || {}),
+      'hide-x-home-tabs': {
+        enabled: Boolean(settings$.get().hideXHomeTimelineTabs),
+      },
+    },
+  }
 }
 
 export const userStyles$ = observable<Store>({
@@ -104,7 +121,7 @@ syncObservable(userStyles$, {
     name: 'user-styles',
     plugin: ObservablePersistMMKV,
     transform: {
-      load: (data: Store) => normalizeUserStyles(data),
+      load: (data: Store) => normalizeUserStyles(applyLegacyBuiltins(data)),
     },
   },
 })

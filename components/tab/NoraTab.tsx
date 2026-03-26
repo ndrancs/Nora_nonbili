@@ -84,7 +84,6 @@ export const NoraTab: React.FC<{
   const inspectable = useValue(settings$.inspectable)
   const videoEdgeLongPressTo2x = useValue(settings$.videoEdgeLongPressTo2x)
   const xDefaultHomeTimeline = useValue(settings$.xDefaultHomeTimeline)
-  const hideXHomeTimelineTabs = useValue(settings$.hideXHomeTimelineTabs)
   const userStyles = useValue(userStyles$)
   const nativeRef = useRef<any>(null)
   const webviewRef = useRef<WebviewTag>(null)
@@ -137,13 +136,12 @@ export const NoraTab: React.FC<{
       const settingsScript = `window.Nora?.setSettings?.(${JSON.stringify({
         videoEdgeLongPressTo2x,
         xDefaultHomeTimeline,
-        hideXHomeTimelineTabs,
       })})`
       const userStylesScript = `window.Nora?.setUserStyles?.(${JSON.stringify(getUserStylesSnapshot(userStyles))})`
       void executeWebviewJavaScriptQuietly(webview, settingsScript)
       void executeWebviewJavaScriptQuietly(webview, userStylesScript)
     },
-    [hideXHomeTimelineTabs, userStyles, videoEdgeLongPressTo2x, xDefaultHomeTimeline],
+    [userStyles, videoEdgeLongPressTo2x, xDefaultHomeTimeline],
   )
 
   const noraViewRef = useCallback(

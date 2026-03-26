@@ -94,13 +94,6 @@ export const SettingsBrowsingContent: React.FC = () => {
               onChange={(index) => settings$.xDefaultHomeTimeline.set(xHomeTimelineValues[index])}
             />
           </View>
-          <View className={rowCls}>
-            <NouSwitch
-              label={<NouText className="font-medium">{t('settings.hideXHomeTimelineTabs')}</NouText>}
-              value={settings.hideXHomeTimelineTabs}
-              onPress={() => settings$.hideXHomeTimelineTabs.toggle()}
-            />
-          </View>
         </View>
       </View>
 
@@ -202,7 +195,7 @@ export const SettingsAppearanceContent = () => {
       {nIf(
         !isWeb,
         <View className="pb-4">
-          <NouText className={subheaderCls}>{t('common.theme')}</NouText>
+          <NouText className={subheaderCls}>{t('settings.theme.label')}</NouText>
           <View className={surfaceCls}>
             <View className="px-4 py-4">
               <View className="flex-row items-start gap-3">
@@ -210,7 +203,7 @@ export const SettingsAppearanceContent = () => {
                   <MaterialIcons name="palette" color="#d4d4d8" size={18} />
                 </View>
                 <View className="flex-1">
-                  <NouText className="font-medium">{t('common.theme')}</NouText>
+                  <NouText className="font-medium">{t('settings.theme.label')}</NouText>
                   <NouText className="mt-1 text-sm leading-5 text-zinc-400">{t('settings.theme.hint')}</NouText>
                 </View>
               </View>

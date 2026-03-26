@@ -126,6 +126,11 @@ export const SettingsModal = () => {
   const showBrowsing = !isWeb || showBlocklist
   const showSync = true
   const browsingDescription = !isWeb ? t('settings.browsing.descriptionNative') : t('settings.browsing.descriptionWeb')
+  const syncDescription = user
+    ? plan
+      ? user.email
+      : t('sync.upgradeHint')
+    : t('sync.hint')
 
   useEffect(() => {
     if (!settingsModalOpen) {
@@ -274,7 +279,7 @@ export const SettingsModal = () => {
               {showSync ? (
                 <SettingsNavRow
                   title={t('sync.label')}
-                  description={user?.email || t('sync.hint')}
+                  description={syncDescription}
                   icon="sync"
                   meta={planLabel}
                   onPress={() => pushPage('sync')}

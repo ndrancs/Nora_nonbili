@@ -4,12 +4,12 @@ export type XHomeTimeline = (typeof xHomeTimelineValues)[number]
 
 export interface XHomeTabsSettings {
   xDefaultHomeTimeline?: XHomeTimeline
-  hideXHomeTimelineTabs?: boolean
 }
 
 export interface XHomeTabsDecisionState {
   activeTimeline: XHomeTimeline | null
   tabsHidden: boolean
+  shouldHideTabs: boolean
 }
 
 export interface XHomeTabsDecision {
@@ -39,6 +39,6 @@ export const resolveXHomeTabsDecision = (
   return {
     revealTabs: false,
     switchTo: null,
-    hideTabs: Boolean(settings.hideXHomeTimelineTabs),
+    hideTabs: state.shouldHideTabs,
   }
 }
