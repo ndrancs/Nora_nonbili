@@ -1,6 +1,7 @@
 import { tabs$ } from '@/states/tabs'
 import { removeTrackingParams } from './url'
 import { onReceiveAuthUrl } from './supabase/auth'
+import NoraViewModule from '@/modules/nora-view'
 export { removeTrackingParams } from './url'
 
 export const homeUrls: Record<string, string> = {
@@ -25,9 +26,24 @@ export function cleanSharedUrl(url: string) {
   return removeTrackingParams(url.replace('nora://', 'https://'))
 }
 
+const isExternalAppUrl = (url: string) => {
+  try {
+    const scheme = new URL(url).protocol.replace(':', '').toLowerCase()
+    return !['about', 'blob', 'data', 'file', 'http', 'https', 'javascript', 'nora'].includes(scheme)
+  } catch {
+    return false
+  }
+}
+
 export function openSharedUrl(url: string, replace = false) {
   if (url.startsWith('nora:auth')) {
     onReceiveAuthUrl(url)
+    return
+  }
+  if (isExternalAppUrl(url)) {
+    void NoraViewModule.openExternalUrl(url).catch((e) => {
+      console.error(e)
+    })
     return
   }
   try {

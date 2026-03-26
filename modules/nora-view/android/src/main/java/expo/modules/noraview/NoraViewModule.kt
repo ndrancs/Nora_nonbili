@@ -109,6 +109,10 @@ class NoraViewModule : Module() {
       }
     }
 
+    AsyncFunction("openExternalUrl") { url: String ->
+      handleExternalAppUrl(appContext.reactContext ?: appContext.throwingActivity, url)
+    }
+
     View(NoraView::class) {
       Prop("scriptOnStart") { view: NoraView, script: String ->
         view.setScriptOnStart(script)

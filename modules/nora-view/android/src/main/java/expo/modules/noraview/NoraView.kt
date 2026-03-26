@@ -123,15 +123,24 @@ fun redirectFacebookUrl(url: String): String? {
   return null
 }
 
+val INTERNAL_SCHEMES = setOf("about", "blob", "data", "file", "http", "https", "javascript", "nora")
+
 fun shouldNoraOverrideUrlLoading(view: WebView, url: String): Boolean {
   val uri = Uri.parse(url)
   val host = uri.host
+  val scheme = uri.scheme?.lowercase()
   val normalizedHost = host?.lowercase()
   val dynamicInternalHosts = nouController.settings.internalHosts.map { it.lowercase() }.toSet()
+  val isInternalScheme = scheme in INTERNAL_SCHEMES
+  val isFacebookHost = normalizedHost?.endsWith(".facebook.com") == true && normalizedHost != "l.facebook.com"
+
+  if (!isInternalScheme) {
+    return handleExternalAppUrl(view.context, url)
+  }
+
   if (host in VIEW_HOSTS ||
     (normalizedHost != null && normalizedHost in dynamicInternalHosts) ||
-    host == null ||
-    (host.endsWith(".facebook.com") && host != "l.facebook.com") ||
+    isFacebookHost ||
     !nouController.settings.openExternalLinkInSystemBrowser
   ) {
     return false
@@ -141,6 +150,75 @@ fun shouldNoraOverrideUrlLoading(view: WebView, url: String): Boolean {
     } catch (e: ActivityNotFoundException) {
       e.printStackTrace()
     }
+    return true
+  }
+}
+
+fun handleExternalAppUrl(context: Context, url: String): Boolean {
+  val uri = Uri.parse(url)
+  val scheme = uri.scheme?.lowercase()
+  val isInternalScheme = scheme in INTERNAL_SCHEMES
+  if (isInternalScheme) {
+    return false
+  }
+
+  try {
+    val intent = if (scheme == "intent") {
+      Intent.parseUri(url, Intent.URI_INTENT_SCHEME).apply {
+        addCategory(Intent.CATEGORY_BROWSABLE)
+        component = null
+        selector = null
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      }
+    } else {
+      Intent(Intent.ACTION_VIEW, uri).apply {
+        addCategory(Intent.CATEGORY_BROWSABLE)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      }
+    }
+    val packageManager = context.packageManager
+    val resolvedActivity = intent.resolveActivity(packageManager)
+    if (resolvedActivity == null) {
+      throw ActivityNotFoundException("No activity found to handle $url")
+    }
+    context.startActivity(intent)
+    return true
+  } catch (e: ActivityNotFoundException) {
+    if (scheme == "intent") {
+      try {
+        val fallbackIntent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+        val fallbackUrl = fallbackIntent.getStringExtra("browser_fallback_url")
+        if (!fallbackUrl.isNullOrEmpty()) {
+          context.startActivity(
+            Intent(Intent.ACTION_VIEW, Uri.parse(fallbackUrl)).apply {
+              addCategory(Intent.CATEGORY_BROWSABLE)
+              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+          )
+          return true
+        }
+
+        val dataUri = fallbackIntent.data
+        if (dataUri != null) {
+          context.startActivity(
+            Intent(Intent.ACTION_VIEW, dataUri).apply {
+              addCategory(Intent.CATEGORY_BROWSABLE)
+              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+              `package` = null
+              selector = null
+              component = null
+            }
+          )
+          return true
+        }
+      } catch (fallbackError: Exception) {
+        fallbackError.printStackTrace()
+      }
+    }
+    e.printStackTrace()
+    return true
+  } catch (e: Exception) {
+    e.printStackTrace()
     return true
   }
 }
@@ -272,6 +350,10 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
             return shouldNoraOverrideUrlLoading(view, url)
           }
 
+          override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            return shouldOverrideUrlLoading(view, request.url.toString())
+          }
+
           override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
             log("onRenderProcessGone crash: ${detail.didCrash()}")
             view.post {
@@ -381,12 +463,16 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
           newWebView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
               val ret = shouldNoraOverrideUrlLoading(view, url)
-              if (!ret || !nouController.settings.openExternalLinkInSystemBrowser) {
-                log("new-tab: $url")
-                emit("new-tab", mapOf("url" to url))
+              if (ret) {
                 return true
               }
-              return ret
+              log("new-tab: $url")
+              emit("new-tab", mapOf("url" to url))
+              return true
+            }
+
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+              return shouldOverrideUrlLoading(view, request.url.toString())
             }
           }
 
@@ -452,6 +538,9 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
 
   fun load(url: String) {
     if (url == "" || url == "about:blank") return
+    if (handleExternalAppUrl(context, url)) {
+      return
+    }
     if (url.startsWith("http://") && !nouController.settings.allowHttpWebsite) {
       showHttpBlockedPage(url)
       return

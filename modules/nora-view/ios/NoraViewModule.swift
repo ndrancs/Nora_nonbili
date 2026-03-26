@@ -29,6 +29,17 @@ let TRACKING_PARAMS: Set<String> = [
   "xmt"
 ]
 
+let INTERNAL_SCHEMES: Set<String> = [
+  "about",
+  "blob",
+  "data",
+  "file",
+  "http",
+  "https",
+  "javascript",
+  "nora"
+]
+
 public class NoraViewModule: Module {
   private var clipText = ""
 
@@ -72,6 +83,17 @@ public class NoraViewModule: Module {
 
     AsyncFunction("clearProfileData") { (profile: String, promise: Promise) in
       NoraView.clearProfileData(profile, promise: promise)
+    }
+
+    AsyncFunction("openExternalUrl") { (url: String) -> Bool in
+      guard let target = URL(string: url) else {
+        return false
+      }
+      guard UIApplication.shared.canOpenURL(target) else {
+        return false
+      }
+      UIApplication.shared.open(target)
+      return true
     }
 
     View(NoraView.self) {

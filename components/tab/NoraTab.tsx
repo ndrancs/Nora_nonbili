@@ -42,6 +42,15 @@ const forceHttps = (str: string) => {
   return url.replace('http://', 'https://')
 }
 
+const isExternalAppUrl = (str: string) => {
+  try {
+    const scheme = new URL(str).protocol.replace(':', '').toLowerCase()
+    return !['about', 'blob', 'data', 'file', 'http', 'https', 'javascript', 'nora'].includes(scheme)
+  } catch {
+    return false
+  }
+}
+
 const onScroll = (dy: number) => {
   const headerHeight = ui$.headerHeight.get()
   const headerShown = ui$.headerShown.get()
@@ -326,7 +335,9 @@ export const NoraTab: React.FC<{
         break
       }
       case 'new-tab':
-        tabs$.openTab(forceHttps(data.url), { parentTabId: tab.id, source: 'child' })
+        if (!isExternalAppUrl(data.url)) {
+          tabs$.openTab(forceHttps(data.url), { parentTabId: tab.id, source: 'child' })
+        }
         break
       case 'save-file':
         webview?.saveFile(data.content, data.fileName, data.mimeType)

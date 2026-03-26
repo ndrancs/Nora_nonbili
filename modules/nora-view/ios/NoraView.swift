@@ -201,12 +201,22 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
       }
 
       let urlString = url.absoluteString
+      let scheme = url.scheme?.lowercased() ?? ""
+      let isInternalScheme = INTERNAL_SCHEMES.contains(scheme)
 
       // Redirect to Old Reddit if setting is enabled
       if NouController.shared.settings.redirectToOldReddit && urlString.hasPrefix("https://www.reddit.com/") {
           let oldRedditUrl = urlString.replacingOccurrences(of: "www.reddit.com", with: "old.reddit.com")
           decisionHandler(.cancel)
           load(url: oldRedditUrl)
+          return
+      }
+
+      if !isInternalScheme {
+          if UIApplication.shared.canOpenURL(url) {
+              UIApplication.shared.open(url)
+          }
+          decisionHandler(.cancel)
           return
       }
 
@@ -219,7 +229,6 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
       let allowedInView =
         VIEW_HOSTS.contains(host) ||
         isDynamicInternalHost ||
-        host.isEmpty ||
         isFacebook ||
         isGoogle ||
         !NouController.shared.settings.openExternalLinkInSystemBrowser
