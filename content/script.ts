@@ -15,6 +15,7 @@ function runVideoLongPressScript() {
   const EDGE_MIN_WIDTH_PX = 56
   const INDICATOR_ID = '_nora_video_speed_indicator'
   let enabled = Boolean(window.Nora?.getSettings?.().videoEdgeLongPressTo2x)
+  let pendingWasPlaying = false
   let pointerId: number | null = null
   let pendingVideo: HTMLVideoElement | null = null
   let activeVideo: HTMLVideoElement | null = null
@@ -78,6 +79,7 @@ function runVideoLongPressScript() {
     clearTimer()
     pointerId = null
     pendingVideo = null
+    pendingWasPlaying = false
   }
 
   const resetPlayback = () => {
@@ -88,7 +90,25 @@ function runVideoLongPressScript() {
     hideIndicator()
     pointerId = null
     pendingVideo = null
+    pendingWasPlaying = false
     activeVideo = null
+  }
+
+  const isInstagramReelPage = () => {
+    const { hostname, pathname } = document.location
+    return hostname === 'www.instagram.com' && (pathname.startsWith('/reel/') || pathname.startsWith('/reels/'))
+  }
+
+  const shouldGuardInstagramReelPlayback = (video: HTMLVideoElement | null) => {
+    return Boolean(video && isInstagramReelPage() && pendingWasPlaying)
+  }
+
+  const resumeVideoPlayback = (video: HTMLVideoElement | null, playbackRate = 1) => {
+    if (!video || video.ended) {
+      return
+    }
+    video.playbackRate = playbackRate
+    void video.play().catch(() => {})
   }
 
   const suppressClick = (video: HTMLVideoElement | null) => {
@@ -141,13 +161,24 @@ function runVideoLongPressScript() {
     return x <= edgeWidth || x >= rect.width - edgeWidth
   }
 
-  const activatePlayback = (video: HTMLVideoElement) => {
+  const activatePlayback = async (video: HTMLVideoElement) => {
     if (!enabled || pendingVideo !== video) {
       return
     }
-    if (video.paused || video.ended) {
+    if (video.ended) {
       cancelPending()
       return
+    }
+    if (video.paused) {
+      if (isInstagramReelPage() && pendingWasPlaying) {
+        try {
+          await video.play()
+        } catch {}
+      }
+      if (video.paused) {
+        cancelPending()
+        return
+      }
     }
 
     clearTimer()
@@ -171,9 +202,12 @@ function runVideoLongPressScript() {
     clearTimer()
     pointerId = event.pointerId
     pendingVideo = video
+    pendingWasPlaying = !video.paused && !video.ended
     startX = event.clientX
     startY = event.clientY
-    timer = window.setTimeout(() => activatePlayback(video), LONG_PRESS_DELAY_MS)
+    timer = window.setTimeout(() => {
+      void activatePlayback(video)
+    }, LONG_PRESS_DELAY_MS)
   }
 
   const onPointerMove = (event: PointerEvent) => {
@@ -197,8 +231,9 @@ function runVideoLongPressScript() {
 
   const onPointerEnd = (event: PointerEvent) => {
     if (pointerId === event.pointerId) {
-      if (activeVideo) {
-        suppressClick(activeVideo)
+      const trackedVideo = activeVideo || pendingVideo
+      if (trackedVideo && (activeVideo || shouldGuardInstagramReelPlayback(trackedVideo))) {
+        suppressClick(trackedVideo)
       }
       resetPlayback()
     }
@@ -235,6 +270,20 @@ function runVideoLongPressScript() {
     suppressClick(null)
   }
 
+  const onPause = (event: Event) => {
+    const video = event.target instanceof HTMLVideoElement ? event.target : null
+    if (!video) {
+      return
+    }
+    if (video === activeVideo) {
+      resumeVideoPlayback(video, 2)
+      return
+    }
+    if (video === pendingVideo && shouldGuardInstagramReelPlayback(video)) {
+      resumeVideoPlayback(video, 1)
+    }
+  }
+
   window.addEventListener(noraSettingsEvent, (event) => {
     const detail = (event as CustomEvent<{ videoEdgeLongPressTo2x?: boolean }>).detail
     enabled = Boolean(detail?.videoEdgeLongPressTo2x)
@@ -250,6 +299,7 @@ function runVideoLongPressScript() {
   document.addEventListener('touchend', onTouchEnd, true)
   document.addEventListener('touchcancel', onTouchCancel, true)
   document.addEventListener('click', onClick, true)
+  document.addEventListener('pause', onPause, true)
   document.addEventListener(
     'contextmenu',
     (event) => {

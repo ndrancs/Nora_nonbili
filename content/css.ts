@@ -103,6 +103,8 @@ const styles: Record<string, (settings: any) => string> = {
   `,
 
   x: (settings) => css`
+    /* Subscribe */
+    a[href="/i/premium_sign_up"],
     /* Upgrade */
     [data-testid='super-upsell-UpsellButtonRenderProperties'] {
       display: none !important;
