@@ -20,7 +20,10 @@ function formatTimestamp(timestamp?: number) {
   }
 }
 
-export const BlocklistSection: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false }) => {
+export const BlocklistSection: React.FC<{ hideTitle?: boolean; hideRefreshAction?: boolean }> = ({
+  hideTitle = false,
+  hideRefreshAction = false,
+}) => {
   const blocklist = useValue(blocklist$)
 
   if (!supportsRuntimeBlocklist()) {
@@ -66,8 +69,8 @@ export const BlocklistSection: React.FC<{ hideTitle?: boolean }> = ({ hideTitle 
       {blocklist.lastError ? <NouText className="text-sm text-red-400 mt-2">{blocklist.lastError}</NouText> : null}
       {
         <>
-          <View className="items-end mt-1">
-            {blocklist.enabled ? (
+          <View className="items-end">
+            {blocklist.enabled && !hideRefreshAction ? (
               <NouButton
                 size="1"
                 variant="outline"

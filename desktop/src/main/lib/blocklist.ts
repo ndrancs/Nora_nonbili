@@ -2,10 +2,11 @@ import fs from 'fs/promises'
 import path from 'path'
 import { app, session } from 'electron'
 import { shouldBlockHost } from '@/lib/blocklist/parser'
-import type { BlocklistSourceId, DesktopBlocklistPayload } from '@/lib/blocklist/types'
+import type { BlocklistSourceId, DesktopBlocklistPayload, PersistedBlocklistMatcherSnapshot } from '@/lib/blocklist/types'
 
 const attachedPartitions = new Set<string>()
 const STORAGE_DIR_NAME = 'blocklist'
+const MATCHER_FILENAME = 'matcher.json'
 const SOURCE_FILENAMES: Record<BlocklistSourceId, string> = {
   easylist: 'easylist.txt',
   easyprivacy: 'easyprivacy.txt',
@@ -28,6 +29,10 @@ function getBlocklistDirPath() {
 
 function getBlocklistSourcePath(id: BlocklistSourceId) {
   return path.join(getBlocklistDirPath(), SOURCE_FILENAMES[id])
+}
+
+function getBlocklistMatcherPath() {
+  return path.join(getBlocklistDirPath(), MATCHER_FILENAME)
 }
 
 function shouldCancel(url: string, resourceType: string) {
@@ -69,8 +74,28 @@ export async function writeDesktopBlocklistSource(id: BlocklistSourceId, body: s
   await fs.writeFile(getBlocklistSourcePath(id), body, 'utf8')
 }
 
+export async function readDesktopBlocklistMatcherSnapshot() {
+  try {
+    return await fs.readFile(getBlocklistMatcherPath(), 'utf8')
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+      return null
+    }
+    throw error
+  }
+}
+
+export async function writeDesktopBlocklistMatcherSnapshot(snapshot: PersistedBlocklistMatcherSnapshot) {
+  await fs.mkdir(getBlocklistDirPath(), { recursive: true })
+  await fs.writeFile(getBlocklistMatcherPath(), JSON.stringify(snapshot), 'utf8')
+}
+
 export async function deleteDesktopBlocklistSources(ids: BlocklistSourceId[]) {
   await Promise.all(ids.map((id) => fs.rm(getBlocklistSourcePath(id), { force: true })))
+}
+
+export async function deleteDesktopBlocklistMatcherSnapshot() {
+  await fs.rm(getBlocklistMatcherPath(), { force: true })
 }
 
 export async function hasDesktopBlocklistSourceFiles(ids: BlocklistSourceId[]) {

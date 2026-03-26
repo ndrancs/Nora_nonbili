@@ -2,10 +2,13 @@ import { openDownloadWindow } from 'main/lib/download-window.js'
 import { MAIN_CHANNEL } from './constants.js'
 import { ipcMain, session } from 'electron'
 import {
+  deleteDesktopBlocklistMatcherSnapshot,
   deleteDesktopBlocklistSources,
   hasDesktopBlocklistSourceFiles,
+  readDesktopBlocklistMatcherSnapshot,
   readDesktopBlocklistSource,
   setDesktopBlocklist,
+  writeDesktopBlocklistMatcherSnapshot,
   writeDesktopBlocklistSource,
 } from '../lib/blocklist.js'
 
@@ -34,10 +37,13 @@ const interfaces = {
   downloadVideo: (url: string) => {
     openDownloadWindow(url)
   },
+  deleteBlocklistMatcherSnapshot: deleteDesktopBlocklistMatcherSnapshot,
   deleteBlocklistSources: deleteDesktopBlocklistSources,
   hasBlocklistSourceFiles: hasDesktopBlocklistSourceFiles,
+  readBlocklistMatcherSnapshot: readDesktopBlocklistMatcherSnapshot,
   readBlocklistSource: readDesktopBlocklistSource,
   writeBlocklistSource: writeDesktopBlocklistSource,
+  writeBlocklistMatcherSnapshot: writeDesktopBlocklistMatcherSnapshot,
   setBlocklist: setDesktopBlocklist,
 }
 

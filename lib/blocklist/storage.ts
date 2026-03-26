@@ -1,9 +1,10 @@
 import { Directory, File, Paths } from 'expo-file-system'
 import { isWeb } from '@/lib/utils'
-import type { BlocklistSourceId } from './types'
+import type { BlocklistSourceId, PersistedBlocklistMatcherSnapshot } from './types'
 
 const MAIN_CHANNEL = 'channel:main'
 const STORAGE_DIR_NAME = 'blocklist'
+const MATCHER_FILENAME = 'matcher.json'
 const SOURCE_FILENAMES: Record<BlocklistSourceId, string> = {
   easylist: 'easylist.txt',
   easyprivacy: 'easyprivacy.txt',
@@ -40,6 +41,40 @@ function getNativeBlocklistFile(id: BlocklistSourceId) {
   return new File(getNativeBlocklistFileUri(id))
 }
 
+function getNativeMatcherFileUri() {
+  return `${getNativeBlocklistDirUri()}/${MATCHER_FILENAME}`
+}
+
+function getNativeMatcherFile() {
+  return new File(getNativeMatcherFileUri())
+}
+
+function parsePersistedMatcherSnapshot(raw: string | null | undefined): PersistedBlocklistMatcherSnapshot | null {
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<PersistedBlocklistMatcherSnapshot>
+    if (typeof parsed?.revision !== 'number') {
+      return null
+    }
+    if (!Array.isArray(parsed.blockedHosts) || !parsed.blockedHosts.every((host) => typeof host === 'string')) {
+      return null
+    }
+    if (!Array.isArray(parsed.allowedHosts) || !parsed.allowedHosts.every((host) => typeof host === 'string')) {
+      return null
+    }
+    return {
+      revision: parsed.revision,
+      blockedHosts: parsed.blockedHosts,
+      allowedHosts: parsed.allowedHosts,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function readBlocklistSourceFile(id: BlocklistSourceId) {
   if (hasElectron()) {
     return window.electron.ipcRenderer.invoke(MAIN_CHANNEL, 'readBlocklistSource', id)
@@ -50,6 +85,19 @@ export async function readBlocklistSourceFile(id: BlocklistSourceId) {
     return null
   }
   return file.text()
+}
+
+export async function readBlocklistMatcherSnapshot() {
+  if (hasElectron()) {
+    const raw = await window.electron.ipcRenderer.invoke(MAIN_CHANNEL, 'readBlocklistMatcherSnapshot')
+    return parsePersistedMatcherSnapshot(raw)
+  }
+
+  const file = getNativeMatcherFile()
+  if (!file.exists) {
+    return null
+  }
+  return parsePersistedMatcherSnapshot(await file.text())
 }
 
 export async function writeBlocklistSourceFile(id: BlocklistSourceId, body: string) {
@@ -69,6 +117,23 @@ export async function writeBlocklistSourceFile(id: BlocklistSourceId, body: stri
   file.write(body)
 }
 
+export async function writeBlocklistMatcherSnapshot(snapshot: PersistedBlocklistMatcherSnapshot) {
+  if (hasElectron()) {
+    return window.electron.ipcRenderer.invoke(MAIN_CHANNEL, 'writeBlocklistMatcherSnapshot', snapshot)
+  }
+
+  const dir = getNativeBlocklistDir()
+  if (!dir.exists) {
+    dir.create({ idempotent: true, intermediates: true })
+  }
+
+  const file = getNativeMatcherFile()
+  if (!file.exists) {
+    file.create({ overwrite: true, intermediates: true })
+  }
+  file.write(JSON.stringify(snapshot))
+}
+
 export async function deleteBlocklistSourceFiles(ids: readonly BlocklistSourceId[]) {
   if (hasElectron()) {
     return window.electron.ipcRenderer.invoke(MAIN_CHANNEL, 'deleteBlocklistSources', ids)
@@ -80,6 +145,17 @@ export async function deleteBlocklistSourceFiles(ids: readonly BlocklistSourceId
       file.delete()
     }
   })
+}
+
+export async function deleteBlocklistMatcherSnapshot() {
+  if (hasElectron()) {
+    return window.electron.ipcRenderer.invoke(MAIN_CHANNEL, 'deleteBlocklistMatcherSnapshot')
+  }
+
+  const file = getNativeMatcherFile()
+  if (file.exists) {
+    file.delete()
+  }
 }
 
 export async function hasBlocklistSourceFiles(ids: readonly BlocklistSourceId[]) {

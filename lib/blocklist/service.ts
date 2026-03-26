@@ -7,9 +7,12 @@ import { mergeFilterLists, mergeFilterListsAsync } from './parser'
 import { shouldAutoRefresh } from './policy'
 import { createWorkletRuntime, runOnRuntime, type WorkletRuntime } from 'react-native-worklets'
 import {
+  deleteBlocklistMatcherSnapshot,
   deleteBlocklistSourceFiles,
   hasBlocklistSourceFiles,
+  readBlocklistMatcherSnapshot,
   readBlocklistSourceFile,
+  writeBlocklistMatcherSnapshot,
   writeBlocklistSourceFile,
 } from './storage'
 import {
@@ -105,12 +108,59 @@ function setPayloadCache(matcherData: BlocklistMatcherData) {
   }
 }
 
+function coerceStringArray(value: unknown): string[] | null {
+  if (Array.isArray(value)) {
+    return value.every((item) => typeof item === 'string') ? value : null
+  }
+
+  if (value && typeof value === 'object') {
+    if ('length' in value) {
+      const length = Number((value as { length?: unknown }).length)
+      if (!Number.isInteger(length) || length < 0) {
+        return null
+      }
+
+      const result: string[] = []
+      for (let index = 0; index < length; index += 1) {
+        const item = (value as Record<number, unknown>)[index]
+        if (typeof item !== 'string') {
+          return null
+        }
+        result.push(item)
+      }
+      return result
+    }
+
+    const keys = Object.keys(value)
+    if (!keys.length) {
+      return []
+    }
+    if (!keys.every((key) => /^\d+$/.test(key))) {
+      return null
+    }
+
+    const result: string[] = []
+    for (const key of keys.sort((a, b) => Number(a) - Number(b))) {
+      const item = (value as Record<string, unknown>)[key]
+      if (typeof item !== 'string') {
+        return null
+      }
+      result.push(item)
+    }
+    return result
+  }
+
+  return null
+}
+
 async function mergeFilterListsInBackground(bodies: string[]): Promise<{ blockedHosts: string[]; allowedHosts: string[] }> {
   if (workletRuntime) {
     try {
       const result = await runOnRuntime(workletRuntime, mergeFilterLists)(bodies)
-      if (result && Array.isArray(result.blockedHosts) && Array.isArray(result.allowedHosts)) {
-        return result
+      const blockedHosts = coerceStringArray(result?.blockedHosts)
+      const allowedHosts = coerceStringArray(result?.allowedHosts)
+      if (blockedHosts && allowedHosts) {
+        return { blockedHosts, allowedHosts }
       }
       console.warn('[blocklist] Invalid worklet merge result, falling back to async parser')
     } catch (error) {
@@ -118,6 +168,14 @@ async function mergeFilterListsInBackground(bodies: string[]): Promise<{ blocked
     }
   }
   return mergeFilterListsAsync(bodies)
+}
+
+function toPersistedMatcherSnapshot(matcherData: BlocklistMatcherData) {
+  return {
+    revision: matcherData.revision,
+    blockedHosts: matcherData.blockedHosts,
+    allowedHosts: matcherData.allowedHosts,
+  }
 }
 
 async function readMergedPayloadFromFiles(revision: number): Promise<BlocklistMatcherData | null> {
@@ -149,11 +207,24 @@ async function getPersistedMatcherData(revision: number) {
     return payloadCache.matcherData
   }
 
+  const persistedSnapshot = await readBlocklistMatcherSnapshot()
+  if (persistedSnapshot?.revision === revision) {
+    const matcherData = {
+      enabled: true,
+      blockedHosts: persistedSnapshot.blockedHosts,
+      allowedHosts: persistedSnapshot.allowedHosts,
+      revision,
+    } satisfies BlocklistMatcherData
+    setPayloadCache(matcherData)
+    return matcherData
+  }
+
   const matcherData = await readMergedPayloadFromFiles(revision)
   if (!matcherData) {
     return null
   }
 
+  await writeBlocklistMatcherSnapshot(toPersistedMatcherSnapshot(matcherData))
   setPayloadCache(matcherData)
   return matcherData
 }
@@ -332,19 +403,19 @@ export async function refreshBlocklist({ manual = false } = {}) {
       revision: payloadRevision,
     } satisfies BlocklistMatcherData
   })()
-  try {
-    await Promise.all(writes)
-  } catch (error) {
-    blocklist$.assign({
-      phase: 'error',
-      lastError: error instanceof Error ? error.message : String(error),
-    })
-    return false
-  }
   if (!nextMatcherData) {
     blocklist$.assign({
       phase: 'error',
       lastError: 'Blocklist source files are missing or invalid',
+    })
+    return false
+  }
+  try {
+    await Promise.all([...writes, writeBlocklistMatcherSnapshot(toPersistedMatcherSnapshot(nextMatcherData))])
+  } catch (error) {
+    blocklist$.assign({
+      phase: 'error',
+      lastError: error instanceof Error ? error.message : String(error),
     })
     return false
   }
@@ -386,6 +457,7 @@ export async function resetBlocklist() {
   }
 
   await deleteBlocklistSourceFiles(BLOCKLIST_SOURCE_IDS)
+  await deleteBlocklistMatcherSnapshot()
   payloadCache = undefined
 
   const sources = BLOCKLIST_SOURCE_IDS.reduce(

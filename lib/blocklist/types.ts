@@ -35,6 +35,12 @@ export interface BlocklistMatcherData {
   revision: number
 }
 
+export interface PersistedBlocklistMatcherSnapshot {
+  revision: number
+  blockedHosts: string[]
+  allowedHosts: string[]
+}
+
 export interface BlocklistPayload {
   enabled: boolean
   blockedHosts: string
