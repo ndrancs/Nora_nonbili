@@ -38,7 +38,7 @@ export const BlocklistSection: React.FC<{ hideTitle?: boolean; hideRefreshAction
     ? t('blocklist.lastUpdated', { value: lastUpdated, interpolation: { escapeValue: false } })
     : null
   const initialFetchText = blocklist.enabled && !hasSnapshot && loading ? t('blocklist.statusFetching') : null
-  const showRefreshAction = !hideRefreshAction && (shouldAutoRefresh(blocklist) || blocklist.lastError)
+  const showRefreshAction = !hideRefreshAction
   const updateBlocklist = async (showSuccessToast = false) => {
     const refreshed = await refreshBlocklist({ manual: true })
     if (refreshed && showSuccessToast) {
@@ -66,14 +66,12 @@ export const BlocklistSection: React.FC<{ hideTitle?: boolean; hideRefreshAction
         value={blocklist.enabled}
         onPress={onToggle}
       />
-      <NouText className={clsx('text-sm text-gray-400', showRefreshAction ? 'mb-4' : 'mb-1')}>
-        {t('blocklist.description')}
-      </NouText>
+      <NouText className="text-sm text-gray-400 mb-4">{t('blocklist.description')}</NouText>
       {initialFetchText ? <NouText className="text-sm text-gray-400 mb-3">{initialFetchText}</NouText> : null}
       {blocklist.lastError ? <NouText className="text-sm text-red-400 mt-2">{blocklist.lastError}</NouText> : null}
       {
         <>
-          <View className={clsx('items-end', showRefreshAction && 'gap-y-1')}>
+          <View className="items-end">
             {blocklist.enabled && showRefreshAction ? (
               <NouButton
                 size="1"
@@ -86,7 +84,7 @@ export const BlocklistSection: React.FC<{ hideTitle?: boolean; hideRefreshAction
               </NouButton>
             ) : null}
             {blocklist.enabled && lastUpdatedText ? (
-              <NouText className="text-sm text-gray-400 text-right">{lastUpdatedText}</NouText>
+              <NouText className="text-sm text-gray-400 mt-1 text-right">{lastUpdatedText}</NouText>
             ) : null}
           </View>
         </>

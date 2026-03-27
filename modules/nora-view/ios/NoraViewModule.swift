@@ -73,7 +73,7 @@ public class NoraViewModule: Module {
       NouController.shared.setBlocklist(blocklist)
     }
 
-    AsyncFunction("reloadBlocklistFromDisk") { (enabled: Bool, revision: Int) in
+    AsyncFunction("reloadBlocklistFromDisk") { (enabled: Bool, revision: Int) -> Bool in
       NouController.shared.reloadBlocklistFromDisk(enabled: enabled, revision: revision)
     }
 

@@ -3,7 +3,7 @@ import { NativeModule, requireNativeModule } from 'expo'
 declare class NoraViewModule extends NativeModule {
   clearProfileData(profile: string): Promise<void>
   openExternalUrl(url: string): Promise<boolean>
-  reloadBlocklistFromDisk?(enabled: boolean, revision: number): Promise<void>
+  reloadBlocklistFromDisk?(enabled: boolean, revision: number): Promise<boolean>
   reloadBlocklistFromSourceFiles?(enabled: boolean, revision: number): Promise<boolean>
 }
 

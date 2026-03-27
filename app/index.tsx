@@ -140,7 +140,8 @@ export default function HomeScreen() {
     syncNativeSettings()
   })
 
-  useObserveEffect(blocklist$, () => {
+  useObserveEffect(() => {
+    const { enabled, hasSnapshot, revision } = blocklist$.get()
     void applyBlocklist()
   })
 

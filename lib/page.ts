@@ -2,7 +2,9 @@ import { tabs$ } from '@/states/tabs'
 import { removeTrackingParams } from './url'
 import { onReceiveAuthUrl } from './supabase/auth'
 import NoraViewModule from '@/modules/nora-view'
+import { isAuthCallbackUrl } from './auth-callback'
 export { removeTrackingParams } from './url'
+export { isAuthCallbackUrl } from './auth-callback'
 
 export const homeUrls: Record<string, string> = {
   bluesky: 'https://bsky.app',
@@ -35,9 +37,9 @@ const isExternalAppUrl = (url: string) => {
   }
 }
 
-export function openSharedUrl(url: string, replace = false) {
-  if (url.startsWith('nora:auth')) {
-    onReceiveAuthUrl(url)
+export async function openSharedUrl(url: string, replace = false) {
+  if (isAuthCallbackUrl(url)) {
+    await onReceiveAuthUrl(url)
     return
   }
   if (isExternalAppUrl(url)) {

@@ -139,21 +139,20 @@ class NouController {
     }
   }
 
-  func reloadBlocklistFromDisk(enabled: Bool, revision: Int) {
+  func reloadBlocklistFromDisk(enabled: Bool, revision: Int) -> Bool {
     guard enabled else {
       setBlocklist(NoraBlocklist())
-      return
+      return true
     }
 
     guard let snapshot = readPersistedBlocklistSnapshot() else {
-      log("blocklist snapshot is missing")
       clearBlocklist()
-      return
+      return false
     }
     guard snapshot.revision == revision else {
       log("blocklist snapshot revision mismatch")
       clearBlocklist()
-      return
+      return false
     }
 
     setBlocklist(
@@ -164,6 +163,7 @@ class NouController {
         revision: snapshot.revision
       )
     )
+    return true
   }
 
   func reloadBlocklistFromSourceFiles(enabled: Bool, revision: Int) -> Bool {
@@ -216,13 +216,17 @@ class NouController {
   }
 
   private func readPersistedBlocklistSnapshot() -> PersistedBlocklistMatcherSnapshot? {
+    guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+      return nil
+    }
+    let fileURL = documentDirectory
+      .appendingPathComponent(blocklistStorageDirectory, isDirectory: true)
+      .appendingPathComponent(blocklistMatcherFilename, isDirectory: false)
+    guard FileManager.default.fileExists(atPath: fileURL.path) else {
+      return nil
+    }
+
     do {
-      guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-        return nil
-      }
-      let fileURL = documentDirectory
-        .appendingPathComponent(blocklistStorageDirectory, isDirectory: true)
-        .appendingPathComponent(blocklistMatcherFilename, isDirectory: false)
       let data = try Data(contentsOf: fileURL)
       return try JSONDecoder().decode(PersistedBlocklistMatcherSnapshot.self, from: data)
     } catch {

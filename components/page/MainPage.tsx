@@ -46,19 +46,6 @@ export const MainPage: React.FC<{ contentJs: string }> = ({ contentJs }) => {
     }
   }, [locales[0]])
 
-  useEffect(() => {
-    supabaseAuth.onAuthStateChange((event, session) => {
-      // console.log('onAuthStateChange', event, session)
-      auth$.assign({
-        loaded: true,
-        userId: session?.user.id,
-        userEmail: session?.user.email,
-        user: session?.user.user_metadata,
-        accessToken: session?.access_token,
-      })
-    })
-  }, [])
-
   return (
     <ContentJsContext.Provider value={contentJs}>
       <QueryClientProvider client={queryClient}>

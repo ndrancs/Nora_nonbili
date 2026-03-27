@@ -373,7 +373,7 @@ export async function refreshBlocklist({ manual = false } = {}) {
     return false
   }
 
-  const previousSnapshot = isIos ? null : current.hasSnapshot ? await readBlocklistMatcherSnapshot() : null
+  const previousSnapshot = current.hasSnapshot ? await readBlocklistMatcherSnapshot() : null
 
   blocklist$.assign({
     phase: 'fetching',
@@ -419,18 +419,27 @@ export async function refreshBlocklist({ manual = false } = {}) {
       }
 
       const payloadRevision = current.revision + 1
-      const hostsChanged = settled.some((result) => result.status === 'fulfilled' && result.value.status !== 304)
-      const nextRevision = hostsChanged ? payloadRevision : current.revision
 
       if (isIos && typeof NoraViewModule.reloadBlocklistFromSourceFiles === 'function') {
-        await Promise.all(writes)
+        const nextSnapshot = await mergeFilterListsInBackground(sourceBodies, payloadRevision)
+        if (!nextSnapshot || (!nextSnapshot.blockedHosts && !nextSnapshot.allowedHosts)) {
+          throw new Error('Blocklist source files are missing or invalid')
+        }
+
+        await Promise.all([...writes, writeBlocklistMatcherSnapshot(nextSnapshot)])
 
         const reloaded = await NoraViewModule.reloadBlocklistFromSourceFiles(current.enabled, payloadRevision)
         if (!reloaded) {
           throw new Error('Blocklist source files are missing or invalid')
         }
 
-        lastAppliedRevision = nextRevision
+        const snapshotChanged =
+          nextSnapshot.blockedHosts !== (previousSnapshot?.blockedHosts || '') ||
+          nextSnapshot.allowedHosts !== (previousSnapshot?.allowedHosts || '')
+        const nextMatcherData = toMatcherData(nextSnapshot)
+        setPayloadCache(nextMatcherData)
+
+        lastAppliedRevision = snapshotChanged ? payloadRevision : current.revision
         lastAppliedEnabled = current.enabled
 
         blocklist$.assign({
@@ -438,9 +447,16 @@ export async function refreshBlocklist({ manual = false } = {}) {
           hasSnapshot: true,
           lastUpdatedAt: now,
           lastError: undefined,
-          revision: nextRevision,
+          revision: snapshotChanged ? payloadRevision : current.revision,
           sources: nextSources,
         })
+
+        if (!snapshotChanged && current.revision !== nextSnapshot.revision) {
+          setPayloadCache({
+            ...nextMatcherData,
+            revision: current.revision,
+          })
+        }
         return true
       }
 

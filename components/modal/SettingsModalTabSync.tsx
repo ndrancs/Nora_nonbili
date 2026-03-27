@@ -30,9 +30,9 @@ const SettingsBadge: React.FC<{ label: string }> = ({ label }) => {
 }
 
 export const SettingsModalTabSync = () => {
-  const { user, userEmail, plan } = use$(auth$)
+  const { user, userEmail, plan, userId } = use$(auth$)
   const { me, refetchMe } = useMe()
-  const syncHint = user && !plan ? t('sync.upgradeHint') : t('sync.hint')
+  const syncHint = userId && (!plan || plan === 'free') ? t('sync.upgradeHint') : t('sync.hint')
   const [loadingProduct, setLoadingProduct] = useState(isIos)
   const [productPrice, setProductPrice] = useState<string>()
   const [actionError, setActionError] = useState<string>()
@@ -160,7 +160,7 @@ export const SettingsModalTabSync = () => {
     { label: t('menus.signOut'), handler: signOut },
   ]
 
-  if (!user) {
+  if (!userId) {
     return (
       <View className="gap-6">
         <View>
@@ -193,11 +193,11 @@ export const SettingsModalTabSync = () => {
           <View className="flex-row items-center gap-3 px-4 py-4">
             <Image
               style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: '#18181b' }}
-              source={user.picture}
+              source={user?.picture}
               contentFit="cover"
             />
             <View className="flex-1">
-              <NouText className="font-medium">{userEmail || user.email}</NouText>
+              <NouText className="font-medium">{userEmail || user?.email || 'Nora User'}</NouText>
               <NouText className="mt-1 text-sm text-zinc-400">
                 {t('sync.currentPlan')}: {planLabel}
               </NouText>
@@ -230,13 +230,8 @@ export const SettingsModalTabSync = () => {
             ) : null}
             {isIos ? (
               <View className="mt-5 gap-3">
-                <NouText className="text-sm text-zinc-400">
-                  {productPrice
-                    ? `${t('sync.buy')}: ${productPrice}`
-                    : loadingProduct
-                      ? t('sync.priceLoading')
-                      : t('sync.productUnavailable')}
-                </NouText>
+                {loadingProduct ? <NouText className="text-sm text-zinc-400">{t('sync.priceLoading')}</NouText> : null}
+                {!loadingProduct && !productPrice ? <NouText className="text-sm text-zinc-400">{t('sync.productUnavailable')}</NouText> : null}
                 {me?.source === 'app_store' && me?.plan === 'sync' ? (
                   busyAction === 'manage' || busyAction === 'restore' ? (
                     <NouText className="text-sm text-zinc-400">
