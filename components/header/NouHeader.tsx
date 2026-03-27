@@ -214,6 +214,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
                           label: t('menus.desktop'),
                           icon: <MaterialIcons name="desktop-windows" size={18} color={colors.icon} />,
                           systemImage: 'desktopcomputer',
+                          metaLabel: currentTab?.desktopMode ? t('common.on') : t('common.off'),
                           meta: (
                             <View
                               className={clsx(
@@ -229,7 +230,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
                                   currentTab?.desktopMode ? 'text-indigo-200' : 'text-zinc-400',
                                 )}
                               >
-                                {currentTab?.desktopMode ? t('menus.desktopOn') : t('menus.desktopOff')}
+                                {currentTab?.desktopMode ? t('common.on') : t('common.off')}
                               </Text>
                             </View>
                           ),

@@ -10,6 +10,7 @@ export interface Item {
   description?: string
   kind?: 'item' | 'label' | 'separator'
   meta?: ReactNode
+  metaLabel?: string
 }
 
 export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigger, items }) => {
@@ -43,7 +44,7 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
             <div className="truncate text-[13px] leading-[20px]">{item.label}</div>
             {item.description ? <div className="truncate text-xs text-zinc-500">{item.description}</div> : null}
           </div>
-          {item.meta ? <div className="shrink-0">{item.meta}</div> : null}
+          {item.meta ? <div className="shrink-0">{item.meta}</div> : item.metaLabel ? <div className="shrink-0 text-xs text-zinc-500">{item.metaLabel}</div> : null}
         </div>
       </DropdownMenu.Item>
     )

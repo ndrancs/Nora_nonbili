@@ -23,12 +23,11 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
       .map((item, itemIndex) => (
         <Button
           key={`${groupIndex}-${itemIndex}`}
-          color={colors.text}
           disabled={item.disabled}
           onPress={item.handler}
           systemImage={item.systemImage as any}
         >
-          {item.label}
+          {item.metaLabel ? `${item.label} (${item.metaLabel})` : item.label}
         </Button>
       ))
 
@@ -54,7 +53,7 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
         <ContextMenu.Items>{menuItems}</ContextMenu.Items>
         <ContextMenu.Trigger>
           {typeof trigger === 'string' ? (
-            <Button variant="borderless" color={colors.icon} systemImage={trigger as any} modifiers={[frame({ width: 44, height: 44 })]} />
+            <Button variant="borderless" color={colors.text} systemImage={trigger as any} modifiers={[frame({ width: 44, height: 44 })]} />
           ) : (
             trigger
           )}

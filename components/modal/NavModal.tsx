@@ -2,15 +2,15 @@ import { ui$ } from '@/states/ui'
 import { useValue } from '@legendapp/state/react'
 import { BaseModal } from './BaseModal'
 import { services } from '../service/Services'
-import { View, Text, Pressable, ScrollView, TouchableHighlight, TextInput } from 'react-native'
-import { clsx, nIf } from '@/lib/utils'
+import { View, Text, Pressable, ScrollView, TouchableHighlight, TextInput, Modal, useWindowDimensions } from 'react-native'
+import { clsx, isIos, nIf } from '@/lib/utils'
 import { getHomeUrl } from '@/lib/page'
 import { settings$ } from '@/states/settings'
 import { tabs$ } from '@/states/tabs'
 import { bookmarks$ } from '@/states/bookmarks'
 import { Image } from 'expo-image'
 import { t } from 'i18next'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { NouMenu } from '../menu/NouMenu'
 import {
@@ -20,9 +20,11 @@ import {
   resolveUrlInput,
 } from '@/lib/search'
 import { SearchProviderIcon } from '../service/SearchProviderIcon'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const cls = 'flex-row items-center gap-2 rounded-full bg-sky-50 w-40 py-2 px-3 overflow-hidden'
 const inputCls = 'flex-1 pl-3 pr-1 py-3 text-white'
+type Anchor = { x: number; y: number; width: number; height: number }
 
 interface NavModalContentProps {
   index?: number
@@ -46,10 +48,22 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
   const selectedSearchProviderId = useValue(settings$.selectedSearchProviderId)
   const currentTab = useValue(tabs$.tabs[index])
   const [input, setInput] = useState('')
+  const [providerPickerOpen, setProviderPickerOpen] = useState(false)
+  const [providerAnchor, setProviderAnchor] = useState<Anchor | null>(null)
+  const providerTriggerRef = useRef<View>(null)
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions()
+  const insets = useSafeAreaInsets()
   const selectedProfile = profileId || currentTab?.profile || 'default'
   const enabledSearchProviders = getEnabledSearchProviders(enabledSearchProviderIds, customSearchProviders)
   const selectedSearchProvider =
     getResolvedSearchProvider(selectedSearchProviderId, customSearchProviders) || enabledSearchProviders[0]
+
+  const openProviderPicker = () => {
+    providerTriggerRef.current?.measureInWindow((x, y, width, height) => {
+      setProviderAnchor({ x, y, width, height })
+      setProviderPickerOpen(true)
+    })
+  }
 
   const onPress = (url: string) => {
     if (onOpenUrl) {
@@ -121,20 +135,31 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
         className="flex-1"
         contentContainerClassName={clsx('pb-16 flex-grow', oneHandMode ? 'justify-end pt-[40vh]' : 'justify-center')}
       >
-        <View className="mb-8 px-4">
+        <View className="mb-8 w-full max-w-2xl self-center px-4">
           <View className="flex-row items-center overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900">
-            <NouMenu
-              trigger={
-                <View className="h-[52px] w-[48px] items-center justify-center border-r border-zinc-800 bg-zinc-900">
+            {isIos ? (
+              <View ref={providerTriggerRef} collapsable={false}>
+                <Pressable
+                  onPress={openProviderPicker}
+                  className="h-[52px] w-[48px] items-center justify-center border-r border-zinc-800 bg-zinc-900"
+                >
                   {selectedSearchProvider ? <SearchProviderIcon provider={selectedSearchProvider} size={22} /> : null}
-                </View>
-              }
-              items={enabledSearchProviders.map((provider) => ({
-                label: provider.name,
-                handler: () => settings$.setSelectedSearchProvider(provider.id),
-                icon: <SearchProviderIcon provider={provider} />,
-              }))}
-            />
+                </Pressable>
+              </View>
+            ) : (
+              <NouMenu
+                trigger={
+                  <View className="h-[52px] w-[48px] items-center justify-center border-r border-zinc-800 bg-zinc-900">
+                    {selectedSearchProvider ? <SearchProviderIcon provider={selectedSearchProvider} size={22} /> : null}
+                  </View>
+                }
+                items={enabledSearchProviders.map((provider) => ({
+                  label: provider.name,
+                  handler: () => settings$.setSelectedSearchProvider(provider.id),
+                  icon: <SearchProviderIcon provider={provider} />,
+                }))}
+              />
+            )}
             <TextInput
               className={inputCls}
               value={input}
@@ -160,7 +185,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
             </Pressable>
           </View>
         </View>
-        <View className="flex-row flex-wrap justify-center gap-x-6 gap-y-7">
+        <View className="mt-6 lg:mt-10 flex-row flex-wrap justify-center gap-x-6 gap-y-7">
           {Object.entries(services).map(([value, [label, icon]]) =>
             nIf(
               !disabledServices.includes(value),
@@ -186,6 +211,50 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
           ))}
         </View>
       </ScrollView>
+      {isIos && providerPickerOpen && providerAnchor ? (
+        <Modal transparent visible onRequestClose={() => setProviderPickerOpen(false)}>
+          <View className="flex-1" pointerEvents="box-none">
+            <Pressable className="absolute inset-0" onPress={() => setProviderPickerOpen(false)} />
+            <View
+              className="absolute overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+              style={{
+                top: Math.min(
+                  providerAnchor.y + providerAnchor.height + 6,
+                  screenHeight - insets.bottom - Math.min(enabledSearchProviders.length * 56 + 16, 320) - 8,
+                ),
+                left: Math.min(
+                  Math.max(providerAnchor.x - 8, 8),
+                  Math.max(8, screenWidth - 240 - 8),
+                ),
+                width: 240,
+                maxHeight: 320,
+              }}
+            >
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {enabledSearchProviders.map((provider, idx) => (
+                  <Pressable
+                    key={provider.id}
+                    onPress={() => {
+                      settings$.setSelectedSearchProvider(provider.id)
+                      setProviderPickerOpen(false)
+                    }}
+                    className={clsx(
+                      'flex-row items-center gap-3 px-4 py-3 active:bg-zinc-800',
+                      idx !== enabledSearchProviders.length - 1 && 'border-b border-zinc-800',
+                    )}
+                  >
+                    <SearchProviderIcon provider={provider} size={20} />
+                    <Text className="flex-1 text-sm text-white">{provider.name}</Text>
+                    {selectedSearchProvider?.id === provider.id ? (
+                      <MaterialIcons name="check" size={18} color="#f1f5f9" />
+                    ) : null}
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </View>
   )
 }

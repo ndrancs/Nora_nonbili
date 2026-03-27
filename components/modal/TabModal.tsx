@@ -2,7 +2,7 @@ import { ui$ } from '@/states/ui'
 import { useValue } from '@legendapp/state/react'
 import { BaseModal } from './BaseModal'
 import { ServiceIcon } from '../service/Services'
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Pressable, Modal, useWindowDimensions } from 'react-native'
 import { clsx, isWeb, isIos, nIf } from '@/lib/utils'
 import { settings$ } from '@/states/settings'
 import { Tab, tabs$ } from '@/states/tabs'
@@ -12,13 +12,21 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { t } from 'i18next'
 import { colors } from '@/lib/colors'
 import { getProfileColor } from '@/lib/profile'
+import { useRef, useState } from 'react'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const getTabLabel = (tab?: Pick<Tab, 'title' | 'url'> | null) => tab?.title || tab?.url || t('tabs.new')
+type Anchor = { x: number; y: number; width: number; height: number }
 
 export const TabModal = () => {
   const tabModalOpen = useValue(ui$.tabModalOpen)
   const oneHandMode = useValue(settings$.oneHandMode)
   const { tabs, activeTabIndex, recentlyClosedTabs } = useValue(tabs$)
+  const [iosMenuOpen, setIosMenuOpen] = useState(false)
+  const [iosMenuAnchor, setIosMenuAnchor] = useState<Anchor | null>(null)
+  const iosMenuTriggerRef = useRef<View>(null)
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions()
+  const insets = useSafeAreaInsets()
 
   if (!tabModalOpen) {
     return null
@@ -30,13 +38,18 @@ export const TabModal = () => {
   }
 
   const closeModal = () => ui$.tabModalOpen.set(false)
+  const openIosMenu = () => {
+    iosMenuTriggerRef.current?.measureInWindow((x, y, width, height) => {
+      setIosMenuAnchor({ x, y, width, height })
+      setIosMenuOpen(true)
+    })
+  }
 
   const menuItems = [
     {
-      label: isIos
-        ? `${t('settings.oneHandMode')} (${oneHandMode ? t('common.on') : t('common.off')})`
-        : t('settings.oneHandMode'),
+      label: t('settings.oneHandMode'),
       icon: <MaterialIcons name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'} size={18} color={oneHandMode ? '#818cf8' : '#71717a'} />,
+      metaLabel: oneHandMode ? t('common.on') : t('common.off'),
       meta: isIos
         ? undefined
         : (
@@ -111,12 +124,18 @@ export const TabModal = () => {
                 {t('buttons.closeAll')}
               </NouButton>,
             )}
-            <NouMenu
-              trigger={
-                isWeb ? <MaterialIcons name="more-vert" size={20} color={colors.icon} /> : isIos ? 'ellipsis' : 'filled.MoreVert'
-              }
-              items={menuItems}
-            />
+            {isIos ? (
+              <View ref={iosMenuTriggerRef} collapsable={false}>
+                <Pressable onPress={openIosMenu} className="h-10 w-10 items-center justify-center rounded-full">
+                  <MaterialIcons name="more-horiz" size={20} color={colors.icon} />
+                </Pressable>
+              </View>
+            ) : (
+              <NouMenu
+                trigger={isWeb ? <MaterialIcons name="more-vert" size={20} color={colors.icon} /> : 'filled.MoreVert'}
+                items={menuItems}
+              />
+            )}
           </View>
         </View>
         {tabs.map((tab, index) => (
@@ -147,6 +166,79 @@ export const TabModal = () => {
           </View>
         ))}
       </ScrollView>
+      {isIos && iosMenuOpen && iosMenuAnchor ? (
+        <Modal transparent visible onRequestClose={() => setIosMenuOpen(false)}>
+          <View className="flex-1" pointerEvents="box-none">
+            <Pressable className="absolute inset-0" onPress={() => setIosMenuOpen(false)} />
+            <View
+              className="absolute overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+              style={{
+                top: Math.min(
+                  iosMenuAnchor.y + iosMenuAnchor.height + 6,
+                  screenHeight - insets.bottom - Math.min(48 + Math.max(recentlyClosedTabs.length, 1) * 56 + 24, 360) - 8,
+                ),
+                left: Math.min(
+                  Math.max(iosMenuAnchor.x + iosMenuAnchor.width - 280, 8),
+                  Math.max(8, screenWidth - 280 - 8),
+                ),
+                width: 280,
+                maxHeight: 360,
+              }}
+            >
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Pressable
+                  className="flex-row items-center gap-3 px-4 py-3 active:bg-zinc-800"
+                  onPress={() => {
+                    settings$.oneHandMode.toggle()
+                    setIosMenuOpen(false)
+                  }}
+                >
+                  <MaterialIcons
+                    name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'}
+                    size={18}
+                    color={oneHandMode ? '#818cf8' : '#a1a1aa'}
+                  />
+                  <Text className="flex-1 text-sm text-white">{t('settings.oneHandMode')}</Text>
+                  <Text className="text-xs text-zinc-400">{oneHandMode ? t('common.on') : t('common.off')}</Text>
+                </Pressable>
+                <View className="mx-3 my-1 h-px bg-zinc-800" />
+                <View className="px-4 pt-2 pb-1">
+                  <Text className="text-[11px] uppercase tracking-[1px] text-zinc-500">{t('tabs.recentlyClosed')}</Text>
+                </View>
+                {recentlyClosedTabs.length ? (
+                  recentlyClosedTabs.map((tab) => (
+                    <Pressable
+                      key={tab.id}
+                      className="flex-row items-center gap-3 px-4 py-3 active:bg-zinc-800"
+                      onPress={() => {
+                        tabs$.reopenClosedTab(tab.id)
+                        setIosMenuOpen(false)
+                        closeModal()
+                      }}
+                    >
+                      <ServiceIcon url={tab.url} icon={tab.icon} />
+                      <View className="flex-1 min-w-0">
+                        <Text className="text-sm text-white" numberOfLines={1}>
+                          {getTabLabel(tab)}
+                        </Text>
+                        {tab.title && tab.url && tab.title !== tab.url ? (
+                          <Text className="text-xs text-zinc-500" numberOfLines={1}>
+                            {tab.url}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </Pressable>
+                  ))
+                ) : (
+                  <View className="px-4 py-4">
+                    <Text className="text-sm text-zinc-500">{t('tabs.noRecentlyClosed')}</Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </BaseModal>
   )
 }
