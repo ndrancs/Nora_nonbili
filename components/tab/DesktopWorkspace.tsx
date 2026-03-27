@@ -151,7 +151,6 @@ const EmptySlot: React.FC<{
           profileId={selectedProfileId}
           onOpenUrl={createTabInSlot}
           onSelectProfile={setSelectedProfileId}
-          showOpenUrl={false}
         />
       </View>
     </div>

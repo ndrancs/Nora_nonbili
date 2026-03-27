@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TextInput } from 'react-native'
+import { View, TextInput, Pressable } from 'react-native'
 import { NouButton } from '../button/NouButton'
 import { ui$ } from '@/states/ui'
 import { ServiceManager } from '../service/Services'
@@ -19,6 +19,14 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { ProfileManager } from '../profile/ProfileManager'
 import { BlocklistSection } from '../blocklist/BlocklistSection'
 import { xHomeTimelineValues } from '@/lib/settings/twitter'
+import {
+  searchSettingsProviderIds,
+  getEnabledSearchProviders,
+  getResolvedSearchProvider,
+  isValidSearchTemplate,
+} from '@/lib/search'
+import { SearchProviderIcon } from '../service/SearchProviderIcon'
+import { showToast } from '@/lib/toast'
 
 const headerPositions = ['top', 'bottom'] as const
 const themes = [null, 'dark', 'light'] as const
@@ -27,6 +35,7 @@ const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zin
 const rowCls = 'px-4 py-4'
 const rowBorderCls = 'border-b border-zinc-800'
 const iconWrapCls = 'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950'
+const textInputCls = 'rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white'
 const xTimelineLabels: Record<(typeof xHomeTimelineValues)[number], string> = {
   'for-you': 'settings.xHomeTimeline.forYou',
   following: 'settings.xHomeTimeline.following',
@@ -335,6 +344,236 @@ export const SettingsBookmarksContent = () => {
           ))}
         </View>
       </View>
+    </View>
+  )
+}
+
+type SearchProviderDraft = {
+  id: string | null
+  name: string
+  templateUrl: string
+}
+
+const emptySearchProviderDraft: SearchProviderDraft = {
+  id: null,
+  name: '',
+  templateUrl: '',
+}
+
+export const SettingsSearchContent = () => {
+  const enabledSearchProviderIds = useValue(settings$.enabledSearchProviderIds)
+  const customSearchProviders = useValue(settings$.customSearchProviders)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [draft, setDraft] = useState<SearchProviderDraft>(emptySearchProviderDraft)
+
+  useEffect(() => {
+    if (!draft.id) {
+      return
+    }
+
+    const provider = customSearchProviders.find((item) => item.id === draft.id)
+    if (!provider) {
+      setDraft(emptySearchProviderDraft)
+      setEditorOpen(false)
+    }
+  }, [customSearchProviders, draft.id])
+
+  const saveDraft = () => {
+    const name = draft.name.trim()
+    const templateUrl = draft.templateUrl.trim()
+    const duplicateName = customSearchProviders.some(
+      (provider) => provider.id !== draft.id && provider.name.trim().toLowerCase() === name.toLowerCase(),
+    )
+
+    if (!name) {
+      showToast(t('settings.search.validation.name'))
+      return
+    }
+
+    if (duplicateName) {
+      showToast(t('settings.search.validation.duplicateName'))
+      return
+    }
+
+    if (!isValidSearchTemplate(templateUrl)) {
+      showToast(t('settings.search.validation.template'))
+      return
+    }
+
+    if (draft.id) {
+      settings$.updateCustomSearchProvider(draft.id, name, templateUrl)
+    } else {
+      settings$.addCustomSearchProvider(name, templateUrl)
+    }
+
+    setDraft(emptySearchProviderDraft)
+    setEditorOpen(false)
+  }
+
+  return (
+    <View className="pb-4">
+      <View>
+        <NouText className={subheaderCls}>{t('settings.search.builtin')}</NouText>
+        <NouText className="mb-3 px-1 text-sm leading-6 text-zinc-400">{t('settings.search.builtinHint')}</NouText>
+        <View className={surfaceCls}>
+          {searchSettingsProviderIds.map((providerId, index) => {
+            const provider = getResolvedSearchProvider(providerId, customSearchProviders)
+            if (!provider) {
+              return null
+            }
+
+            const enabled = enabledSearchProviderIds.includes(providerId)
+            return (
+              <View key={provider.id} className={clsx(rowCls, index !== searchSettingsProviderIds.length - 1 && rowBorderCls)}>
+                <View className="flex-row items-center gap-3">
+                  <SearchProviderIcon provider={provider} />
+                  <View className="flex-1">
+                    <NouSwitch
+                      label={
+                        <View className="pr-3">
+                          <NouText className="font-medium">{provider.name}</NouText>
+                          {provider.id === 'url' ? (
+                            <NouText className="mt-1 text-sm leading-5 text-zinc-400">{t('settings.search.urlHint')}</NouText>
+                          ) : null}
+                        </View>
+                      }
+                      value={enabled}
+                      disabled={provider.id === 'url'}
+                      onPress={() => settings$.toggleSearchProvider(provider.id)}
+                    />
+                  </View>
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      </View>
+
+      <View className="mt-10">
+        <View className="mb-3 flex-row items-center justify-between gap-3">
+          <NouText className={subheaderCls}>{t('settings.search.custom')}</NouText>
+          <NouButton
+            size="1"
+            variant="outline"
+            onPress={() => {
+              setDraft(emptySearchProviderDraft)
+              setEditorOpen(true)
+            }}
+          >
+            {t('settings.search.addAction')}
+          </NouButton>
+        </View>
+        <View className={surfaceCls}>
+          {!customSearchProviders.length ? (
+            <NouText className="px-4 py-4 text-sm text-gray-500">{t('settings.search.empty')}</NouText>
+          ) : null}
+          {customSearchProviders.map((provider, index) => {
+            const enabled = enabledSearchProviderIds.includes(provider.id)
+            const resolved = getResolvedSearchProvider(provider.id, customSearchProviders)
+
+            return (
+              <View
+                key={provider.id}
+                className={clsx('px-4 py-4', index !== customSearchProviders.length - 1 && 'border-b border-zinc-800')}
+              >
+                <View className="flex-row items-center gap-3">
+                  {resolved ? <SearchProviderIcon provider={resolved} /> : null}
+                  <View className="flex-1">
+                    <NouText className="font-medium">{provider.name}</NouText>
+                    <NouText className="mt-1 text-sm leading-5 text-zinc-400" numberOfLines={1}>
+                      {provider.templateUrl}
+                    </NouText>
+                  </View>
+                  <NouButton size="1" variant={enabled ? 'soft' : 'outline'} onPress={() => settings$.toggleSearchProvider(provider.id)}>
+                    {enabled ? t('common.on') : t('common.off')}
+                  </NouButton>
+                </View>
+                <View className="mt-3 flex-row flex-wrap justify-end gap-2">
+                  <NouButton
+                    size="1"
+                    variant="outline"
+                    onPress={() => {
+                      setDraft({
+                        id: provider.id,
+                        name: provider.name,
+                        templateUrl: provider.templateUrl,
+                      })
+                      setEditorOpen(true)
+                    }}
+                  >
+                    {t('common.edit')}
+                  </NouButton>
+                  <NouButton size="1" variant="outline" onPress={() => settings$.deleteCustomSearchProvider(provider.id)}>
+                    {t('menus.delete')}
+                  </NouButton>
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      </View>
+
+      {editorOpen ? (
+        <View className="mt-10">
+        <View className="mb-3 flex-row items-center justify-between gap-3">
+          <NouText className={subheaderCls}>{draft.id ? t('settings.search.editTitle') : t('settings.search.addTitle')}</NouText>
+          <Pressable
+            onPress={() => {
+              setDraft(emptySearchProviderDraft)
+              setEditorOpen(false)
+            }}
+          >
+              <NouText className="text-sm text-zinc-400">{t('buttons.cancel')}</NouText>
+          </Pressable>
+        </View>
+        <View className={surfaceCls}>
+          <View className={clsx(rowCls, rowBorderCls)}>
+            <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+              {t('settings.search.fields.name')}
+            </NouText>
+            <TextInput
+              className={textInputCls}
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={draft.name}
+              onChangeText={(name) => setDraft((value) => ({ ...value, name }))}
+              placeholder={t('settings.search.fields.namePlaceholder')}
+              placeholderTextColor="#71717a"
+            />
+          </View>
+          <View className={rowCls}>
+            <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+              {t('settings.search.fields.template')}
+            </NouText>
+            <TextInput
+              className={textInputCls}
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={draft.templateUrl}
+              onChangeText={(templateUrl) => setDraft((value) => ({ ...value, templateUrl }))}
+              placeholder={t('settings.search.fields.templatePlaceholder')}
+              placeholderTextColor="#71717a"
+            />
+            <NouText className="mt-3 text-sm leading-6 text-zinc-400">{t('settings.search.templateHint')}</NouText>
+            <View className="mt-5 flex-row justify-end gap-2">
+              <NouButton
+                variant="outline"
+                size="1"
+                onPress={() => {
+                  setDraft(emptySearchProviderDraft)
+                  setEditorOpen(false)
+                }}
+              >
+                {t('buttons.cancel')}
+              </NouButton>
+              <NouButton size="1" onPress={saveDraft}>
+                {draft.id ? t('buttons.save') : t('settings.search.addAction')}
+              </NouButton>
+            </View>
+          </View>
+        </View>
+        </View>
+      ) : null}
     </View>
   )
 }

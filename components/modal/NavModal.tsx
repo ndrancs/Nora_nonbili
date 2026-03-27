@@ -2,7 +2,7 @@ import { ui$ } from '@/states/ui'
 import { useValue } from '@legendapp/state/react'
 import { BaseModal } from './BaseModal'
 import { services } from '../service/Services'
-import { View, Text, Pressable, ScrollView, TouchableHighlight } from 'react-native'
+import { View, Text, Pressable, ScrollView, TouchableHighlight, TextInput } from 'react-native'
 import { clsx, nIf } from '@/lib/utils'
 import { getHomeUrl } from '@/lib/page'
 import { settings$ } from '@/states/settings'
@@ -10,15 +10,25 @@ import { tabs$ } from '@/states/tabs'
 import { bookmarks$ } from '@/states/bookmarks'
 import { Image } from 'expo-image'
 import { t } from 'i18next'
+import { useMemo, useState } from 'react'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
+import { NouMenu } from '../menu/NouMenu'
+import {
+  getEnabledSearchProviders,
+  getResolvedSearchProvider,
+  resolveSearchUrl,
+  resolveUrlInput,
+} from '@/lib/search'
+import { SearchProviderIcon } from '../service/SearchProviderIcon'
 
 const cls = 'flex-row items-center gap-2 rounded-full bg-sky-50 w-40 py-2 px-3 overflow-hidden'
+const inputCls = 'flex-1 pl-3 pr-1 py-3 text-white'
 
 interface NavModalContentProps {
   index?: number
   onOpenUrl?: (url: string, profileId: string) => void
   onSelectProfile?: (profileId: string) => void
   profileId?: string
-  showOpenUrl?: boolean
 }
 
 export const NavModalContent: React.FC<NavModalContentProps> = ({
@@ -26,14 +36,23 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
   onOpenUrl,
   onSelectProfile,
   profileId,
-  showOpenUrl = true,
 }) => {
   const disabledServices = useValue(settings$.disabledServicesArr)
   const profiles = useValue(settings$.profiles)
   const bookmarks = useValue(bookmarks$.bookmarks)
   const oneHandMode = useValue(settings$.oneHandMode)
+  const enabledSearchProviderIds = useValue(settings$.enabledSearchProviderIds)
+  const customSearchProviders = useValue(settings$.customSearchProviders)
+  const selectedSearchProviderId = useValue(settings$.selectedSearchProviderId)
   const currentTab = useValue(tabs$.tabs[index])
+  const [input, setInput] = useState('')
   const selectedProfile = profileId || currentTab?.profile || 'default'
+  const enabledSearchProviders = useMemo(
+    () => getEnabledSearchProviders(enabledSearchProviderIds, customSearchProviders),
+    [customSearchProviders, enabledSearchProviderIds],
+  )
+  const selectedSearchProvider =
+    getResolvedSearchProvider(selectedSearchProviderId, customSearchProviders) || enabledSearchProviders[0]
 
   const onPress = (url: string) => {
     if (onOpenUrl) {
@@ -54,6 +73,25 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
       }
     }
     ui$.lastSelectedProfileId.set(profileId)
+  }
+
+  const submitInput = () => {
+    const value = input.trim()
+    if (!value || !selectedSearchProvider) {
+      return
+    }
+
+    const nextUrl =
+      selectedSearchProvider.kind === 'url'
+        ? resolveUrlInput(value)
+        : resolveSearchUrl(selectedSearchProvider.id, value, customSearchProviders)
+
+    if (!nextUrl) {
+      return
+    }
+
+    onPress(nextUrl)
+    setInput('')
   }
 
   return (
@@ -86,6 +124,45 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
         className="flex-1"
         contentContainerClassName={clsx('pb-16 flex-grow', oneHandMode ? 'justify-end pt-[40vh]' : 'justify-center')}
       >
+        <View className="mb-8 px-4">
+          <View className="flex-row items-center overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900">
+            <NouMenu
+              trigger={
+                <View className="h-[52px] w-[48px] items-center justify-center border-r border-zinc-800 bg-zinc-900">
+                  {selectedSearchProvider ? <SearchProviderIcon provider={selectedSearchProvider} size={22} /> : null}
+                </View>
+              }
+              items={enabledSearchProviders.map((provider) => ({
+                label: provider.name,
+                handler: () => settings$.setSelectedSearchProvider(provider.id),
+                icon: <SearchProviderIcon provider={provider} />,
+              }))}
+            />
+            <TextInput
+              className={inputCls}
+              value={input}
+              onChangeText={setInput}
+              onSubmitEditing={submitInput}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder={
+                selectedSearchProvider?.kind === 'url' ? t('newTab.search.urlPlaceholder') : t('newTab.search.searchPlaceholder')
+              }
+              placeholderTextColor="#71717a"
+            />
+            <Pressable
+              onPress={submitInput}
+              className="h-[52px] w-[52px] items-center justify-center border-l border-zinc-800 bg-zinc-900 active:bg-zinc-800"
+            >
+              <MaterialIcons
+                name={selectedSearchProvider?.kind === 'url' ? 'arrow-forward' : 'search'}
+                color="white"
+                size={18}
+              />
+            </Pressable>
+          </View>
+        </View>
         <View className="flex-row flex-wrap justify-center gap-x-6 gap-y-7">
           {Object.entries(services).map(([value, [label, icon]]) =>
             nIf(
@@ -110,13 +187,6 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
               </View>
             </TouchableHighlight>
           ))}
-          {showOpenUrl ? (
-            <TouchableHighlight onPress={() => ui$.urlModalOpen.set(true)}>
-              <View className={clsx(cls, 'bg-transparent border border-indigo-200 justify-center')}>
-                <Text className="text-white h-6 leading-6">{t('buttons.openUrl')}</Text>
-              </View>
-            </TouchableHighlight>
-          ) : null}
         </View>
       </ScrollView>
     </View>

@@ -1,8 +1,16 @@
-import { observable } from '@legendapp/state'
+import { observable, type Observable } from '@legendapp/state'
 import { syncObservable } from '@legendapp/state/sync'
 import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv'
 import { genId } from '@/lib/utils'
 import { normalizeXHomeTimeline, type XHomeTimeline } from '@/lib/settings/twitter'
+import {
+  type CustomSearchProvider,
+  normalizeCustomSearchProviders,
+  normalizeEnabledSearchProviderIds,
+  normalizeSelectedSearchProviderId,
+  getFaviconUrl,
+  isValidSearchTemplate,
+} from '@/lib/search'
 
 export interface Profile {
   id: string
@@ -46,11 +54,19 @@ export interface Settings {
   deckTabWidth: number
 
   disabledServicesArr: string[]
+  enabledSearchProviderIds: string[]
+  selectedSearchProviderId: string
+  customSearchProviders: CustomSearchProvider[]
   profiles: Profile[]
 }
 
 interface Store extends Settings {
   toggleService: (service: string) => void
+  toggleSearchProvider: (providerId: string) => void
+  setSelectedSearchProvider: (providerId: string) => void
+  addCustomSearchProvider: (name: string, templateUrl: string) => string | null
+  updateCustomSearchProvider: (id: string, name: string, templateUrl: string) => void
+  deleteCustomSearchProvider: (id: string) => void
   addProfile: (name: string, color: string) => void
   updateProfile: (id: string, name: string, color: string) => void
   deleteProfile: (id: string) => void
@@ -64,6 +80,9 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
   if ('profiles' in data) {
     data.profiles = ensureProfiles(data.profiles)
   }
+  data.customSearchProviders = normalizeCustomSearchProviders(data.customSearchProviders)
+  data.enabledSearchProviderIds = normalizeEnabledSearchProviderIds(data.enabledSearchProviderIds, data.customSearchProviders)
+  data.selectedSearchProviderId = normalizeSelectedSearchProviderId(data.selectedSearchProviderId, data.enabledSearchProviderIds)
   if (typeof data.videoEdgeLongPressTo2x !== 'boolean') {
     data.videoEdgeLongPressTo2x = true
   }
@@ -80,7 +99,7 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
   return data
 }
 
-export const settings$ = observable<Store>({
+export const settings$: Observable<Store> = observable<Store>({
   autoHideHeader: false,
   headerPosition: 'top',
   theme: null,
@@ -103,6 +122,9 @@ export const settings$ = observable<Store>({
   deckTabWidth: 400,
 
   disabledServicesArr: [],
+  enabledSearchProviderIds: ['url', 'duckduckgo', 'google'],
+  selectedSearchProviderId: 'url',
+  customSearchProviders: [],
   profiles: [DEFAULT_PROFILE],
   toggleService: (service) => {
     const index = settings$.disabledServicesArr.indexOf(service)
@@ -110,6 +132,78 @@ export const settings$ = observable<Store>({
       settings$.disabledServicesArr.push(service)
     } else {
       settings$.disabledServicesArr.splice(index, 1)
+    }
+  },
+  toggleSearchProvider: (providerId) => {
+    if (providerId === 'url') {
+      return
+    }
+
+    const ids = settings$.enabledSearchProviderIds.get()
+    const index = ids.indexOf(providerId)
+    if (index === -1) {
+      settings$.enabledSearchProviderIds.push(providerId)
+      return
+    }
+
+    settings$.enabledSearchProviderIds.splice(index, 1)
+    if (settings$.selectedSearchProviderId.get() === providerId) {
+      settings$.selectedSearchProviderId.set('url')
+    }
+  },
+  setSelectedSearchProvider: (providerId) => {
+    const enabledIds = settings$.enabledSearchProviderIds.get()
+    settings$.selectedSearchProviderId.set(enabledIds.includes(providerId) ? providerId : 'url')
+  },
+  addCustomSearchProvider: (name, templateUrl): string | null => {
+    const trimmedName = name.trim()
+    const trimmedTemplateUrl = templateUrl.trim()
+    if (!trimmedName || !isValidSearchTemplate(trimmedTemplateUrl)) {
+      return null
+    }
+
+    const id = genId()
+    settings$.customSearchProviders.push({
+      id,
+      name: trimmedName,
+      templateUrl: trimmedTemplateUrl,
+      iconUrl: getFaviconUrl(trimmedTemplateUrl),
+    })
+    if (!settings$.enabledSearchProviderIds.get().includes(id)) {
+      settings$.enabledSearchProviderIds.push(id)
+    }
+    return id
+  },
+  updateCustomSearchProvider: (id, name, templateUrl) => {
+    const providers = settings$.customSearchProviders.get()
+    const index = providers.findIndex((provider) => provider.id === id)
+    const trimmedName = name.trim()
+    const trimmedTemplateUrl = templateUrl.trim()
+    if (index === -1 || !trimmedName || !isValidSearchTemplate(trimmedTemplateUrl)) {
+      return
+    }
+
+    settings$.customSearchProviders[index].assign({
+      name: trimmedName,
+      templateUrl: trimmedTemplateUrl,
+      iconUrl: getFaviconUrl(trimmedTemplateUrl),
+    })
+  },
+  deleteCustomSearchProvider: (id) => {
+    const providers = settings$.customSearchProviders.get()
+    const index = providers.findIndex((provider) => provider.id === id)
+    if (index === -1) {
+      return
+    }
+
+    settings$.customSearchProviders.splice(index, 1)
+    const enabledIds = settings$.enabledSearchProviderIds.get()
+    const enabledIndex = enabledIds.indexOf(id)
+    if (enabledIndex !== -1) {
+      settings$.enabledSearchProviderIds.splice(enabledIndex, 1)
+    }
+    if (settings$.selectedSearchProviderId.get() === id) {
+      settings$.selectedSearchProviderId.set('url')
     }
   },
   addProfile: (name, color) => {

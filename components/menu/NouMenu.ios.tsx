@@ -47,7 +47,11 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
       <ContextMenu activationMethod="singlePress">
         <ContextMenu.Items>{menuItems}</ContextMenu.Items>
         <ContextMenu.Trigger>
-          <Button variant="borderless" color={colors.icon} systemImage={trigger as any} modifiers={[frame({ width: 44, height: 44 })]} />
+          {typeof trigger === 'string' ? (
+            <Button variant="borderless" color={colors.icon} systemImage={trigger as any} modifiers={[frame({ width: 44, height: 44 })]} />
+          ) : (
+            trigger
+          )}
         </ContextMenu.Trigger>
       </ContextMenu>
     </Host>

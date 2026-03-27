@@ -101,7 +101,8 @@
       "browsing": "Browsing",
       "appearance": "Appearance",
       "profiles": "Profiles & Sessions",
-      "bookmarks": "Bookmarks"
+      "bookmarks": "Bookmarks",
+      "search": "Search"
     },
     "browsing": {
       "descriptionNative": "Tabs, site handling, blocklist controls, and advanced webview settings.",
@@ -125,6 +126,29 @@
       "builtin": "Built-In Services",
       "saved": "Saved Bookmarks",
       "empty": "No bookmarks yet."
+    },
+    "search": {
+      "description": "Choose search providers for the new tab input and add your own engines.",
+      "builtin": "Built-In Search Providers",
+      "builtinHint": "Turn on the providers you want to show in the new tab search menu.",
+      "custom": "Custom Search Providers",
+      "empty": "No custom search providers yet.",
+      "urlHint": "Always available for direct URL entry.",
+      "addTitle": "Add Custom Search",
+      "editTitle": "Edit Custom Search",
+      "addAction": "Add Search",
+      "templateHint": "Use `%s` where the query should be inserted. Nora will derive the favicon from this URL.",
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "Example Search",
+        "template": "Search URL Template",
+        "templatePlaceholder": "https://example.com/search?q=%s"
+      },
+      "validation": {
+        "name": "Add a search provider name",
+        "template": "Use a valid http(s) template URL containing `%s`",
+        "duplicateName": "A custom search provider with this name already exists"
+      }
     },
     "userStyles": {
       "label": "User Styles",
@@ -212,6 +236,12 @@
     "new": "New tab",
     "recentlyClosed": "Recently closed",
     "noRecentlyClosed": "No recently closed tabs"
+  },
+  "newTab": {
+    "search": {
+      "urlPlaceholder": "Enter a URL",
+      "searchPlaceholder": "Search the web"
+    }
   },
   "toast": {
     "pinned": "Pinned to new tab page",

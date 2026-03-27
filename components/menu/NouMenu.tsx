@@ -53,7 +53,7 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
       <DropdownMenu.Trigger>
         <div className="flex shrink min-w-0 items-center justify-center">{trigger}</div>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Content variant="soft" className="rounded-xl">
+      <DropdownMenu.Content variant="soft" className="max-h-[70vh] overflow-auto rounded-xl">
         {menuItems}
       </DropdownMenu.Content>
     </DropdownMenu.Root>

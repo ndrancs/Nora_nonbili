@@ -13,6 +13,7 @@ import {
   SettingsAppearanceContent,
   SettingsProfilesContent,
   SettingsBookmarksContent,
+  SettingsSearchContent,
 } from './SettingsModalTabSettings'
 import { SettingsUserStylesContent } from './SettingsUserStylesContent'
 import { t } from 'i18next'
@@ -36,7 +37,7 @@ const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zin
 const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-500'
 const iconWrapCls = 'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950'
 
-type SettingsPage = 'home' | 'browsing' | 'styles' | 'appearance' | 'profiles' | 'bookmarks' | 'sync' | 'about' | 'changelog'
+type SettingsPage = 'home' | 'browsing' | 'styles' | 'appearance' | 'profiles' | 'bookmarks' | 'search' | 'sync' | 'about' | 'changelog'
 
 const SettingsSection = ({ label, children }: PropsWithChildren<{ label?: string }>) => {
   return (
@@ -225,6 +226,7 @@ export const SettingsModal = () => {
     appearance: t('settings.pages.appearance'),
     profiles: t('settings.pages.profiles'),
     bookmarks: t('settings.pages.bookmarks'),
+    search: t('settings.pages.search'),
     sync: t('sync.label'),
     about: t('common.about'),
     changelog: t('changelog.label'),
@@ -256,6 +258,12 @@ export const SettingsModal = () => {
                 description={t('settings.userStyles.hint')}
                 icon="brush"
                 onPress={() => pushPage('styles')}
+              />
+              <SettingsNavRow
+                title={t('settings.pages.search')}
+                description={t('settings.search.description')}
+                icon="manage-search"
+                onPress={() => pushPage('search')}
                 isLast
               />
             </View>
@@ -316,6 +324,7 @@ export const SettingsModal = () => {
     if (currentPage === 'appearance') return <SettingsAppearanceContent />
     if (currentPage === 'profiles') return <SettingsProfilesContent />
     if (currentPage === 'bookmarks') return <SettingsBookmarksContent />
+    if (currentPage === 'search') return <SettingsSearchContent />
     if (currentPage === 'changelog') return <SettingsChangelogContent />
 
     if (currentPage === 'sync' && showSync) {
