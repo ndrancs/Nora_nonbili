@@ -21,7 +21,13 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
     const buttons = group
       .filter((item) => item.kind !== 'label')
       .map((item, itemIndex) => (
-        <Button key={`${groupIndex}-${itemIndex}`} color={colors.text} onPress={item.handler}>
+        <Button
+          key={`${groupIndex}-${itemIndex}`}
+          color={colors.text}
+          disabled={item.disabled}
+          onPress={item.handler}
+          systemImage={item.systemImage as any}
+        >
           {item.label}
         </Button>
       ))

@@ -129,6 +129,14 @@ export const NouHeader: React.FC<{}> = ({}) => {
     }
   }
 
+  const editTabUrl = () => {
+    ui$.assign({
+      urlModalOpen: true,
+      urlModalMode: 'editTab',
+      urlModalTargetTabId: currentTab?.id || null,
+    })
+  }
+
   const Root = AnimatedView
 
   const ret = (
@@ -182,17 +190,48 @@ export const NouHeader: React.FC<{}> = ({}) => {
               : [
                   {
                     label: t('menus.reload'),
+                    icon: <MaterialIcons name="refresh" size={18} color={colors.icon} />,
+                    systemImage: 'arrow.clockwise',
                     handler: reloadPage,
                   },
                   {
                     label: t('menus.scroll'),
+                    icon: <MaterialIcons name="vertical-align-top" size={18} color={colors.icon} />,
+                    systemImage: 'arrow.up.to.line',
                     handler: scrollToTop,
+                  },
+                  {
+                    label: t('menus.editUrl'),
+                    icon: <MaterialIcons name="edit" size={18} color={colors.icon} />,
+                    systemImage: 'pencil',
+                    handler: editTabUrl,
                   },
                   ...(hostname.endsWith('.facebook.com')
                     ? []
                     : [
                         {
-                          label: `${t('menus.desktop')} |  ${currentTab?.desktopMode ? t('menus.desktopOn') : t('menus.desktopOff')}`,
+                          label: t('menus.desktop'),
+                          icon: <MaterialIcons name="desktop-windows" size={18} color={colors.icon} />,
+                          systemImage: 'desktopcomputer',
+                          meta: (
+                            <View
+                              className={clsx(
+                                'rounded-full px-2 py-1',
+                                currentTab?.desktopMode
+                                  ? 'bg-indigo-500/20 border border-indigo-400/40'
+                                  : 'bg-zinc-800 border border-zinc-700',
+                              )}
+                            >
+                              <Text
+                                className={clsx(
+                                  'text-[11px] font-medium',
+                                  currentTab?.desktopMode ? 'text-indigo-200' : 'text-zinc-400',
+                                )}
+                              >
+                                {currentTab?.desktopMode ? t('menus.desktopOn') : t('menus.desktopOff')}
+                              </Text>
+                            </View>
+                          ),
                           handler: () => {
                             tabs$.tabs[activeTabIndex].desktopMode.toggle()
                             void executeWebviewJavaScriptQuietly(webview, 'document.location.reload()')
@@ -201,10 +240,14 @@ export const NouHeader: React.FC<{}> = ({}) => {
                       ]),
                   {
                     label: t('menus.addBookmark'),
+                    icon: <MaterialIcons name="bookmark-add" size={18} color={colors.icon} />,
+                    systemImage: 'bookmark',
                     handler: addBookmark,
                   },
                   {
                     label: t('menus.share'),
+                    icon: <MaterialIcons name="share" size={18} color={colors.icon} />,
+                    systemImage: 'square.and.arrow.up',
                     handler: () => (currentTab ? share(currentTab.url) : {}),
                   },
                 ]),
@@ -212,12 +255,24 @@ export const NouHeader: React.FC<{}> = ({}) => {
               ? [
                   {
                     label: t('buttons.closeAll'),
+                    icon: <MaterialIcons name="tab-unselected" size={18} color={colors.icon} />,
+                    systemImage: 'xmark.square',
                     handler: () => tabs$.closeAll(),
                   },
                 ]
               : []),
-            { label: t('menus.tools'), handler: () => ui$.toolsModalOpen.set(true) },
-            { label: t('settings.label'), handler: () => ui$.settingsModalOpen.set(true) },
+            {
+              label: t('menus.tools'),
+              icon: <MaterialIcons name="build" size={18} color={colors.icon} />,
+              systemImage: 'wrench.and.screwdriver',
+              handler: () => ui$.toolsModalOpen.set(true),
+            },
+            {
+              label: t('settings.label'),
+              icon: <MaterialIcons name="settings" size={18} color={colors.icon} />,
+              systemImage: 'gearshape',
+              handler: () => ui$.settingsModalOpen.set(true),
+            },
           ]}
         />
       </View>

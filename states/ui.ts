@@ -1,6 +1,8 @@
 import { observable } from '@legendapp/state'
 
 interface Store {
+  urlModalMode: 'open' | 'editTab'
+  urlModalTargetTabId: string | null
   url: string
   title: string
 
@@ -31,6 +33,8 @@ interface Store {
 }
 
 export const ui$ = observable<Store>({
+  urlModalMode: 'open',
+  urlModalTargetTabId: null,
   url: '',
   title: '',
 

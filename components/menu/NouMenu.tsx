@@ -5,6 +5,7 @@ export interface Item {
   label: string
   handler: () => void
   icon?: ReactNode
+  systemImage?: string
   disabled?: boolean
   description?: string
   kind?: 'item' | 'label' | 'separator'
