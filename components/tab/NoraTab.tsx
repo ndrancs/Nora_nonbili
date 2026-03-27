@@ -3,7 +3,7 @@ import { useValue } from '@legendapp/state/react'
 import { ui$ } from '@/states/ui'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { settings$ } from '@/states/settings'
-import { StyleSheet, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { ObservableHint } from '@legendapp/state'
 import type { WebviewTag } from 'electron'
 import { clsx, isWeb, isIos, nIf } from '@/lib/utils'
@@ -40,6 +40,43 @@ const forceHttps = (str: string) => {
     return url
   }
   return url.replace('http://', 'https://')
+}
+
+const buildImageViewerUrl = (imageUrl: string) => {
+  const escapedImageUrl = imageUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+  const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Image</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 100%;
+        min-height: 100vh;
+        background: #09090b;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        padding: 16px;
+      }
+      img {
+        display: block;
+        max-width: 100%;
+        max-height: calc(100vh - 32px);
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="${escapedImageUrl}" alt="" />
+  </body>
+</html>`
+  return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
 }
 
 const isExternalAppUrl = (str: string) => {
@@ -125,7 +162,10 @@ export const NoraTab: React.FC<{
         return
       }
       pageUrlRef.current = url
-      tabs$.updateTabUrl(url, index)
+      const tab$ = tabs$.tabs[index]
+      if (tab$.get()) {
+        tab$.url.set(url)
+      }
     },
     [index],
   )
@@ -159,6 +199,18 @@ export const NoraTab: React.FC<{
           .catch(() => {})
           .finally(() => applyContentState(webview))
         void refreshCanGoBack(webview)
+      })
+      webview.addEventListener('did-start-loading', () => {
+        tabs$.setTabLoading(true, index)
+      })
+      webview.addEventListener('did-stop-loading', () => {
+        tabs$.setTabLoading(false, index)
+      })
+      webview.addEventListener('did-fail-load', () => {
+        tabs$.setTabLoading(false, index)
+      })
+      webview.addEventListener('did-fail-provisional-load', () => {
+        tabs$.setTabLoading(false, index)
       })
       webview.addEventListener('did-navigate', (e) => {
         setPageUrl(e.url)
@@ -292,7 +344,9 @@ export const NoraTab: React.FC<{
 
   const onLoad = async (e: { nativeEvent: any }) => {
     const { url, title, icon, canGoBack: nextCanGoBack } = e.nativeEvent
-    if (url) {
+    const hasLoadedUrl = typeof url === 'string' && url !== '' && url !== 'about:blank'
+    if (hasLoadedUrl) {
+      tabs$.setTabLoading(false, index)
       setPageUrl(url)
     }
     if (typeof title === 'string' || typeof icon === 'string') {
@@ -334,7 +388,8 @@ export const NoraTab: React.FC<{
       }
       case 'new-tab':
         if (!isExternalAppUrl(data.url)) {
-          tabs$.openTab(forceHttps(data.url), { parentTabId: tab.id, source: 'child' })
+          const nextUrl = data.kind === 'image' ? buildImageViewerUrl(data.url) : forceHttps(data.url)
+          tabs$.openTab(nextUrl, { parentTabId: tab.id, source: 'child' })
         }
         break
       case 'save-file':
@@ -365,6 +420,7 @@ export const NoraTab: React.FC<{
         >
           <View className="flex-row items-center gap-2 shrink-0">
             <ServiceIcon url={tab.url} icon={tab.icon} />
+            {nIf(tab.isLoading, <ActivityIndicator size="small" color="#a1a1aa" />)}
             {nIf(canGoBack, <MaterialButton name="arrow-back" onPress={goBack} style={toolbarButtonStyle} />)}
           </View>
           <View className="flex-1 min-w-0 flex-row items-center justify-center">

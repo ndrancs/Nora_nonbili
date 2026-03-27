@@ -1,7 +1,7 @@
 import ExpoModulesCore
 import WebKit
 
-class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, UIScrollViewDelegate {
+class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, UIScrollViewDelegate, UIGestureRecognizerDelegate {
   let onLoad = EventDispatcher()
   let onMessage = EventDispatcher()
 
@@ -9,6 +9,7 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
   var scriptOnStart: String = ""
   var userAgent: String?
   var lastTranslationY: CGFloat = 0
+  var lastContextMenuLocation: CGPoint?
   var currentProfile: String = "default"
   var appliedBlocklistRuleList: WKContentRuleList?
 
@@ -107,6 +108,10 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
     webView.uiDelegate = self
     webView.scrollView.delegate = self
     webView.allowsBackForwardNavigationGestures = true
+    let longPressRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleContextMenuLongPress(_:)))
+    longPressRecognizer.cancelsTouchesInView = false
+    longPressRecognizer.delegate = self
+    webView.addGestureRecognizer(longPressRecognizer)
 
     if let ua = userAgent {
       webView.customUserAgent = ua
@@ -296,6 +301,61 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
       emitCustomEvent(type: "scroll", data: ["dy": translation])
   }
 
+  @objc
+  func handleContextMenuLongPress(_ recognizer: UILongPressGestureRecognizer) {
+      if recognizer.state == .began {
+          lastContextMenuLocation = recognizer.location(in: webView)
+      }
+  }
+
+  func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+      true
+  }
+
+  private func resolveContextMenuTargets(
+    elementInfo: WKContextMenuElementInfo,
+    completion: @escaping (_ linkUrl: String?, _ imageUrl: String?) -> Void
+  ) {
+      let fallbackLinkUrl = elementInfo.linkURL?.absoluteString
+      guard let location = lastContextMenuLocation else {
+          completion(fallbackLinkUrl, nil)
+          return
+      }
+
+      let script = """
+        (() => {
+          const element = document.elementFromPoint(\(location.x), \(location.y));
+          const image = element?.closest?.('img');
+          const link = element?.closest?.('a[href]');
+          return JSON.stringify({
+            imageUrl: image ? (image.currentSrc || image.src || null) : null,
+            linkUrl: link ? link.href : null
+          });
+        })();
+      """
+
+      webView.evaluateJavaScript(script) { result, error in
+          var linkUrl = fallbackLinkUrl
+          var imageUrl: String?
+
+          if
+            error == nil,
+            let payload = result as? String,
+            let data = payload.data(using: .utf8),
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+          {
+              if let resolvedLinkUrl = json["linkUrl"] as? String, !resolvedLinkUrl.isEmpty {
+                  linkUrl = resolvedLinkUrl
+              }
+              if let resolvedImageUrl = json["imageUrl"] as? String, !resolvedImageUrl.isEmpty {
+                  imageUrl = resolvedImageUrl
+              }
+          }
+
+          completion(linkUrl, imageUrl)
+      }
+  }
+
   func emitCustomEvent(type: String, data: Any) {
      let payload: [String: Any] = ["type": type, "data": data]
      onMessage([
@@ -307,5 +367,51 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
   @available(iOS 15.0, *)
   func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
       decisionHandler(.grant)
+  }
+
+  @available(iOS 13.0, *)
+  func webView(
+    _ webView: WKWebView,
+    contextMenuConfigurationForElement elementInfo: WKContextMenuElementInfo,
+    completionHandler: @escaping (UIContextMenuConfiguration?) -> Void
+  ) {
+      resolveContextMenuTargets(elementInfo: elementInfo) { [weak self] linkUrl, imageUrl in
+          guard let self = self else {
+              completionHandler(nil)
+              return
+          }
+          guard linkUrl != nil || imageUrl != nil else {
+              completionHandler(nil)
+              return
+          }
+
+          let configuration = UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { suggestedActions in
+              var actions = [UIMenuElement]()
+
+              if let imageUrl = imageUrl {
+                  let openImageInNewTab = UIAction(
+                    title: NouController.shared.t("menu_openImageInNewTab"),
+                    image: UIImage(systemName: "photo.on.rectangle")
+                  ) { [weak self] _ in
+                      self?.emitCustomEvent(type: "new-tab", data: ["url": imageUrl, "kind": "image"])
+                  }
+                  actions.append(openImageInNewTab)
+              }
+
+              if let linkUrl = linkUrl, linkUrl != imageUrl {
+                  let openInNewTab = UIAction(
+                    title: NouController.shared.t("menu_openInNewTab"),
+                    image: UIImage(systemName: "plus.square.on.square")
+                  ) { [weak self] _ in
+                      self?.emitCustomEvent(type: "new-tab", data: ["url": linkUrl])
+                  }
+                  actions.append(openInNewTab)
+              }
+
+              return UIMenu(title: "", children: actions + suggestedActions)
+          }
+
+          completionHandler(configuration)
+      }
   }
 }

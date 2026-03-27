@@ -11,6 +11,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.AttributeSet
@@ -230,6 +232,8 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
   private var scriptOnStart = ""
   private var pageUrl = ""
   private var customView: View? = null
+  private var contextMenuLinkUrl: String? = null
+  private var contextMenuImageUrl: String? = null
   internal var userAgent: String? = null
   private var profileSet = false
 
@@ -242,37 +246,92 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
     super.onCreateContextMenu(menu)
 
     val result = webView.getHitTestResult()
-    val url = result.getExtra()
     val activity = currentActivity
+    val fallbackUrl = result.getExtra()
+    val linkUrl =
+      contextMenuLinkUrl ?: if (
+        result.getType() in arrayOf(WebView.HitTestResult.SRC_ANCHOR_TYPE, WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE)
+      ) fallbackUrl else null
+    val imageUrl =
+      contextMenuImageUrl ?: if (
+        result.getType() in arrayOf(WebView.HitTestResult.IMAGE_TYPE, WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE)
+      ) fallbackUrl else null
 
-    if (url == null || activity == null) {
+    if ((linkUrl == null && imageUrl == null) || activity == null) {
       return
     }
 
-    val onCopyLink = object : MenuItem.OnMenuItemClickListener {
-      override fun onMenuItemClick(item: MenuItem): Boolean {
-        val clipboardManager = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clipData = ClipData.newPlainText("image", url)
-        clipboardManager.setPrimaryClip(clipData)
-        return true
+    fun copyUrl(label: String, targetUrl: String) =
+      object : MenuItem.OnMenuItemClickListener {
+        override fun onMenuItemClick(item: MenuItem): Boolean {
+          val clipboardManager = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+          val clipData = ClipData.newPlainText(label, targetUrl)
+          clipboardManager.setPrimaryClip(clipData)
+          return true
+        }
       }
-    }
+
+    fun openInNewTab(targetUrl: String, kind: String? = null) =
+      object : MenuItem.OnMenuItemClickListener {
+        override fun onMenuItemClick(item: MenuItem): Boolean {
+          val payload = mutableMapOf<String, Any>("url" to targetUrl)
+          if (kind != null) {
+            payload["kind"] = kind
+          }
+          emit("new-tab", payload)
+          return true
+        }
+      }
 
     if (
       result.getType() in arrayOf(WebView.HitTestResult.IMAGE_TYPE, WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE)
     ) {
+      val imageTargetUrl = imageUrl ?: return
       val onDownload = object : MenuItem.OnMenuItemClickListener {
         override fun onMenuItemClick(item: MenuItem): Boolean {
-          download(url, null, "image/jpeg")
+          download(imageTargetUrl, null, "image/jpeg")
           return true
         }
       }
 
       menu.add(nouController.t("menu_saveImage")).setOnMenuItemClickListener(onDownload)
-      menu.add(nouController.t("menu_copyImageLink")).setOnMenuItemClickListener(onCopyLink)
-    } else if (result.getType() == WebView.HitTestResult.SRC_ANCHOR_TYPE) {
-      menu.add(nouController.t("menu_copyLink")).setOnMenuItemClickListener(onCopyLink)
+      menu.add(nouController.t("menu_openImageInNewTab")).setOnMenuItemClickListener(openInNewTab(imageTargetUrl, "image"))
+      menu.add(nouController.t("menu_copyImageLink")).setOnMenuItemClickListener(copyUrl("image", imageTargetUrl))
+      if (result.getType() == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE && linkUrl != null && linkUrl != imageTargetUrl) {
+        menu.add(nouController.t("menu_openInNewTab")).setOnMenuItemClickListener(openInNewTab(linkUrl))
+        menu.add(nouController.t("menu_copyLink")).setOnMenuItemClickListener(copyUrl("link", linkUrl))
+      }
+    } else if (result.getType() == WebView.HitTestResult.SRC_ANCHOR_TYPE && linkUrl != null) {
+      menu.add(nouController.t("menu_openInNewTab")).setOnMenuItemClickListener(openInNewTab(linkUrl))
+      menu.add(nouController.t("menu_copyLink")).setOnMenuItemClickListener(copyUrl("link", linkUrl))
     }
+  }
+
+  private fun prepareContextMenuTargets() {
+    contextMenuLinkUrl = null
+    contextMenuImageUrl = null
+
+    val result = webView.getHitTestResult()
+    when (result.getType()) {
+      WebView.HitTestResult.SRC_ANCHOR_TYPE -> contextMenuLinkUrl = result.getExtra()
+      WebView.HitTestResult.IMAGE_TYPE -> contextMenuImageUrl = result.getExtra()
+      WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE -> contextMenuImageUrl = result.getExtra()
+    }
+
+    val handler =
+      Handler(Looper.getMainLooper()) { msg ->
+        val data = msg.data
+        val linkUrl = data?.getString("url")?.takeIf { it.isNotEmpty() }
+        val imageUrl = data?.getString("src")?.takeIf { it.isNotEmpty() }
+        if (linkUrl != null) {
+          contextMenuLinkUrl = linkUrl
+        }
+        if (imageUrl != null) {
+          contextMenuImageUrl = imageUrl
+        }
+        false
+      }
+    webView.requestFocusNodeHref(handler.obtainMessage())
   }
 
   inner class NoraGestureListener : GestureDetector.SimpleOnGestureListener() {
@@ -512,6 +571,10 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
         if (event.action == MotionEvent.ACTION_DOWN) {
           v.requestFocus()
         }
+        false
+      }
+      setOnLongClickListener {
+        prepareContextMenuTargets()
         false
       }
     }

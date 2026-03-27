@@ -10,7 +10,7 @@ import { tabs$ } from '@/states/tabs'
 import { bookmarks$ } from '@/states/bookmarks'
 import { Image } from 'expo-image'
 import { t } from 'i18next'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { NouMenu } from '../menu/NouMenu'
 import {
@@ -47,10 +47,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
   const currentTab = useValue(tabs$.tabs[index])
   const [input, setInput] = useState('')
   const selectedProfile = profileId || currentTab?.profile || 'default'
-  const enabledSearchProviders = useMemo(
-    () => getEnabledSearchProviders(enabledSearchProviderIds, customSearchProviders),
-    [customSearchProviders, enabledSearchProviderIds],
-  )
+  const enabledSearchProviders = getEnabledSearchProviders(enabledSearchProviderIds, customSearchProviders)
   const selectedSearchProvider =
     getResolvedSearchProvider(selectedSearchProviderId, customSearchProviders) || enabledSearchProviders[0]
 

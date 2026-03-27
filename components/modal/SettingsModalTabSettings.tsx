@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TextInput, Pressable } from 'react-native'
+import { Alert, ScrollView, View, TextInput } from 'react-native'
 import { NouButton } from '../button/NouButton'
 import { ui$ } from '@/states/ui'
 import { ServiceManager } from '../service/Services'
@@ -21,12 +21,12 @@ import { BlocklistSection } from '../blocklist/BlocklistSection'
 import { xHomeTimelineValues } from '@/lib/settings/twitter'
 import {
   searchSettingsProviderIds,
-  getEnabledSearchProviders,
   getResolvedSearchProvider,
   isValidSearchTemplate,
 } from '@/lib/search'
 import { SearchProviderIcon } from '../service/SearchProviderIcon'
 import { showToast } from '@/lib/toast'
+import { BaseCenterModal } from './BaseCenterModal'
 
 const headerPositions = ['top', 'bottom'] as const
 const themes = [null, 'dark', 'light'] as const
@@ -503,7 +503,20 @@ export const SettingsSearchContent = () => {
                   >
                     {t('common.edit')}
                   </NouButton>
-                  <NouButton size="1" variant="outline" onPress={() => settings$.deleteCustomSearchProvider(provider.id)}>
+                  <NouButton
+                    size="1"
+                    variant="outline"
+                    onPress={() => {
+                      Alert.alert(t('menus.delete'), t('settings.search.deleteConfirm'), [
+                        { text: t('buttons.cancel'), style: 'cancel' },
+                        {
+                          text: t('menus.delete'),
+                          style: 'destructive',
+                          onPress: () => settings$.deleteCustomSearchProvider(provider.id),
+                        },
+                      ])
+                    }}
+                  >
                     {t('menus.delete')}
                   </NouButton>
                 </View>
@@ -514,65 +527,65 @@ export const SettingsSearchContent = () => {
       </View>
 
       {editorOpen ? (
-        <View className="mt-10">
-        <View className="mb-3 flex-row items-center justify-between gap-3">
-          <NouText className={subheaderCls}>{draft.id ? t('settings.search.editTitle') : t('settings.search.addTitle')}</NouText>
-          <Pressable
-            onPress={() => {
-              setDraft(emptySearchProviderDraft)
-              setEditorOpen(false)
-            }}
-          >
-              <NouText className="text-sm text-zinc-400">{t('buttons.cancel')}</NouText>
-          </Pressable>
-        </View>
-        <View className={surfaceCls}>
-          <View className={clsx(rowCls, rowBorderCls)}>
-            <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-              {t('settings.search.fields.name')}
-            </NouText>
-            <TextInput
-              className={textInputCls}
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={draft.name}
-              onChangeText={(name) => setDraft((value) => ({ ...value, name }))}
-              placeholder={t('settings.search.fields.namePlaceholder')}
-              placeholderTextColor="#71717a"
-            />
-          </View>
-          <View className={rowCls}>
-            <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-              {t('settings.search.fields.template')}
-            </NouText>
-            <TextInput
-              className={textInputCls}
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={draft.templateUrl}
-              onChangeText={(templateUrl) => setDraft((value) => ({ ...value, templateUrl }))}
-              placeholder={t('settings.search.fields.templatePlaceholder')}
-              placeholderTextColor="#71717a"
-            />
-            <NouText className="mt-3 text-sm leading-6 text-zinc-400">{t('settings.search.templateHint')}</NouText>
-            <View className="mt-5 flex-row justify-end gap-2">
-              <NouButton
-                variant="outline"
-                size="1"
-                onPress={() => {
-                  setDraft(emptySearchProviderDraft)
-                  setEditorOpen(false)
-                }}
-              >
-                {t('buttons.cancel')}
-              </NouButton>
-              <NouButton size="1" onPress={saveDraft}>
-                {draft.id ? t('buttons.save') : t('settings.search.addAction')}
-              </NouButton>
+        <BaseCenterModal
+          onClose={() => {
+            setDraft(emptySearchProviderDraft)
+            setEditorOpen(false)
+          }}
+          containerClassName="max-h-[80vh] overflow-hidden"
+        >
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <View className="p-5">
+              <NouText className="text-lg font-semibold mb-4">
+                {draft.id ? t('settings.search.editTitle') : t('settings.search.addTitle')}
+              </NouText>
+              <View className={clsx(rowCls, rowBorderCls, 'px-0 pt-0')}>
+                <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                  {t('settings.search.fields.name')}
+                </NouText>
+                <TextInput
+                  className={textInputCls}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={draft.name}
+                  onChangeText={(name) => setDraft((value) => ({ ...value, name }))}
+                  placeholder={t('settings.search.fields.namePlaceholder')}
+                  placeholderTextColor="#71717a"
+                />
+              </View>
+              <View className="pt-4">
+                <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                  {t('settings.search.fields.template')}
+                </NouText>
+                <TextInput
+                  className={textInputCls}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={draft.templateUrl}
+                  onChangeText={(templateUrl) => setDraft((value) => ({ ...value, templateUrl }))}
+                  placeholder={t('settings.search.fields.templatePlaceholder')}
+                  placeholderTextColor="#71717a"
+                />
+                <NouText className="mt-3 text-sm leading-6 text-zinc-400">{t('settings.search.templateHint')}</NouText>
+              </View>
+              <View className="mt-6 flex-row justify-end gap-2">
+                <NouButton
+                  variant="outline"
+                  size="1"
+                  onPress={() => {
+                    setDraft(emptySearchProviderDraft)
+                    setEditorOpen(false)
+                  }}
+                >
+                  {t('buttons.cancel')}
+                </NouButton>
+                <NouButton size="1" onPress={saveDraft}>
+                  {draft.id ? t('buttons.save') : t('settings.search.addAction')}
+                </NouButton>
+              </View>
             </View>
-          </View>
-        </View>
-        </View>
+          </ScrollView>
+        </BaseCenterModal>
       ) : null}
     </View>
   )

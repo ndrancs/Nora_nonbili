@@ -25,6 +25,7 @@ export interface Tab {
   url: string
   title?: string
   icon?: string
+  isLoading?: boolean
   desktopMode?: boolean
   profile?: string
 }
@@ -48,6 +49,7 @@ interface Store {
   deleteProfileData: (profileId: string) => void
   reopenClosedTab: (tabId: string) => string | undefined
   updateTabUrl: (url: string, index?: number) => void
+  setTabLoading: (loading: boolean, index?: number) => void
   setActiveTabIndex: (index: number, reason?: TabActivationReason) => void
   setActiveTabById: (tabId: string, reason?: TabActivationReason) => void
   handleBackPress: () => boolean
@@ -199,6 +201,7 @@ export const tabs$: Observable<Store> = observable<Store>({
           if (existingTabIndex !== -1) {
             tabs$.setActiveTabIndex(existingTabIndex, 'open')
             tabs$.tabs[existingTabIndex].url.set(url)
+            tabs$.tabs[existingTabIndex].isLoading.set(Boolean(url))
             return tabs$.tabs[existingTabIndex].id.get()
           }
         }
@@ -207,7 +210,12 @@ export const tabs$: Observable<Store> = observable<Store>({
       }
     }
 
-    const tab: Tab = { id: genId(), url, profile: options?.profile || ui$.lastSelectedProfileId.get() }
+    const tab: Tab = {
+      id: genId(),
+      url,
+      isLoading: Boolean(url),
+      profile: options?.profile || ui$.lastSelectedProfileId.get(),
+    }
     tabs$.tabs.push(tab)
     if (options?.source === 'child' && options.parentTabId && options.parentTabId !== tab.id) {
       childBackParentByTabId[tab.id] = options.parentTabId
@@ -319,7 +327,7 @@ export const tabs$: Observable<Store> = observable<Store>({
 
     tabs$.recentlyClosedTabs.set(recentlyClosedTabs.filter((tab) => tab.id !== tabId))
     const { id: _closedTabId, closedAt: _closedAt, ...rest } = closedTab
-    const reopenedTab: Tab = { ...rest, id: genId() }
+    const reopenedTab: Tab = { ...rest, id: genId(), isLoading: Boolean(rest.url) }
     tabs$.tabs.push(reopenedTab)
     tabs$.setActiveTabIndex(tabs$.tabs.length - 1, 'open')
     return reopenedTab.id
@@ -333,6 +341,15 @@ export const tabs$: Observable<Store> = observable<Store>({
     const tab$ = tabs$.tabs[targetIndex]
     if (tab$.get()) {
       tab$.url.set(url)
+      tab$.isLoading.set(Boolean(url))
+    }
+  },
+
+  setTabLoading: (loading, index) => {
+    const targetIndex = index ?? tabs$.activeTabIndex.get()
+    const tab$ = tabs$.tabs[targetIndex]
+    if (tab$.get()) {
+      tab$.isLoading.set(loading)
     }
   },
 
@@ -405,6 +422,7 @@ syncObservable(tabs$, {
               if (!tab.id || seenIds.has(tab.id)) {
                 tab.id = genId()
               }
+              tab.isLoading = false
               seenIds.add(tab.id)
               return tab
             })

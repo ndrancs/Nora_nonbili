@@ -1,4 +1,4 @@
-import { Dimensions, View, Text, TouchableOpacity, LayoutChangeEvent } from 'react-native'
+import { ActivityIndicator, Dimensions, View, Text, TouchableOpacity, LayoutChangeEvent } from 'react-native'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Drawer from 'expo-router/drawer'
@@ -174,6 +174,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
           canDownload,
           <MaterialButton name="download" onPress={() => ui$.downloadVideoModalUrl.set(currentTab?.url || '')} />,
         )}
+        {nIf(!isWeb && currentTab?.isLoading, <ActivityIndicator size="small" color="#e4e4e7" style={{ marginRight: 4 }} />)}
         {nIf(
           !isWeb,
           <TouchableOpacity className="flex-row items-center p-3" onPress={() => ui$.tabModalOpen.set(true)}>

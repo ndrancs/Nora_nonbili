@@ -66,6 +66,8 @@
     "menu_saveImage": "Save image",
     "menu_copyImageLink": "Copy image link",
     "menu_copyLink": "Copy link",
+    "menu_openInNewTab": "Open in new tab",
+    "menu_openImageInNewTab": "Open image in new tab",
     "toast_downloadStarted": "Download started, check the system notification",
     "toast_downloadSucceeded": "Saved to the Downloads folder",
     "toast_downloadFailed": "Failed to download",
@@ -138,7 +140,7 @@
       "addTitle": "Add Custom Search",
       "editTitle": "Edit Custom Search",
       "addAction": "Add Search",
-      "templateHint": "Use `%s` where the query should be inserted. Nora will derive the favicon from this URL.",
+      "templateHint": "Use `%s` where the query should be inserted.",
       "fields": {
         "name": "Name",
         "namePlaceholder": "Example Search",
@@ -149,7 +151,8 @@
         "name": "Add a search provider name",
         "template": "Use a valid http(s) template URL containing `%s`",
         "duplicateName": "A custom search provider with this name already exists"
-      }
+      },
+      "deleteConfirm": "Are you sure you want to delete this custom search?"
     },
     "userStyles": {
       "label": "User Styles",

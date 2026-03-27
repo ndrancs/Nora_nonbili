@@ -81,8 +81,14 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
     data.profiles = ensureProfiles(data.profiles)
   }
   data.customSearchProviders = normalizeCustomSearchProviders(data.customSearchProviders)
-  data.enabledSearchProviderIds = normalizeEnabledSearchProviderIds(data.enabledSearchProviderIds, data.customSearchProviders)
-  data.selectedSearchProviderId = normalizeSelectedSearchProviderId(data.selectedSearchProviderId, data.enabledSearchProviderIds)
+  data.enabledSearchProviderIds = normalizeEnabledSearchProviderIds(
+    data.enabledSearchProviderIds,
+    data.customSearchProviders,
+  )
+  data.selectedSearchProviderId = normalizeSelectedSearchProviderId(
+    data.selectedSearchProviderId,
+    data.enabledSearchProviderIds,
+  )
   if (typeof data.videoEdgeLongPressTo2x !== 'boolean') {
     data.videoEdgeLongPressTo2x = true
   }
@@ -107,7 +113,7 @@ export const settings$: Observable<Store> = observable<Store>({
   redirectToOldReddit: false,
   xDefaultHomeTimeline: 'for-you',
   hideXHomeTimelineTabs: false,
-  allowHttpWebsite: false,
+  allowHttpWebsite: true,
   inspectable: false,
   videoEdgeLongPressTo2x: true,
 
