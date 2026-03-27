@@ -3,7 +3,7 @@ import NoraViewModule from '@/modules/nora-view'
 import { isWeb, isIos, isAndroid } from '@/lib/utils'
 import { settings$ } from '@/states/settings'
 import { blocklist$ } from '@/states/blocklist'
-import { mergeFilterLists, mergeFilterListsAsync } from './parser'
+import { mergeFilterListsText, mergeFilterListsAsync } from './parser'
 import { shouldAutoRefresh } from './policy'
 import { createWorkletRuntime, runOnRuntime, type WorkletRuntime } from 'react-native-worklets'
 import {
@@ -23,10 +23,13 @@ import {
   BlocklistSnapshot,
   BlocklistSourceId,
   DesktopBlocklistPayload,
+  PersistedBlocklistMatcherSnapshot,
   RemoteTextResponse,
 } from './types'
 
 const MAIN_CHANNEL = 'channel:main'
+const BLOCKLIST_FETCH_TIMEOUT_MS = 20_000
+const BLOCKLIST_WORKLET_TIMEOUT_MS = 8_000
 
 const hasElectron = () => isWeb && typeof window !== 'undefined' && typeof window.electron !== 'undefined'
 
@@ -39,7 +42,7 @@ let payloadCache:
   | undefined
 
 let workletRuntime: WorkletRuntime | undefined
-if (isIos || isAndroid) {
+if (isAndroid) {
   try {
     workletRuntime = createWorkletRuntime('blocklist')
   } catch (err) {
@@ -50,27 +53,62 @@ if (isIos || isAndroid) {
 const readHeader = (headers: Record<string, string | undefined>, key: string) =>
   headers[key] || headers[key.toLowerCase()] || headers[key.toUpperCase()]
 
+function decodeHosts(value: string) {
+  if (!value) {
+    return []
+  }
+  return value
+    .split('\n')
+    .map((host) => host.trim())
+    .filter(Boolean)
+}
+
 async function fetchRemoteText(url: string, headers: Record<string, string> = {}): Promise<RemoteTextResponse> {
   if (hasElectron()) {
     return window.electron.ipcRenderer.invoke(MAIN_CHANNEL, 'fetchText', url, headers)
   }
 
-  const res = await fetch(url, { headers })
-  return {
-    status: res.status,
-    body: await res.text(),
-    headers: {
-      etag: res.headers.get('etag') || undefined,
-      'last-modified': res.headers.get('last-modified') || undefined,
-    },
-  }
-}
+  const controller = new AbortController()
+  const timeoutError = new Error(`Timed out fetching blocklist after ${Math.round(BLOCKLIST_FETCH_TIMEOUT_MS / 1000)}s`)
+  let timerId: ReturnType<typeof setTimeout> | undefined
 
-function arraysEqual(a: string[], b: string[]) {
-  if (a.length !== b.length) {
-    return false
+  const fetchPromise = (async () => {
+    try {
+      const res = await fetch(url, { headers, signal: controller.signal })
+      if (!res.ok && res.status !== 304) {
+        throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`)
+      }
+      const body = await res.text()
+      return {
+        status: res.status,
+        body,
+        headers: {
+          etag: res.headers.get('etag') || undefined,
+          'last-modified': res.headers.get('last-modified') || undefined,
+        },
+      }
+    } finally {
+      if (timerId) {
+        clearTimeout(timerId)
+      }
+    }
+  })()
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timerId = setTimeout(() => {
+      controller.abort()
+      reject(timeoutError)
+    }, BLOCKLIST_FETCH_TIMEOUT_MS)
+  })
+
+  try {
+    return await Promise.race([fetchPromise, timeoutPromise])
+  } catch (error) {
+    if (error === timeoutError || (error instanceof Error && error.name === 'AbortError')) {
+      throw timeoutError
+    }
+    throw error
   }
-  return a.every((value, index) => value === b[index])
 }
 
 function getDesktopPartitions() {
@@ -108,73 +146,50 @@ function setPayloadCache(matcherData: BlocklistMatcherData) {
   }
 }
 
-function coerceStringArray(value: unknown): string[] | null {
-  if (Array.isArray(value)) {
-    return value.every((item) => typeof item === 'string') ? value : null
+function toMatcherData(snapshot: PersistedBlocklistMatcherSnapshot): BlocklistMatcherData {
+  return {
+    enabled: true,
+    blockedHosts: decodeHosts(snapshot.blockedHosts),
+    allowedHosts: decodeHosts(snapshot.allowedHosts),
+    revision: snapshot.revision,
   }
-
-  if (value && typeof value === 'object') {
-    if ('length' in value) {
-      const length = Number((value as { length?: unknown }).length)
-      if (!Number.isInteger(length) || length < 0) {
-        return null
-      }
-
-      const result: string[] = []
-      for (let index = 0; index < length; index += 1) {
-        const item = (value as Record<number, unknown>)[index]
-        if (typeof item !== 'string') {
-          return null
-        }
-        result.push(item)
-      }
-      return result
-    }
-
-    const keys = Object.keys(value)
-    if (!keys.length) {
-      return []
-    }
-    if (!keys.every((key) => /^\d+$/.test(key))) {
-      return null
-    }
-
-    const result: string[] = []
-    for (const key of keys.sort((a, b) => Number(a) - Number(b))) {
-      const item = (value as Record<string, unknown>)[key]
-      if (typeof item !== 'string') {
-        return null
-      }
-      result.push(item)
-    }
-    return result
-  }
-
-  return null
 }
 
-async function mergeFilterListsInBackground(bodies: string[]): Promise<{ blockedHosts: string[]; allowedHosts: string[] }> {
+function toPersistedMatcherSnapshot(matcherData: BlocklistMatcherData): PersistedBlocklistMatcherSnapshot {
+  return {
+    revision: matcherData.revision,
+    blockedHosts: encodeHosts(matcherData.blockedHosts),
+    allowedHosts: encodeHosts(matcherData.allowedHosts),
+  }
+}
+
+async function mergeFilterListsInBackground(bodies: string[], revision: number): Promise<PersistedBlocklistMatcherSnapshot | null> {
   if (workletRuntime) {
     try {
-      const result = await runOnRuntime(workletRuntime, mergeFilterLists)(bodies)
-      const blockedHosts = coerceStringArray(result?.blockedHosts)
-      const allowedHosts = coerceStringArray(result?.allowedHosts)
-      if (blockedHosts && allowedHosts) {
-        return { blockedHosts, allowedHosts }
+      const timeoutError = new Error(`Timed out processing blocklist in worklet after ${Math.round(BLOCKLIST_WORKLET_TIMEOUT_MS / 1000)}s`)
+      const result = await Promise.race([
+        runOnRuntime(workletRuntime, mergeFilterListsText)(bodies),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(timeoutError), BLOCKLIST_WORKLET_TIMEOUT_MS)
+        }),
+      ])
+      if (result && typeof result.blockedHosts === 'string' && typeof result.allowedHosts === 'string') {
+        return {
+          revision,
+          blockedHosts: result.blockedHosts,
+          allowedHosts: result.allowedHosts,
+        }
       }
       console.warn('[blocklist] Invalid worklet merge result, falling back to async parser')
     } catch (error) {
       console.warn('[blocklist] Worklet merge failed, falling back to async parser', error)
     }
   }
-  return mergeFilterListsAsync(bodies)
-}
-
-function toPersistedMatcherSnapshot(matcherData: BlocklistMatcherData) {
+  const merged = await mergeFilterListsAsync(bodies)
   return {
-    revision: matcherData.revision,
-    blockedHosts: matcherData.blockedHosts,
-    allowedHosts: matcherData.allowedHosts,
+    revision,
+    blockedHosts: encodeHosts(merged.blockedHosts),
+    allowedHosts: encodeHosts(merged.allowedHosts),
   }
 }
 
@@ -184,18 +199,17 @@ async function readMergedPayloadFromFiles(revision: number): Promise<BlocklistMa
     return null
   }
 
-  const { blockedHosts, allowedHosts } = await mergeFilterListsInBackground(bodies.map((body) => body || ''))
+  const snapshot = await mergeFilterListsInBackground(bodies.map((body) => body || ''), revision)
+  if (!snapshot) {
+    return null
+  }
+  const matcherData = toMatcherData(snapshot)
 
-  if (!blockedHosts.length && !allowedHosts.length) {
+  if (!matcherData.blockedHosts.length && !matcherData.allowedHosts.length) {
     return null
   }
 
-  return {
-    enabled: true,
-    blockedHosts,
-    allowedHosts,
-    revision,
-  }
+  return matcherData
 }
 
 function getCachedPayload(revision: number) {
@@ -209,12 +223,7 @@ async function getPersistedMatcherData(revision: number) {
 
   const persistedSnapshot = await readBlocklistMatcherSnapshot()
   if (persistedSnapshot?.revision === revision) {
-    const matcherData = {
-      enabled: true,
-      blockedHosts: persistedSnapshot.blockedHosts,
-      allowedHosts: persistedSnapshot.allowedHosts,
-      revision,
-    } satisfies BlocklistMatcherData
+    const matcherData = toMatcherData(persistedSnapshot)
     setPayloadCache(matcherData)
     return matcherData
   }
@@ -237,13 +246,36 @@ export async function waitForBlocklistPersist() {
   await when(syncState(blocklist$).isPersistLoaded)
 }
 
+let lastAppliedRevision = -1
+let lastAppliedEnabled: boolean | undefined
+
 export async function applyBlocklist() {
   if (!supportsRuntimeBlocklist()) {
     return
   }
 
   const state = blocklist$.get()
+  const enabled = !!(state.enabled && state.hasSnapshot)
+  if (state.revision === lastAppliedRevision && enabled === lastAppliedEnabled) {
+    return
+  }
+
+  lastAppliedRevision = state.revision
+  lastAppliedEnabled = enabled
+
   let activePayload = emptyPayload(state.revision)
+  if (isIos) {
+    if (enabled && typeof NoraViewModule.reloadBlocklistFromDisk === 'function') {
+      const reloaded = await NoraViewModule.reloadBlocklistFromDisk(enabled, state.revision)
+      if (reloaded) {
+        return
+      }
+    }
+    if (typeof NoraViewModule.reloadBlocklistFromSourceFiles === 'function') {
+      await NoraViewModule.reloadBlocklistFromSourceFiles(enabled, state.revision)
+      return
+    }
+  }
   if (state.enabled && state.hasSnapshot) {
     const cachedPayload = getCachedPayload(state.revision)
     if (cachedPayload) {
@@ -341,107 +373,129 @@ export async function refreshBlocklist({ manual = false } = {}) {
     return false
   }
 
-  const previousPayload = current.hasSnapshot ? await getPersistedMatcherData(current.revision) : null
+  const previousSnapshot = isIos ? null : current.hasSnapshot ? await readBlocklistMatcherSnapshot() : null
 
   blocklist$.assign({
     phase: 'fetching',
     lastError: undefined,
   })
 
-  const now = Date.now()
-  const settled = await Promise.allSettled(BLOCKLIST_SOURCE_IDS.map((id) => fetchSource(id, now)))
-  const failure = settled.find((result) => result.status === 'rejected')
-  if (failure) {
-    blocklist$.assign({
-      phase: 'error',
-      lastError: failure.reason instanceof Error ? failure.reason.message : String(failure.reason),
-    })
-    return false
-  }
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
 
-  const nextSources = BLOCKLIST_SOURCE_IDS.reduce(
-    (acc, id, index) => {
-      const result = settled[index]
-      if (result.status === 'fulfilled') {
-        const value = result.value
-        acc[id] = {
-          ...current.sources[id],
-          etag: value.etag,
-          lastModified: value.lastModified,
-          lastFetchedAt: value.lastFetchedAt,
-        }
-      }
-      return acc
-    },
-    {} as BlocklistSnapshot['sources'],
-  )
-
-  const writes = settled
-    .filter((result): result is PromiseFulfilledResult<BlocklistFetchSourceResult> => result.status === 'fulfilled')
-    .filter((result) => result.value.status !== 304 && typeof result.value.body === 'string')
-    .map((result) => writeBlocklistSourceFile(result.value.id, result.value.body || ''))
-  const sourceBodies = await getSourceBodiesFromRefreshResults(settled)
-  if (!sourceBodies) {
-    blocklist$.assign({
-      phase: 'error',
-      lastError: 'Blocklist source files are missing or invalid',
-    })
-    return false
-  }
-
-  const payloadRevision = current.revision + 1
-  const nextMatcherData = await (async () => {
-    const { blockedHosts, allowedHosts } = await mergeFilterListsInBackground(sourceBodies)
-    if (!blockedHosts.length && !allowedHosts.length) {
-      return null
-    }
-
-    return {
-      enabled: true,
-      blockedHosts,
-      allowedHosts,
-      revision: payloadRevision,
-    } satisfies BlocklistMatcherData
-  })()
-  if (!nextMatcherData) {
-    blocklist$.assign({
-      phase: 'error',
-      lastError: 'Blocklist source files are missing or invalid',
-    })
-    return false
-  }
   try {
-    await Promise.all([...writes, writeBlocklistMatcherSnapshot(toPersistedMatcherSnapshot(nextMatcherData))])
+    const refreshPromise = (async () => {
+      const now = Date.now()
+      const settled = await Promise.allSettled(BLOCKLIST_SOURCE_IDS.map((id) => fetchSource(id, now)))
+      const failure = settled.find((result) => result.status === 'rejected')
+      if (failure) {
+        throw failure.reason instanceof Error ? failure.reason : new Error(String(failure.reason))
+      }
+
+      const nextSources = BLOCKLIST_SOURCE_IDS.reduce(
+        (acc, id, index) => {
+          const result = settled[index]
+          if (result.status === 'fulfilled') {
+            const value = result.value
+            acc[id] = {
+              ...current.sources[id],
+              etag: value.etag,
+              lastModified: value.lastModified,
+              lastFetchedAt: value.lastFetchedAt,
+            }
+          }
+          return acc
+        },
+        {} as BlocklistSnapshot['sources'],
+      )
+
+      const writes = settled
+        .filter((result): result is PromiseFulfilledResult<BlocklistFetchSourceResult> => result.status === 'fulfilled')
+        .filter((result) => result.value.status !== 304 && typeof result.value.body === 'string')
+        .map((result) => writeBlocklistSourceFile(result.value.id, result.value.body || ''))
+
+      const sourceBodies = await getSourceBodiesFromRefreshResults(settled)
+      if (!sourceBodies) {
+        throw new Error('Blocklist source files are missing or invalid')
+      }
+
+      const payloadRevision = current.revision + 1
+      const hostsChanged = settled.some((result) => result.status === 'fulfilled' && result.value.status !== 304)
+      const nextRevision = hostsChanged ? payloadRevision : current.revision
+
+      if (isIos && typeof NoraViewModule.reloadBlocklistFromSourceFiles === 'function') {
+        await Promise.all(writes)
+
+        const reloaded = await NoraViewModule.reloadBlocklistFromSourceFiles(current.enabled, payloadRevision)
+        if (!reloaded) {
+          throw new Error('Blocklist source files are missing or invalid')
+        }
+
+        lastAppliedRevision = nextRevision
+        lastAppliedEnabled = current.enabled
+
+        blocklist$.assign({
+          phase: 'ready',
+          hasSnapshot: true,
+          lastUpdatedAt: now,
+          lastError: undefined,
+          revision: nextRevision,
+          sources: nextSources,
+        })
+        return true
+      }
+
+      const nextSnapshot = await mergeFilterListsInBackground(sourceBodies, payloadRevision)
+      if (!nextSnapshot || (!nextSnapshot.blockedHosts && !nextSnapshot.allowedHosts)) {
+        throw new Error('Blocklist source files are missing or invalid')
+      }
+
+      await Promise.all([...writes, writeBlocklistMatcherSnapshot(nextSnapshot)])
+
+      const snapshotChanged =
+        nextSnapshot.blockedHosts !== (previousSnapshot?.blockedHosts || '') ||
+        nextSnapshot.allowedHosts !== (previousSnapshot?.allowedHosts || '')
+      const nextMatcherData = toMatcherData(nextSnapshot)
+      setPayloadCache(nextMatcherData)
+
+      blocklist$.assign({
+        phase: 'ready',
+        hasSnapshot: true,
+        lastUpdatedAt: now,
+        lastError: undefined,
+        revision: snapshotChanged ? payloadRevision : current.revision,
+        sources: nextSources,
+      })
+
+      if (!snapshotChanged && current.revision !== nextSnapshot.revision) {
+        setPayloadCache({
+          ...nextMatcherData,
+          revision: current.revision,
+        })
+      }
+      return true
+    })()
+
+    const emergencyTimeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('Update timed out after 60 seconds'))
+      }, 60_000)
+    })
+
+    const result = await Promise.race([refreshPromise, emergencyTimeoutPromise])
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+    return result
   } catch (error) {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
     blocklist$.assign({
       phase: 'error',
       lastError: error instanceof Error ? error.message : String(error),
     })
     return false
   }
-
-  setPayloadCache(nextMatcherData)
-  const previousBlockedHosts = previousPayload?.blockedHosts || []
-  const previousAllowedHosts = previousPayload?.allowedHosts || []
-  const hostsChanged =
-    !arraysEqual(nextMatcherData.blockedHosts, previousBlockedHosts) ||
-    !arraysEqual(nextMatcherData.allowedHosts, previousAllowedHosts)
-
-  blocklist$.assign({
-    phase: 'ready',
-    hasSnapshot: true,
-    lastUpdatedAt: now,
-    lastError: undefined,
-    revision: hostsChanged ? payloadRevision : current.revision,
-    sources: nextSources,
-  })
-  if (!hostsChanged && current.revision !== nextMatcherData.revision) {
-    setPayloadCache({
-      ...nextMatcherData,
-      revision: current.revision,
-    })
-  }
-  return true
 }
 
 export async function refreshBlocklistIfDue() {

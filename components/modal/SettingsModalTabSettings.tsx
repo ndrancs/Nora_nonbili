@@ -110,7 +110,7 @@ export const SettingsBrowsingContent: React.FC = () => {
         <NouText className={subheaderCls}>{t('blocklist.label')}</NouText>
         <View className={surfaceCls}>
           <View className={rowCls}>
-            <BlocklistSection hideTitle hideRefreshAction />
+            <BlocklistSection hideTitle />
           </View>
         </View>
       </View>
@@ -539,7 +539,7 @@ export const SettingsSearchContent = () => {
               <NouText className="text-lg font-semibold mb-4">
                 {draft.id ? t('settings.search.editTitle') : t('settings.search.addTitle')}
               </NouText>
-              <View className={clsx(rowCls, rowBorderCls, 'px-0 pt-0')}>
+              <View>
                 <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
                   {t('settings.search.fields.name')}
                 </NouText>
@@ -553,7 +553,7 @@ export const SettingsSearchContent = () => {
                   placeholderTextColor="#71717a"
                 />
               </View>
-              <View className="pt-4">
+              <View className="mt-4">
                 <NouText className="mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
                   {t('settings.search.fields.template')}
                 </NouText>

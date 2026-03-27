@@ -30,8 +30,8 @@ export function normalizeBlocklist<T extends Partial<BlocklistSnapshot> | undefi
   const currentSchemaVersion = typeof data.schemaVersion === 'number' ? data.schemaVersion : 0
   const enabled =
     currentSchemaVersion < 2 || typeof data.enabled !== 'boolean' ? true : data.enabled
-  const phase = data.phase || 'idle'
   const hasSnapshot = typeof data.hasSnapshot === 'boolean' ? data.hasSnapshot : false
+  const phase = data.phase === 'fetching' ? (hasSnapshot ? 'ready' : 'idle') : (data.phase || 'idle')
   const revision = typeof data.revision === 'number' ? data.revision : 0
   const lastUpdatedAt = typeof data.lastUpdatedAt === 'number' ? data.lastUpdatedAt : undefined
   const lastError = typeof data.lastError === 'string' ? data.lastError : undefined

@@ -59,16 +59,25 @@ function parsePersistedMatcherSnapshot(raw: string | null | undefined): Persiste
     if (typeof parsed?.revision !== 'number') {
       return null
     }
-    if (!Array.isArray(parsed.blockedHosts) || !parsed.blockedHosts.every((host) => typeof host === 'string')) {
-      return null
-    }
-    if (!Array.isArray(parsed.allowedHosts) || !parsed.allowedHosts.every((host) => typeof host === 'string')) {
+    const blockedHosts =
+      typeof parsed.blockedHosts === 'string'
+        ? parsed.blockedHosts
+        : Array.isArray(parsed.blockedHosts) && parsed.blockedHosts.every((host) => typeof host === 'string')
+          ? parsed.blockedHosts.join('\n')
+          : null
+    const allowedHosts =
+      typeof parsed.allowedHosts === 'string'
+        ? parsed.allowedHosts
+        : Array.isArray(parsed.allowedHosts) && parsed.allowedHosts.every((host) => typeof host === 'string')
+          ? parsed.allowedHosts.join('\n')
+          : null
+    if (blockedHosts === null || allowedHosts === null) {
       return null
     }
     return {
       revision: parsed.revision,
-      blockedHosts: parsed.blockedHosts,
-      allowedHosts: parsed.allowedHosts,
+      blockedHosts,
+      allowedHosts,
     }
   } catch {
     return null

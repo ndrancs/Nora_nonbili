@@ -37,8 +37,8 @@ export interface BlocklistMatcherData {
 
 export interface PersistedBlocklistMatcherSnapshot {
   revision: number
-  blockedHosts: string[]
-  allowedHosts: string[]
+  blockedHosts: string
+  allowedHosts: string
 }
 
 export interface BlocklistPayload {

@@ -73,6 +73,14 @@ public class NoraViewModule: Module {
       NouController.shared.setBlocklist(blocklist)
     }
 
+    AsyncFunction("reloadBlocklistFromDisk") { (enabled: Bool, revision: Int) in
+      NouController.shared.reloadBlocklistFromDisk(enabled: enabled, revision: revision)
+    }
+
+    AsyncFunction("reloadBlocklistFromSourceFiles") { (enabled: Bool, revision: Int) -> Bool in
+      NouController.shared.reloadBlocklistFromSourceFiles(enabled: enabled, revision: revision)
+    }
+
     Function("setLocaleStrings") { (v: [String: Any]) in
       for (key, value) in v {
         if let strValue = value as? String {

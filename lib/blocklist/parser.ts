@@ -105,6 +105,15 @@ function finalizeHosts(blockedHosts: Set<string>, allowedHosts: Set<string>, sor
   }
 }
 
+function finalizeHostText(blockedHosts: Set<string>, allowedHosts: Set<string>, sort = true) {
+  'worklet'
+  const finalized = finalizeHosts(blockedHosts, allowedHosts, sort)
+  return {
+    blockedHosts: finalized.blockedHosts.join('\n'),
+    allowedHosts: finalized.allowedHosts.join('\n'),
+  }
+}
+
 export function getAdvertisedExpiryMs(text: string) {
   'worklet'
   const match = text.match(/^!\s*Expires:\s*(\d+)\s*(hour|hours|day|days)\b/im)
@@ -166,6 +175,18 @@ export function mergeFilterLists(texts: string[], { sort = false }: { sort?: boo
   }
 
   return finalizeHosts(blockedHosts, allowedHosts, sort)
+}
+
+export function mergeFilterListsText(texts: string[], { sort = false }: { sort?: boolean } = {}) {
+  'worklet'
+  const blockedHosts = new Set<string>()
+  const allowedHosts = new Set<string>()
+
+  for (const text of texts) {
+    collectHosts(text, blockedHosts, allowedHosts)
+  }
+
+  return finalizeHostText(blockedHosts, allowedHosts, sort)
 }
 
 async function collectHostsAsync(text: string, blockedHosts: Set<string>, allowedHosts: Set<string>) {
