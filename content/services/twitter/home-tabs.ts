@@ -104,6 +104,7 @@ export function runXHomeTabsController() {
   let hiddenTarget: HTMLElement | null = null
   let pendingTimeline: XHomeTimeline | null = null
   let pendingAt = 0
+  let shouldRespectDefaultTimeline = true
 
   const clearHiddenTarget = () => {
     if (hiddenTarget) {
@@ -143,10 +144,14 @@ export function runXHomeTabsController() {
     const hideTarget = getHideTarget(tabs.tabList)
 
     const activeTimeline = getActiveTimeline(tabs)
+    if (activeTimeline === settings.xDefaultHomeTimeline) {
+      shouldRespectDefaultTimeline = false
+    }
     const decision = resolveXHomeTabsDecision(settings, {
       activeTimeline,
       tabsHidden: hideTarget.classList.contains(HIDDEN_CLASS),
       shouldHideTabs: hideTabs,
+      shouldRespectDefaultTimeline,
     })
 
     if (decision.revealTabs) {
@@ -183,6 +188,7 @@ export function runXHomeTabsController() {
     settings = {
       xDefaultHomeTimeline: normalizeXHomeTimeline(detail?.xDefaultHomeTimeline),
     }
+    shouldRespectDefaultTimeline = true
     scheduleApply()
   })
 
@@ -191,8 +197,14 @@ export function runXHomeTabsController() {
     scheduleApply()
   })
 
-  window.addEventListener('popstate', scheduleApply)
-  window.addEventListener('hashchange', scheduleApply)
+  window.addEventListener('popstate', () => {
+    shouldRespectDefaultTimeline = true
+    scheduleApply()
+  })
+  window.addEventListener('hashchange', () => {
+    shouldRespectDefaultTimeline = true
+    scheduleApply()
+  })
 
   if (document.body) {
     const observer = new MutationObserver(() => scheduleApply())

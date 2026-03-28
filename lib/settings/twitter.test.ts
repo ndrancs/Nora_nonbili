@@ -17,7 +17,7 @@ describe('resolveXHomeTabsDecision', () => {
     expect(
       resolveXHomeTabsDecision(
         { xDefaultHomeTimeline: 'following' },
-        { activeTimeline: 'for-you', tabsHidden: false, shouldHideTabs: true },
+        { activeTimeline: 'for-you', tabsHidden: false, shouldHideTabs: true, shouldRespectDefaultTimeline: true },
       ),
     ).toEqual({
       revealTabs: false,
@@ -30,7 +30,7 @@ describe('resolveXHomeTabsDecision', () => {
     expect(
       resolveXHomeTabsDecision(
         { xDefaultHomeTimeline: 'following' },
-        { activeTimeline: 'for-you', tabsHidden: true, shouldHideTabs: true },
+        { activeTimeline: 'for-you', tabsHidden: true, shouldHideTabs: true, shouldRespectDefaultTimeline: true },
       ),
     ).toEqual({
       revealTabs: true,
@@ -43,7 +43,7 @@ describe('resolveXHomeTabsDecision', () => {
     expect(
       resolveXHomeTabsDecision(
         { xDefaultHomeTimeline: 'following' },
-        { activeTimeline: 'following', tabsHidden: false, shouldHideTabs: true },
+        { activeTimeline: 'following', tabsHidden: false, shouldHideTabs: true, shouldRespectDefaultTimeline: true },
       ),
     ).toEqual({
       revealTabs: false,
@@ -56,12 +56,25 @@ describe('resolveXHomeTabsDecision', () => {
     expect(
       resolveXHomeTabsDecision(
         { xDefaultHomeTimeline: 'for-you' },
-        { activeTimeline: 'for-you', tabsHidden: false, shouldHideTabs: false },
+        { activeTimeline: 'for-you', tabsHidden: false, shouldHideTabs: false, shouldRespectDefaultTimeline: true },
       ),
     ).toEqual({
       revealTabs: false,
       switchTo: null,
       hideTabs: false,
+    })
+  })
+
+  it('does not switch tabs after the default has already been applied', () => {
+    expect(
+      resolveXHomeTabsDecision(
+        { xDefaultHomeTimeline: 'following' },
+        { activeTimeline: 'for-you', tabsHidden: false, shouldHideTabs: true, shouldRespectDefaultTimeline: false },
+      ),
+    ).toEqual({
+      revealTabs: false,
+      switchTo: null,
+      hideTabs: true,
     })
   })
 })

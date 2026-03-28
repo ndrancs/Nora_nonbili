@@ -10,6 +10,7 @@ export interface XHomeTabsDecisionState {
   activeTimeline: XHomeTimeline | null
   tabsHidden: boolean
   shouldHideTabs: boolean
+  shouldRespectDefaultTimeline: boolean
 }
 
 export interface XHomeTabsDecision {
@@ -28,7 +29,7 @@ export const resolveXHomeTabsDecision = (
 ): XHomeTabsDecision => {
   const desiredTimeline = normalizeXHomeTimeline(settings.xDefaultHomeTimeline)
 
-  if (state.activeTimeline !== desiredTimeline) {
+  if (state.shouldRespectDefaultTimeline && state.activeTimeline !== desiredTimeline) {
     return {
       revealTabs: state.tabsHidden,
       switchTo: desiredTimeline,
