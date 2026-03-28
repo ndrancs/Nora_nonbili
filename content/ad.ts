@@ -9,6 +9,31 @@ const hideElement = (element: HTMLElement) => {
   element.style.display = 'none'
 }
 
+const shouldHideFacebookOpenAppBanner = (element: HTMLElement | null) => {
+  if (!element) {
+    return false
+  }
+
+  if (element.dataset.noraHiddenOpenApp === '1') {
+    return true
+  }
+
+  if (element.querySelector('form, input, textarea, select')) {
+    return false
+  }
+
+  if (element.querySelector('[role="article"], [data-pagelet], [role="feed"]')) {
+    return false
+  }
+
+  const textBlocks = element.querySelectorAll('.native-text')
+  const hasTopGradient = !!element.querySelector(':scope > [data-mcomponent="MContainer"] > [data-mcomponent="TextArea"]')
+  const hasServerImageArea = !!element.querySelector('[data-mcomponent="ServerImageArea"]')
+  const hasPromoButtonShell = !!element.querySelector('[role="button"].bg-s3')
+
+  return textBlocks.length == 1 && hasTopGradient && hasServerImageArea && hasPromoButtonShell
+}
+
 const hideFacebookDesktopAds = (element: HTMLElement) => {
   if (isFacebookMessagesPath(document.location.pathname)) {
     return
@@ -99,11 +124,9 @@ export function hideAds(mutations: MutationRecord[]) {
       case 'm.facebook.com': {
         const target = document.querySelector('.fixed-container.bottom') as HTMLElement
 
-        if (
-          target?.querySelectorAll('.native-text')?.length == 1 &&
-          !target.querySelector('[data-mcomponent="ServerTextArea"]')
-        ) {
+        if (shouldHideFacebookOpenAppBanner(target)) {
           // facebook open app btn
+          target.dataset.noraHiddenOpenApp = '1'
           hideElement(target)
         }
         break

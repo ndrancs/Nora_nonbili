@@ -191,7 +191,9 @@ fun handleExternalAppUrl(context: Context, url: String): Boolean {
       }
     } else {
       Intent(Intent.ACTION_VIEW, uri).apply {
-        addCategory(Intent.CATEGORY_BROWSABLE)
+        if (scheme == "http" || scheme == "https") {
+          addCategory(Intent.CATEGORY_BROWSABLE)
+        }
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
       }
     }
@@ -210,7 +212,10 @@ fun handleExternalAppUrl(context: Context, url: String): Boolean {
         if (!fallbackUrl.isNullOrEmpty()) {
           context.startActivity(
             Intent(Intent.ACTION_VIEW, Uri.parse(fallbackUrl)).apply {
-              addCategory(Intent.CATEGORY_BROWSABLE)
+              val fallbackScheme = Uri.parse(fallbackUrl).scheme?.lowercase()
+              if (fallbackScheme == "http" || fallbackScheme == "https") {
+                addCategory(Intent.CATEGORY_BROWSABLE)
+              }
               addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
           )
@@ -221,7 +226,10 @@ fun handleExternalAppUrl(context: Context, url: String): Boolean {
         if (dataUri != null) {
           context.startActivity(
             Intent(Intent.ACTION_VIEW, dataUri).apply {
-              addCategory(Intent.CATEGORY_BROWSABLE)
+              val dataScheme = dataUri.scheme?.lowercase()
+              if (dataScheme == "http" || dataScheme == "https") {
+                addCategory(Intent.CATEGORY_BROWSABLE)
+              }
               addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
               `package` = null
               selector = null
