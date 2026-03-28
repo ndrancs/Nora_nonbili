@@ -125,6 +125,23 @@ fun redirectFacebookUrl(url: String): String? {
   return null
 }
 
+fun isMessengerUrl(url: String): Boolean {
+  return url.startsWith("https://www.facebook.com/messages/") || url.startsWith("https://m.facebook.com/messages/")
+}
+
+fun shouldRedirectFacebookToMobile(currentUrl: String, targetUrl: String): Boolean {
+  if (!targetUrl.startsWith("https://www.facebook.com/")) {
+    return false
+  }
+  if (isMessengerUrl(targetUrl)) {
+    return false
+  }
+  if (isMessengerUrl(currentUrl)) {
+    return false
+  }
+  return true
+}
+
 val INTERNAL_SCHEMES = setOf("about", "blob", "data", "file", "http", "https", "javascript", "nora")
 
 fun shouldNoraOverrideUrlLoading(view: WebView, url: String): Boolean {
@@ -361,10 +378,7 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
               load("https://www.facebook.com/messages/")
               return
             }
-            if (
-              url.startsWith("https://www.facebook.com/") &&
-              !url.startsWith("https://www.facebook.com/messages/")
-            ) {
+            if (shouldRedirectFacebookToMobile(pageUrl, url)) {
               load(url.replace("www", "m"))
               return
             }
@@ -404,6 +418,10 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
             val redirectedUrl = redirectFacebookUrl(url)
             if (redirectedUrl != null && !pageUrl.startsWith(redirectedUrl)) {
               load(redirectedUrl)
+              return true
+            }
+            if (shouldRedirectFacebookToMobile(pageUrl, url)) {
+              load(url.replace("www", "m"))
               return true
             }
             return shouldNoraOverrideUrlLoading(view, url)

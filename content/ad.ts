@@ -1,9 +1,29 @@
-import { fbL10nSponsored } from './services/facebook'
+import { fbL10nSponsored, isFacebookDesktopSponsoredPost, isFacebookMessagesPath } from './services/facebook'
 import { linkedinL10nPromoted } from './services/linkedin'
 import { getService } from './services/manager'
 import { emit } from './utils'
 
 const { host } = document.location
+
+const hideElement = (element: HTMLElement) => {
+  element.style.display = 'none'
+}
+
+const hideFacebookDesktopAds = (element: HTMLElement) => {
+  if (isFacebookMessagesPath(document.location.pathname)) {
+    return
+  }
+
+  const container = element.closest('[role="article"], div[data-pagelet^="FeedUnit"], div[role="feed"] > div')
+  if (!container || !(container instanceof HTMLElement) || container.dataset.noraHiddenAd === '1') {
+    return
+  }
+
+  if (isFacebookDesktopSponsoredPost(container)) {
+    container.dataset.noraHiddenAd = '1'
+    hideElement(container)
+  }
+}
 
 export function blockAds() {
   if (!['www.instagram.com', 'www.reddit.com', 'x.com'].includes(host)) {
@@ -52,11 +72,15 @@ export function hideAds(mutations: MutationRecord[]) {
             for (const text of fbL10nSponsored) {
               if (el.textContent?.includes(text)) {
                 // facebook server rendered ads
-                el.style.display = 'none'
+                hideElement(el)
                 break
               }
             }
           }
+          break
+        }
+        case 'www.facebook.com': {
+          hideFacebookDesktopAds(el)
           break
         }
         case 'www.instagram.com': {
@@ -80,7 +104,16 @@ export function hideAds(mutations: MutationRecord[]) {
           !target.querySelector('[data-mcomponent="ServerTextArea"]')
         ) {
           // facebook open app btn
-          target.style.display = 'none'
+          hideElement(target)
+        }
+        break
+      }
+      case 'www.facebook.com': {
+        if (!isFacebookMessagesPath(document.location.pathname)) {
+          const items = document.querySelectorAll<HTMLElement>('[role="article"], div[data-pagelet^="FeedUnit"], div[role="feed"] > div')
+          for (const item of items) {
+            hideFacebookDesktopAds(item)
+          }
         }
         break
       }

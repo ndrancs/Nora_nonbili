@@ -3,6 +3,7 @@ import { delay, retry } from 'es-toolkit'
 import { isDownloadable } from './download'
 import { getService } from './services/manager'
 import { createDefaultUserStylesSnapshot, type UserStylesSnapshot } from '../lib/user-styles'
+import { getBase64Payload } from '../lib/base64'
 
 export const noraSettingsEvent = 'nora:settings'
 export const noraUserStylesEvent = 'nora:user-styles'
@@ -22,10 +23,10 @@ function getMeta(url: string) {
 }
 
 async function blobToBase64(blob: Blob) {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
     reader.onerror = reject
-    reader.onloadend = () => resolve(reader.result)
+    reader.onloadend = () => resolve(getBase64Payload(String(reader.result || '')))
     reader.readAsDataURL(blob)
   })
 }
