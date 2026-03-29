@@ -76,6 +76,8 @@ export const NouHeader: React.FC<{}> = ({}) => {
     } catch (e) {}
   }
 
+  const hideDesktopSiteToggle = hostname.endsWith('.facebook.com') || hostname.endsWith('.tiktok.com')
+
   const onLayout = (event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout
     if (Math.abs(uiState.headerHeight - height) < 1) {
@@ -207,7 +209,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
                     systemImage: 'pencil',
                     handler: editTabUrl,
                   },
-                  ...(hostname.endsWith('.facebook.com')
+                  ...(hideDesktopSiteToggle
                     ? []
                     : [
                         {

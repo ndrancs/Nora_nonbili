@@ -1,6 +1,8 @@
 import ExpoModulesCore
 import WebKit
 
+let uaMac = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+
 class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, UIScrollViewDelegate, UIGestureRecognizerDelegate {
   let onLoad = EventDispatcher()
   let onMessage = EventDispatcher()
@@ -171,6 +173,13 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
 
   func load(url: String) {
       guard let u = URL(string: url) else { return }
+      let urlString = u.absoluteString
+      if urlString.hasPrefix("https://www.facebook.com/messages/") ||
+        urlString.hasPrefix("https://www.tiktok.com") {
+          webView.customUserAgent = uaMac
+      } else {
+          webView.customUserAgent = userAgent
+      }
       var request = URLRequest(url: u)
       webView.load(request)
   }
