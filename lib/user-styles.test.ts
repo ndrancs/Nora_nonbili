@@ -7,7 +7,9 @@ import {
   normalizeUserStyles,
 } from './user-styles'
 
-const withBuiltinEnabled = (id: 'hide-reddit-game' | 'hide-tiktok-sidebar' | 'hide-x-bottom-nav' | 'hide-x-home-tabs') =>
+const withBuiltinEnabled = (
+  id: 'hide-reddit-game' | 'hide-tiktok-sidebar' | 'hide-x-bottom-nav' | 'hide-x-home-tabs',
+) =>
   normalizeUserStyles({
     builtins: {
       [id]: { enabled: true },
@@ -117,6 +119,7 @@ describe('user style css composition', () => {
 
     const css = getInjectedCss('www.instagram.com', {}, snapshot)
     expect(css).toContain('._acc8._abpk')
+    expect(css).toContain('article:has(.x1fhwpqd.x132q4wb.x5n08af)')
     expect(css).not.toContain("ssr-post-content-header")
   })
 

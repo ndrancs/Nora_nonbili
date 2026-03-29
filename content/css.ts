@@ -44,6 +44,17 @@ const styles: Record<string, (settings: any) => string> = {
     ._acc8._ag6v {
       display: none !important;
     }
+
+    /* Server-rendered ads */
+    article:has(.x1fhwpqd.x132q4wb.x5n08af) {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    article:has(.x1fhwpqd.x132q4wb.x5n08af) video {
+      display: none !important;
+    }
+
     /* blocking div */
     ._aagw {
       pointer-events: none !important;

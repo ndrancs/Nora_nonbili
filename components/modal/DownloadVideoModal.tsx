@@ -1,6 +1,6 @@
 import { Modal, Pressable, Text, View } from 'react-native'
 import { NouText } from '../NouText'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { clsx, isIos, nIf } from '@/lib/utils'
 import { useValue } from '@legendapp/state/react'
 import { ui$ } from '@/states/ui'
@@ -53,9 +53,17 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
     if (webview && currentUrl) {
       webview.loadUrl(normalizeDownloadUrl(currentUrl))
     }
-  }, [nativeRef, downloadVideoModalOpen])
+  }, [currentUrl, downloadVideoModalOpen])
 
-  const webview = nativeRef.current
+  const setWebviewRef = useCallback(
+    (webview: any) => {
+      nativeRef.current = webview
+      if (webview && currentUrl) {
+        webview.loadUrl(normalizeDownloadUrl(currentUrl))
+      }
+    },
+    [currentUrl],
+  )
 
   if (!downloadVideoModalOpen) {
     return null
@@ -67,6 +75,7 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
     if (value) {
       setUrl(value)
     }
+    const webview = nativeRef.current
     if (!parsingStartedRef.current && webview) {
       parsingStartedRef.current = true
       void executeWebviewJavaScriptQuietly(webview, 'window.Nora.getVideoUrl()')
@@ -83,13 +92,14 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
         break
       case 'onload':
         if (url && !parsingStartedRef.current) {
+          const webview = nativeRef.current
           parsingStartedRef.current = true
           void executeWebviewJavaScriptQuietly(webview, 'window.Nora.getVideoUrl()')
         }
         break
       case 'download':
         setTitle('Downloading...')
-        webview?.download(data.url, data.fileName)
+        nativeRef.current?.download(data.url, data.fileName)
         await delay(500)
         onClose()
         break
@@ -113,7 +123,7 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
           <View className="flex-1">
             <View className={clsx('flex-1', downloadOptions.length && 'hidden')}>
               <NoraView
-                ref={nativeRef}
+                ref={setWebviewRef}
                 className="bg-white"
                 style={{ flex: 1 }}
                 scriptOnStart={contentJs}
@@ -134,7 +144,7 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
                     <NouButton
                       onPress={async () => {
                         setTitle('Downloading...')
-                        webview?.download(option.url, fileName || undefined)
+                        nativeRef.current?.download(option.url, fileName || undefined)
                         await delay(500)
                         onClose()
                       }}

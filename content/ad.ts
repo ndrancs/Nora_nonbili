@@ -57,8 +57,16 @@ export function blockAds() {
   function interceptResponse(url: string, response: string) {
     try {
       const service = getService(document.location.href)
+      console.log('[nora][xhr] intercept candidate', {
+        pageHost: host,
+        requestUrl: url,
+        hasService: !!service,
+      })
       if (service?.shouldIntercept(url)) {
+        console.log('[nora][xhr] transforming response', { requestUrl: url })
         response = service.transformResponse(response)
+      } else {
+        console.log('[nora][xhr] skipped response', { requestUrl: url })
       }
     } catch (e) {
       console.error(e)
@@ -106,15 +114,6 @@ export function hideAds(mutations: MutationRecord[]) {
         }
         case 'www.facebook.com': {
           hideFacebookDesktopAds(el)
-          break
-        }
-        case 'www.instagram.com': {
-          if (el.nodeName == 'ARTICLE') {
-            if (el.querySelector('.x1fhwpqd.x132q4wb.x5n08af')) {
-              // instagram server rendered ads
-              el.style.visibility = 'hidden'
-            }
-          }
           break
         }
       }

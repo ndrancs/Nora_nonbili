@@ -2,7 +2,12 @@ import { nanoid } from 'nanoid'
 
 export const USER_STYLES_SCHEMA_VERSION = 1
 
-export const builtinUserStyleIds = ['hide-reddit-game', 'hide-tiktok-sidebar', 'hide-x-bottom-nav', 'hide-x-home-tabs'] as const
+export const builtinUserStyleIds = [
+  'hide-reddit-game',
+  'hide-tiktok-sidebar',
+  'hide-x-bottom-nav',
+  'hide-x-home-tabs',
+] as const
 
 export type BuiltinUserStyleId = (typeof builtinUserStyleIds)[number]
 
