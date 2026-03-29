@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid'
 
 export const USER_STYLES_SCHEMA_VERSION = 1
 
-export const builtinUserStyleIds = ['hide-reddit-game', 'hide-x-bottom-nav', 'hide-x-home-tabs'] as const
+export const builtinUserStyleIds = ['hide-reddit-game', 'hide-tiktok-sidebar', 'hide-x-bottom-nav', 'hide-x-home-tabs'] as const
 
 export type BuiltinUserStyleId = (typeof builtinUserStyleIds)[number]
 
@@ -46,6 +46,43 @@ export const builtinUserStyleDefinitions: BuiltinUserStyleDefinition[] = [
     `,
   },
   {
+    id: 'hide-tiktok-sidebar',
+    labelKey: 'settings.userStyles.builtin.hideTiktokSidebar.label',
+    hostGlobs: ['www.tiktok.com'],
+    css: css`
+      /* Compact sidebar */
+      div[class*='DivSideNavPlaceholderContainer'] {
+        width: 3rem !important;
+      }
+
+      div[class*='DivSideNavContainer'] {
+        width: 3rem !important;
+      }
+
+      main#main-content-homepage_hot {
+        min-width: 0 !important;
+      }
+
+      div[class*='DivColumnListContainer'] {
+        padding-inline-end: 0 !important;
+      }
+
+      section[class*='SectionMediaCardContainer'] {
+        width: calc(100vw - 3rem);
+        min-width: 0;
+      }
+
+      section[class*='SectionActionBarContainer'] {
+        position: fixed !important;
+        right: 0 !important;
+        top: 0 !important;
+        background: #ffffff33;
+        border-radius: 12px;
+        transform: scale(0.9);
+      }
+    `,
+  },
+  {
     id: 'hide-x-bottom-nav',
     labelKey: 'settings.userStyles.builtin.hideXBottomNav.label',
     hostGlobs: ['x.com'],
@@ -85,6 +122,7 @@ export const builtinUserStyleDefinitionById = builtinUserStyleDefinitions.reduce
 
 export const createDefaultBuiltinUserStyles = (): Record<BuiltinUserStyleId, BuiltinUserStyleState> => ({
   'hide-reddit-game': { enabled: false },
+  'hide-tiktok-sidebar': { enabled: true },
   'hide-x-bottom-nav': { enabled: true },
   'hide-x-home-tabs': { enabled: false },
 })

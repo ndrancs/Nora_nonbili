@@ -74,34 +74,6 @@ const styles: Record<string, (settings: any) => string> = {
     }
   `,
 
-  tiktok: (settings) => css`
-    /* layout */
-    div[class*='DivSideNavPlaceholderContainer'] {
-      width: 3rem !important;
-    }
-    div[class*='DivSideNavContainer'] {
-      width: 3rem !important;
-    }
-    main#main-content-homepage_hot {
-      min-width: 0 !important;
-    }
-    div[class*='DivColumnListContainer'] {
-      padding-inline-end: 0 !important;
-    }
-    section[class*='SectionMediaCardContainer'] {
-      width: calc(100vw - 3rem);
-      min-width: 0;
-    }
-    section[class*='SectionActionBarContainer'] {
-      position: fixed !important;
-      right: 0 !important;
-      top: 0 !important;
-      background: #ffffff33;
-      border-radius: 12px;
-      transform: scale(0.9);
-    }
-  `,
-
   x: (settings) => css`
     /* Subscribe */
     a[href="/i/premium_sign_up"],
