@@ -18,7 +18,7 @@ import { NouText } from '../NouText'
 import type { SharedValue } from 'react-native-reanimated'
 import NoraViewModule from '@/modules/nora-view'
 import { share } from '@/lib/share'
-import { isDownloadable } from '@/content/download'
+import { isDirectlyDownloadable } from '@/content/download'
 import { t } from 'i18next'
 import { bookmarks$ } from '@/states/bookmarks'
 import { showToast } from '@/lib/toast'
@@ -72,7 +72,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
     try {
       const url = new URL(currentTab.url)
       hostname = url.hostname
-      canDownload = isDownloadable(currentTab.url)
+      canDownload = isDirectlyDownloadable(currentTab.url)
     } catch (e) {}
   }
 

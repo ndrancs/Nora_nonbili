@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native'
+import { Modal, Pressable, Text, View } from 'react-native'
 import { NouText } from '../NouText'
 import { useEffect, useRef, useState } from 'react'
 import { clsx, isIos, nIf } from '@/lib/utils'
@@ -14,8 +14,15 @@ import { delay } from 'es-toolkit'
 import { getUserAgent } from '@/lib/useragent'
 import { parseJson } from '@/content/utils'
 import { executeWebviewJavaScriptQuietly } from '@/lib/webview'
+import { normalizeDownloadUrl } from '@/content/download'
 
 const userAgent = getUserAgent(isIos ? 'ios' : 'android')
+
+type DownloadOption = {
+  description: string
+  label: string
+  url: string
+}
 
 export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs }) => {
   const currentUrl = useValue(ui$.downloadVideoModalUrl)
@@ -23,6 +30,8 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
   const onClose = () => ui$.downloadVideoModalUrl.set('')
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
+  const [downloadOptions, setDownloadOptions] = useState<DownloadOption[]>([])
+  const [fileName, setFileName] = useState('')
   const nativeRef = useRef<any>(null)
   const parsingStartedRef = useRef(false)
 
@@ -33,6 +42,8 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
       nativeRef.current = null
       setTitle('Loading...')
       setUrl('')
+      setFileName('')
+      setDownloadOptions([])
       parsingStartedRef.current = false
     }
   }, [downloadVideoModalOpen])
@@ -40,13 +51,7 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
   useEffect(() => {
     const webview = nativeRef.current
     if (webview && currentUrl) {
-      if (currentUrl.startsWith('https://m.facebook.com/reel/')) {
-        const canonical = new URL(currentUrl)
-        canonical.search = ''
-        webview.loadUrl(canonical.href)
-      } else {
-        webview.loadUrl(currentUrl)
-      }
+      webview.loadUrl(normalizeDownloadUrl(currentUrl))
     }
   }, [nativeRef, downloadVideoModalOpen])
 
@@ -61,6 +66,10 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
     const value = e.nativeEvent.url
     if (value) {
       setUrl(value)
+    }
+    if (!parsingStartedRef.current && webview) {
+      parsingStartedRef.current = true
+      void executeWebviewJavaScriptQuietly(webview, 'window.Nora.getVideoUrl()')
     }
   }
 
@@ -84,6 +93,11 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
         await delay(500)
         onClose()
         break
+      case 'download-options':
+        setFileName(data.fileName || '')
+        setDownloadOptions(data.options || [])
+        setTitle('Choose download quality')
+        break
       case 'video-not-found':
         setTitle('Failed to find video url')
         break
@@ -91,23 +105,49 @@ export const DownloadVideoModal: React.FC<{ contentJs: string }> = ({ contentJs 
   }
 
   return (
-    <View className={clsx('absolute inset-0 z-10 items-center justify-center')}>
-      <Pressable className="absolute inset-0 bg-gray-600/80" onPress={onClose} />
-      <View className="rounded-lg bg-gray-950 py-6 px-4 w-screen h-[75%]">
-        <NouText className="text-lg font-semibold mb-4">{title}</NouText>
-        <View className="flex-1">
-          <NoraView
-            ref={nativeRef}
-            className="bg-white"
-            style={{ flex: 1 }}
-            scriptOnStart={contentJs}
-            useragent={userAgent}
-            onLoad={onLoad}
-            onMessage={onMessage}
-            inspectable={inspectable}
-          />
+    <Modal transparent visible onRequestClose={onClose}>
+      <View className={clsx('flex-1 items-center justify-center')}>
+        <Pressable className="absolute inset-0 bg-gray-600/80" onPress={onClose} />
+        <View className="rounded-lg bg-gray-950 py-6 px-4 w-screen h-[75%]">
+          <NouText className="text-lg font-semibold mb-4">{title}</NouText>
+          <View className="flex-1">
+            <View className={clsx('flex-1', downloadOptions.length && 'hidden')}>
+              <NoraView
+                ref={nativeRef}
+                className="bg-white"
+                style={{ flex: 1 }}
+                scriptOnStart={contentJs}
+                useragent={userAgent}
+                onLoad={onLoad}
+                onMessage={onMessage}
+                inspectable={inspectable}
+              />
+            </View>
+            {downloadOptions.length ? (
+              <View className="gap-3">
+                {downloadOptions.map((option) => (
+                  <View key={option.label} className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 gap-3">
+                    <View className="gap-1">
+                      <NouText className="font-semibold">{option.label}</NouText>
+                      <NouText className="text-sm text-zinc-400">{option.description}</NouText>
+                    </View>
+                    <NouButton
+                      onPress={async () => {
+                        setTitle('Downloading...')
+                        webview?.download(option.url, fileName || undefined)
+                        await delay(500)
+                        onClose()
+                      }}
+                    >
+                      Download
+                    </NouButton>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
         </View>
       </View>
-    </View>
+    </Modal>
   )
 }

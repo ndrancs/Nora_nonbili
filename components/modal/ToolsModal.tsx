@@ -7,7 +7,7 @@ import { TextInput, View } from 'react-native'
 import { gray } from '@radix-ui/colors'
 import { NouButton } from '../button/NouButton'
 import { t } from 'i18next'
-import { isDownloadable } from '@/content/download'
+import { isDownloadable, normalizeDownloadUrl } from '@/content/download'
 import { mainClient } from '@/desktop/src/renderer/ipc/main'
 import { isWeb } from '@/lib/utils'
 
@@ -46,11 +46,12 @@ export const ToolsModal = () => {
   }, [toolsModalOpen])
 
   const onDownload = () => {
-    if (url.trim()) {
+    const normalizedUrl = normalizeDownloadUrl(url.trim())
+    if (normalizedUrl) {
       if (isWeb) {
-        mainClient.downloadVideo(url)
+        mainClient.downloadVideo(normalizedUrl)
       } else {
-        ui$.downloadVideoModalUrl.set(url)
+        ui$.downloadVideoModalUrl.set(normalizedUrl)
       }
     }
   }

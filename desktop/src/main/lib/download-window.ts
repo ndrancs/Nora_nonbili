@@ -3,6 +3,7 @@ import { BrowserWindow, ipcMain, IpcMainEvent, session, WebPreferences } from 'e
 import { is } from '@electron-toolkit/utils'
 import contentJs from '@/assets/scripts/main.bjs?raw'
 import { uiClient } from 'main/ipc/ui'
+import { normalizeDownloadUrl } from '@/content/download'
 
 async function handleProtocolRequest(req: Request, callback: (url: string) => void): Promise<Response> {
   const url = req.url
@@ -38,6 +39,7 @@ async function handleProtocolRequest(req: Request, callback: (url: string) => vo
 }
 
 export async function openDownloadWindow(url: string) {
+  url = normalizeDownloadUrl(url)
   let win: BrowserWindow | undefined
   const webPreferences: WebPreferences = {
     sandbox: false,

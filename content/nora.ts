@@ -1,6 +1,5 @@
-import { emit, log, parseJson, waitUntil } from './utils'
-import { delay, retry } from 'es-toolkit'
-import { isDownloadable } from './download'
+import { emit, waitUntil } from './utils'
+import { getFacebookDownloadInfo, isDownloadable } from './download'
 import { getService } from './services/manager'
 import { createDefaultUserStylesSnapshot, type UserStylesSnapshot } from '../lib/user-styles'
 import { getBase64Payload } from '../lib/base64'
@@ -55,30 +54,37 @@ async function getVideoUrl() {
   switch (hostname) {
     case 'm.facebook.com':
     case 'www.facebook.com':
-      const extra = document.querySelector('[data-video-url]')?.getAttribute('data-extra')
-      if (extra) {
-        const data = parseJson(extra)
-        let height = 0,
-          url
-        for (const representation of data?.dash_prefetch_representations?.representations || []) {
-          if (representation.height > height) {
-            height = representation.height
-            url = representation.base_url
-          }
-        }
-        if (url) {
-          emit('download', { url, fileName })
-          return
-        }
-      }
-      const html = document.body.innerHTML
-      const matches = html.match(/\\u003CBaseURL>(https:.+?)\\u003C/)
-      if (matches) {
-        const url = matches[1].replace(/\\\//g, '/').replaceAll('\\u0025', '%').replaceAll('&amp;', '&')
-        emit('download', { url, fileName })
+      const facebookNodes = [...document.querySelectorAll('[data-video-url]')]
+      const dataVideoUrls = facebookNodes
+        .map((node) => node.getAttribute('data-video-url'))
+        .filter((value): value is string => !!value)
+      const dataExtras = facebookNodes
+        .map((node) => node.getAttribute('data-extra'))
+        .filter((value): value is string => !!value)
+      const htmlSources = [
+        document.documentElement?.innerHTML || '',
+        ...[...document.scripts].map((script) => script.textContent || ''),
+      ].filter(Boolean)
+      const info = getFacebookDownloadInfo(dataExtras, htmlSources, dataVideoUrls)
+      if (info.hdVideoOnlyUrl && info.standardWithAudioUrl && info.hdVideoOnlyUrl !== info.standardWithAudioUrl) {
+        emit('download-options', {
+          fileName,
+          options: [
+            {
+              label: 'HD video only',
+              description: 'Higher quality, no audio',
+              url: info.hdVideoOnlyUrl,
+            },
+            {
+              label: 'Standard quality with audio',
+              description: 'Lower quality, includes audio',
+              url: info.standardWithAudioUrl,
+            },
+          ],
+        })
         return
       }
-      const url = document.querySelector('[data-video-url]')?.getAttribute('data-video-url')
+      const url = info.standardWithAudioUrl || info.hdVideoOnlyUrl
       if (url) {
         emit('download', { url, fileName })
         return
