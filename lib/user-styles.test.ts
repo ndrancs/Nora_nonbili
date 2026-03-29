@@ -8,7 +8,7 @@ import {
 } from './user-styles'
 
 const withBuiltinEnabled = (
-  id: 'hide-reddit-game' | 'hide-tiktok-sidebar' | 'hide-x-bottom-nav' | 'hide-x-home-tabs',
+  id: 'compact-tiktok-layout' | 'hide-reddit-game' | 'hide-x-bottom-nav' | 'hide-x-home-tabs',
 ) =>
   normalizeUserStyles({
     builtins: {
@@ -63,7 +63,7 @@ describe('normalizeUserStyles', () => {
     })
 
     expect(snapshot.builtins['hide-reddit-game'].enabled).toBe(false)
-    expect(snapshot.builtins['hide-tiktok-sidebar'].enabled).toBe(true)
+    expect(snapshot.builtins['compact-tiktok-layout'].enabled).toBe(true)
     expect(snapshot.builtins['hide-x-bottom-nav'].enabled).toBe(true)
     expect(snapshot.builtins['hide-x-home-tabs'].enabled).toBe(false)
     expect(snapshot.customStyles).toHaveLength(1)
@@ -110,7 +110,7 @@ describe('user style css composition', () => {
     const snapshot = normalizeUserStyles({
       builtins: {
         'hide-reddit-game': { enabled: false },
-        'hide-tiktok-sidebar': { enabled: false },
+        'compact-tiktok-layout': { enabled: false },
         'hide-x-bottom-nav': { enabled: false },
         'hide-x-home-tabs': { enabled: false },
       },
@@ -123,6 +123,22 @@ describe('user style css composition', () => {
     expect(css).not.toContain("ssr-post-content-header")
   })
 
+  it('keeps always-on tiktok css even when user styles are disabled', () => {
+    const snapshot = normalizeUserStyles({
+      builtins: {
+        'hide-reddit-game': { enabled: false },
+        'compact-tiktok-layout': { enabled: false },
+        'hide-x-bottom-nav': { enabled: false },
+        'hide-x-home-tabs': { enabled: false },
+      },
+      customStyles: [],
+    })
+
+    const css = getInjectedCss('www.tiktok.com', {}, snapshot)
+    expect(css).toContain("SectionActionBarContainer")
+    expect(css).not.toContain("DivSideNavPlaceholderContainer")
+  })
+
   it('includes x home tab css when the builtin is enabled', () => {
     const snapshot = withBuiltinEnabled('hide-x-home-tabs')
 
@@ -130,7 +146,7 @@ describe('user style css composition', () => {
   })
 
   it('includes tiktok layout css when the builtin is enabled', () => {
-    const snapshot = withBuiltinEnabled('hide-tiktok-sidebar')
+    const snapshot = withBuiltinEnabled('compact-tiktok-layout')
 
     expect(getEnabledUserStyleCss('www.tiktok.com', snapshot)).toContain("DivSideNavPlaceholderContainer")
   })

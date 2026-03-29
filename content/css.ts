@@ -85,6 +85,17 @@ const styles: Record<string, (settings: any) => string> = {
     }
   `,
 
+  tiktok: (settings) => css`
+    section[class*='SectionActionBarContainer'] {
+      position: fixed !important;
+      right: 0 !important;
+      top: 0 !important;
+      background: #ffffff33;
+      border-radius: 12px;
+      transform: scale(0.9);
+    }
+  `,
+
   x: (settings) => css`
     /* Subscribe */
     a[href="/i/premium_sign_up"],

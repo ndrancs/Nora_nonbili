@@ -4,7 +4,7 @@ export const USER_STYLES_SCHEMA_VERSION = 1
 
 export const builtinUserStyleIds = [
   'hide-reddit-game',
-  'hide-tiktok-sidebar',
+  'compact-tiktok-layout',
   'hide-x-bottom-nav',
   'hide-x-home-tabs',
 ] as const
@@ -51,17 +51,17 @@ export const builtinUserStyleDefinitions: BuiltinUserStyleDefinition[] = [
     `,
   },
   {
-    id: 'hide-tiktok-sidebar',
-    labelKey: 'settings.userStyles.builtin.hideTiktokSidebar.label',
+    id: 'compact-tiktok-layout',
+    labelKey: 'settings.userStyles.builtin.compactTiktokLayout.label',
     hostGlobs: ['www.tiktok.com'],
     css: css`
       /* Compact sidebar */
       div[class*='DivSideNavPlaceholderContainer'] {
-        width: 3rem !important;
+        width: 4rem !important;
       }
 
       div[class*='DivSideNavContainer'] {
-        width: 3rem !important;
+        width: 4rem !important;
       }
 
       main#main-content-homepage_hot {
@@ -73,17 +73,8 @@ export const builtinUserStyleDefinitions: BuiltinUserStyleDefinition[] = [
       }
 
       section[class*='SectionMediaCardContainer'] {
-        width: calc(100vw - 3rem);
+        width: calc(100vw - 4rem);
         min-width: 0;
-      }
-
-      section[class*='SectionActionBarContainer'] {
-        position: fixed !important;
-        right: 0 !important;
-        top: 0 !important;
-        background: #ffffff33;
-        border-radius: 12px;
-        transform: scale(0.9);
       }
     `,
   },
@@ -104,13 +95,35 @@ export const builtinUserStyleDefinitions: BuiltinUserStyleDefinition[] = [
     hostGlobs: ['x.com'],
     css: css`
       /* Home timeline tabs wrapper */
-      [role='tablist']:has([role='tab'][aria-label*='For you'], [role='tab'][data-testid*='For you'], [role='tab'][aria-label*='Following'], [role='tab'][data-testid*='Following']),
-      [role='tablist']:has([role='tab'][aria-label*='for you'], [role='tab'][data-testid*='for you'], [role='tab'][aria-label*='following'], [role='tab'][data-testid*='following']) {
+      [role='tablist']:has(
+        [role='tab'][aria-label*='For you'],
+        [role='tab'][data-testid*='For you'],
+        [role='tab'][aria-label*='Following'],
+        [role='tab'][data-testid*='Following']
+      ),
+      [role='tablist']:has(
+        [role='tab'][aria-label*='for you'],
+        [role='tab'][data-testid*='for you'],
+        [role='tab'][aria-label*='following'],
+        [role='tab'][data-testid*='following']
+      ) {
         display: none !important;
       }
 
-      [role='tablist']:has([role='tab'][aria-label*='For you'], [role='tab'][data-testid*='For you'], [role='tab'][aria-label*='Following'], [role='tab'][data-testid*='Following']) > *,
-      [role='tablist']:has([role='tab'][aria-label*='for you'], [role='tab'][data-testid*='for you'], [role='tab'][aria-label*='following'], [role='tab'][data-testid*='following']) > * {
+      [role='tablist']:has(
+          [role='tab'][aria-label*='For you'],
+          [role='tab'][data-testid*='For you'],
+          [role='tab'][aria-label*='Following'],
+          [role='tab'][data-testid*='Following']
+        )
+        > *,
+      [role='tablist']:has(
+          [role='tab'][aria-label*='for you'],
+          [role='tab'][data-testid*='for you'],
+          [role='tab'][aria-label*='following'],
+          [role='tab'][data-testid*='following']
+        )
+        > * {
         display: none !important;
       }
     `,
@@ -127,7 +140,7 @@ export const builtinUserStyleDefinitionById = builtinUserStyleDefinitions.reduce
 
 export const createDefaultBuiltinUserStyles = (): Record<BuiltinUserStyleId, BuiltinUserStyleState> => ({
   'hide-reddit-game': { enabled: false },
-  'hide-tiktok-sidebar': { enabled: true },
+  'compact-tiktok-layout': { enabled: true },
   'hide-x-bottom-nav': { enabled: true },
   'hide-x-home-tabs': { enabled: false },
 })
@@ -202,7 +215,10 @@ export const getEnabledUserStyleCss = (host: string, snapshot?: UserStylesSnapsh
 
 const genId = (size = 6) => nanoid(size)
 
-const normalizeCustomUserStyle = (style: Partial<CustomUserStyle> | null | undefined, index: number): CustomUserStyle | null => {
+const normalizeCustomUserStyle = (
+  style: Partial<CustomUserStyle> | null | undefined,
+  index: number,
+): CustomUserStyle | null => {
   if (!style) {
     return null
   }
@@ -230,7 +246,8 @@ export const normalizeUserStyles = (data?: Partial<UserStylesSnapshot>): UserSty
 
   for (const id of builtinUserStyleIds) {
     builtins[id] = {
-      enabled: typeof data?.builtins?.[id]?.enabled === 'boolean' ? data.builtins[id].enabled : defaults.builtins[id].enabled,
+      enabled:
+        typeof data?.builtins?.[id]?.enabled === 'boolean' ? data.builtins[id].enabled : defaults.builtins[id].enabled,
     }
   }
 

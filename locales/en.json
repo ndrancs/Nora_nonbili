@@ -179,8 +179,8 @@
         "hideRedditGame": {
           "label": "Hide Reddit game posts"
         },
-        "hideTiktokSidebar": {
-          "label": "Use compact TikTok sidebar layout"
+        "compactTiktokLayout": {
+          "label": "Use compact TikTok layout"
         },
         "hideXBottomNav": {
           "label": "Hide X bottom nav bar on scroll"
