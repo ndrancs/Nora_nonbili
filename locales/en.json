@@ -235,7 +235,10 @@
     "signOutSwitch": "Sign out and switch account",
     "signedInAs": "Signed in as {{email}}",
     "productUnavailable": "The App Store product is not available yet.",
-    "expiresAt": "Renews or expires: {{value}}"
+    "expiresAt": "Renews or expires: {{value}}",
+    "legalNotice": "Subscriptions renew automatically unless canceled. By subscribing, you agree to the Terms of Use (EULA) and Privacy Policy.",
+    "termsOfUse": "Terms of Use (EULA)",
+    "privacyPolicy": "Privacy Policy"
   },
   "tabs": {
     "new": "New tab",

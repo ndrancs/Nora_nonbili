@@ -20,6 +20,8 @@ import { useMe } from '@/lib/hooks/useMe'
 const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900/70'
 const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-500'
 const IOS_SYNC_PRODUCT_ID = 'jp.nonbili.nora.sync'
+const TERMS_OF_USE_URL = 'https://www.apple.com/legal/macapps/stdeula/'
+const PRIVACY_POLICY_URL = 'https://inks.page/p/privacy'
 
 const SettingsBadge: React.FC<{ label: string }> = ({ label }) => {
   return (
@@ -250,6 +252,17 @@ export const SettingsModalTabSync = () => {
                     {busyAction === 'restore' ? <NouText className="text-sm text-zinc-400">{t('sync.restore')}</NouText> : null}
                   </>
                 )}
+                <View className="gap-2 rounded-2xl border border-zinc-800 bg-zinc-950/70 px-4 py-3">
+                  <NouText className="text-xs leading-5 text-zinc-400">{t('sync.legalNotice')}</NouText>
+                  <View className="flex-row flex-wrap gap-3">
+                    <NouLink className="text-xs text-zinc-100 underline" href={TERMS_OF_USE_URL}>
+                      {t('sync.termsOfUse')}
+                    </NouLink>
+                    <NouLink className="text-xs text-zinc-100 underline" href={PRIVACY_POLICY_URL}>
+                      {t('sync.privacyPolicy')}
+                    </NouLink>
+                  </View>
+                </View>
               </View>
             ) : (
               <View className="mt-5">
