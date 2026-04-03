@@ -33,6 +33,7 @@ const ensureProfiles = (profiles?: (Profile | null | undefined)[]) => {
 
 export interface Settings {
   autoHideHeader: boolean
+  hideToolbarWhenScrolled: boolean
   headerPosition: 'top' | 'bottom'
   theme: null | 'dark' | 'light'
   openExternalLinkInSystemBrowser: boolean
@@ -99,6 +100,9 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
   if (typeof data.showReloadButtonInHeader !== 'boolean') {
     data.showReloadButtonInHeader = false
   }
+  if (typeof data.hideToolbarWhenScrolled !== 'boolean') {
+    data.hideToolbarWhenScrolled = false
+  }
   if (typeof data.deckTabWidth !== 'number') {
     data.deckTabWidth = 400
   }
@@ -107,6 +111,7 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
 
 export const settings$: Observable<Store> = observable<Store>({
   autoHideHeader: false,
+  hideToolbarWhenScrolled: false,
   headerPosition: 'top',
   theme: null,
   openExternalLinkInSystemBrowser: false,

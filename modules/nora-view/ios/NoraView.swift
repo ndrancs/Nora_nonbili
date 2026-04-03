@@ -307,7 +307,7 @@ class NoraView: ExpoView, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHan
   func scrollViewDidScroll(_ scrollView: UIScrollView) {
       let translation = scrollView.panGestureRecognizer.translation(in: nil).y
 
-      emitCustomEvent(type: "scroll", data: ["dy": translation])
+      emitCustomEvent(type: "scroll", data: ["dy": translation, "y": scrollView.contentOffset.y])
   }
 
   @objc

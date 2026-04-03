@@ -86,7 +86,8 @@
     "allowHttpWebsite": "Allow HTTP websites",
     "inspectable": "Make webview inspectable",
     "videoEdgeLongPressTo2x": "Long press on edge to 2x playback",
-    "hideHeader": "Hide toolbar on scroll",
+    "hideHeader": "Hide and show toolbar on scroll direction",
+    "hideToolbarWhenScrolled": "Hide toolbar when page is not at top",
     "xHomeTimeline": {
       "label": "Default home timeline",
       "forYou": "For you",

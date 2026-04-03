@@ -367,7 +367,7 @@ class NoraView(context: Context, appContext: AppContext) : ExpoView(context, app
       if (e1 != null) {
         dy = e2.y - e1.y
       }
-      emit("scroll", mapOf("dy" to dy))
+      emit("scroll", mapOf("dy" to dy, "y" to webView.scrollY))
       return true
     }
   }

@@ -98,7 +98,26 @@ const isExternalAppUrl = (str: string) => {
   }
 }
 
-const onScroll = (dy: number) => {
+const onScroll = ({
+  dy,
+  y,
+  autoHideHeader,
+  hideToolbarWhenScrolled,
+}: {
+  dy?: number
+  y?: number
+  autoHideHeader: boolean
+  hideToolbarWhenScrolled: boolean
+}) => {
+  if (hideToolbarWhenScrolled && typeof y === 'number') {
+    ui$.headerShown.set(y <= 0)
+    return
+  }
+
+  if (!autoHideHeader || typeof dy !== 'number') {
+    return
+  }
+
   const headerHeight = ui$.headerHeight.get()
   const headerShown = ui$.headerShown.get()
   if (Math.abs(dy) <= headerHeight / 2) {
@@ -128,6 +147,7 @@ export const NoraTab: React.FC<{
   slotSwitcher?: ReactNode
 }> = ({ tab, index, desktopVariant = 'deck', slotSwitcher }) => {
   const autoHideHeader = useValue(settings$.autoHideHeader)
+  const hideToolbarWhenScrolled = useValue(settings$.hideToolbarWhenScrolled)
   const inspectable = useValue(settings$.inspectable)
   const videoEdgeLongPressTo2x = useValue(settings$.videoEdgeLongPressTo2x)
   const xDefaultHomeTimeline = useValue(settings$.xDefaultHomeTimeline)
@@ -407,9 +427,7 @@ export const NoraTab: React.FC<{
         webview?.saveFile(data.content, data.fileName, data.mimeType)
         break
       case 'scroll':
-        if (autoHideHeader) {
-          onScroll(data.dy)
-        }
+        onScroll({ dy: data.dy, y: data.y, autoHideHeader, hideToolbarWhenScrolled })
         break
       default:
         console.log('onMessage', type, data)

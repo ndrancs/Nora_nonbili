@@ -90,13 +90,22 @@ export const NouHeader: React.FC<{}> = ({}) => {
   }
 
   useEffect(() => {
-    const next = settings.autoHideHeader && !uiState.headerShown ? -uiState.headerHeight : 0
+    const shouldHide = (settings.autoHideHeader || settings.hideToolbarWhenScrolled) && !uiState.headerShown
+    const next = shouldHide ? -uiState.headerHeight : 0
     if (isWeb) {
       setMarginTopWeb(next)
     } else {
       marginTop.value = withTimingSafe(next)
     }
-  }, [settings.autoHideHeader, uiState.headerHeight, uiState.headerShown, marginTop, withTimingSafe, isWeb])
+  }, [
+    settings.autoHideHeader,
+    settings.hideToolbarWhenScrolled,
+    uiState.headerHeight,
+    uiState.headerShown,
+    marginTop,
+    withTimingSafe,
+    isWeb,
+  ])
 
   const scrollToTop = () => {
     void executeWebviewJavaScriptQuietly(webview, `window.scrollTo(0, 0, {behavior: 'smooth'})`)

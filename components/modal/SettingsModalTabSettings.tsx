@@ -251,6 +251,13 @@ export const SettingsAppearanceContent = () => {
             </View>
             <View className={clsx(rowCls, rowBorderCls)}>
               <NouSwitch
+                label={<NouText className="font-medium">{t('settings.hideToolbarWhenScrolled')}</NouText>}
+                value={settings.hideToolbarWhenScrolled}
+                onPress={() => settings$.hideToolbarWhenScrolled.toggle()}
+              />
+            </View>
+            <View className={clsx(rowCls, rowBorderCls)}>
+              <NouSwitch
                 label={<NouText className="font-medium">{t('settings.showNewTabButton')}</NouText>}
                 value={settings.showNewTabButtonInHeader}
                 onPress={() => settings$.showNewTabButtonInHeader.toggle()}
