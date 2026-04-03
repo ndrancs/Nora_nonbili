@@ -1,4 +1,4 @@
-import { ActivityIndicator, Dimensions, View, Text, TouchableOpacity, LayoutChangeEvent } from 'react-native'
+import { ActivityIndicator, Dimensions, View, Text, TouchableOpacity, LayoutChangeEvent, useColorScheme } from 'react-native'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Drawer from 'expo-router/drawer'
@@ -41,6 +41,9 @@ function nextTab() {
 export const NouHeader: React.FC<{}> = ({}) => {
   const uiState = useValue(ui$)
   const settings = useValue(settings$)
+  const colorScheme = useColorScheme()
+  const isDark = colorScheme !== 'light'
+  const iconColor = isDark ? colors.icon : '#64748b'
   const { tabs, activeTabIndex } = useValue(tabs$)
   const currentTab = useValue(tabs$.currentTab)
   const webview = ui$.webview.get()
@@ -144,7 +147,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
   const ret = (
     <Root
       className={clsx(
-        'bg-zinc-800 flex-row items-center justify-between pl-2 py-1',
+        'bg-zinc-100 dark:bg-zinc-800 flex-row items-center justify-between pl-2 py-1',
         isWeb && 'lg:w-[52px] lg:flex-col lg:items-center lg:justify-start lg:gap-4 lg:px-0 lg:py-4',
       )}
       style={{ marginTop: isWeb ? marginTopWeb : marginTop }}
@@ -176,11 +179,14 @@ export const NouHeader: React.FC<{}> = ({}) => {
           canDownload,
           <MaterialButton name="download" onPress={() => ui$.downloadVideoModalUrl.set(currentTab?.url || '')} />,
         )}
-        {nIf(!isWeb && currentTab?.isLoading, <ActivityIndicator size="small" color="#e4e4e7" style={{ marginRight: 4 }} />)}
+        {nIf(
+          !isWeb && currentTab?.isLoading,
+          <ActivityIndicator size="small" color={isDark ? '#e4e4e7' : '#64748b'} style={{ marginRight: 4 }} />,
+        )}
         {nIf(
           !isWeb,
           <TouchableOpacity className="flex-row items-center p-3" onPress={() => ui$.tabModalOpen.set(true)}>
-            <View className="rounded-md px-2 py-1 border border-white">
+            <View className="rounded-md px-2 py-1 border border-zinc-700 dark:border-white">
               <NouText className="text-xs">{tabs.length}</NouText>
             </View>
           </TouchableOpacity>,
@@ -193,19 +199,19 @@ export const NouHeader: React.FC<{}> = ({}) => {
               : [
                   {
                     label: t('menus.reload'),
-                    icon: <MaterialIcons name="refresh" size={18} color={colors.icon} />,
+                    icon: <MaterialIcons name="refresh" size={18} color={iconColor} />,
                     systemImage: 'arrow.clockwise',
                     handler: reloadPage,
                   },
                   {
                     label: t('menus.scroll'),
-                    icon: <MaterialIcons name="vertical-align-top" size={18} color={colors.icon} />,
+                    icon: <MaterialIcons name="vertical-align-top" size={18} color={iconColor} />,
                     systemImage: 'arrow.up.to.line',
                     handler: scrollToTop,
                   },
                   {
                     label: t('menus.editUrl'),
-                    icon: <MaterialIcons name="edit" size={18} color={colors.icon} />,
+                    icon: <MaterialIcons name="edit" size={18} color={iconColor} />,
                     systemImage: 'pencil',
                     handler: editTabUrl,
                   },
@@ -214,7 +220,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
                     : [
                         {
                           label: t('menus.desktop'),
-                          icon: <MaterialIcons name="desktop-windows" size={18} color={colors.icon} />,
+                          icon: <MaterialIcons name="desktop-windows" size={18} color={iconColor} />,
                           systemImage: 'desktopcomputer',
                           metaLabel: currentTab?.desktopMode ? t('common.on') : t('common.off'),
                           meta: (
@@ -223,7 +229,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
                                 'rounded-full px-2 py-1',
                                 currentTab?.desktopMode
                                   ? 'bg-indigo-500/20 border border-indigo-400/40'
-                                  : 'bg-zinc-800 border border-zinc-700',
+                                  : 'bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700',
                               )}
                             >
                               <Text
@@ -244,13 +250,13 @@ export const NouHeader: React.FC<{}> = ({}) => {
                       ]),
                   {
                     label: t('menus.addBookmark'),
-                    icon: <MaterialIcons name="bookmark-add" size={18} color={colors.icon} />,
+                    icon: <MaterialIcons name="bookmark-add" size={18} color={iconColor} />,
                     systemImage: 'bookmark',
                     handler: addBookmark,
                   },
                   {
                     label: t('menus.share'),
-                    icon: <MaterialIcons name="share" size={18} color={colors.icon} />,
+                    icon: <MaterialIcons name="share" size={18} color={iconColor} />,
                     systemImage: 'square.and.arrow.up',
                     handler: () => (currentTab ? share(currentTab.url) : {}),
                   },
@@ -259,7 +265,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
               ? [
                   {
                     label: t('buttons.closeAll'),
-                    icon: <MaterialIcons name="tab-unselected" size={18} color={colors.icon} />,
+                    icon: <MaterialIcons name="tab-unselected" size={18} color={iconColor} />,
                     systemImage: 'xmark.square',
                     handler: () => tabs$.closeAll(),
                   },
@@ -267,13 +273,13 @@ export const NouHeader: React.FC<{}> = ({}) => {
               : []),
             {
               label: t('menus.tools'),
-              icon: <MaterialIcons name="build" size={18} color={colors.icon} />,
+              icon: <MaterialIcons name="build" size={18} color={iconColor} />,
               systemImage: 'wrench.and.screwdriver',
               handler: () => ui$.toolsModalOpen.set(true),
             },
             {
               label: t('settings.label'),
-              icon: <MaterialIcons name="settings" size={18} color={colors.icon} />,
+              icon: <MaterialIcons name="settings" size={18} color={iconColor} />,
               systemImage: 'gearshape',
               handler: () => ui$.settingsModalOpen.set(true),
             },

@@ -11,10 +11,10 @@ import {
 import { userStyles$ } from '@/states/user-styles'
 import { ui$ } from '@/states/ui'
 
-const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900/70'
-const subheaderCls = 'mb-3 text-xs uppercase tracking-[0.18em] text-gray-500'
+const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70'
+const subheaderCls = 'mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500'
 const rowCls = 'px-4 py-4'
-const rowBorderCls = 'border-b border-zinc-800'
+const rowBorderCls = 'border-b border-zinc-300 dark:border-zinc-800'
 
 const formatHostGlobs = (hostGlobs: string[]) => hostGlobs.join(', ')
 
@@ -49,7 +49,11 @@ export const SettingsUserStylesContent = () => {
             <Pressable
               key={definition.id}
               onPress={() => startPreviewBuiltin(definition.id)}
-              className={clsx(rowCls, 'flex-row items-center justify-between active:bg-zinc-800/50', index !== sortedBuiltins.length - 1 && rowBorderCls)}
+              className={clsx(
+                rowCls,
+                'flex-row items-center justify-between active:bg-zinc-200/50 dark:active:bg-zinc-800/50',
+                index !== sortedBuiltins.length - 1 && rowBorderCls,
+              )}
             >
               <View className="flex-1 pr-4">
                 <NouText className="font-medium" numberOfLines={1}>
@@ -57,7 +61,7 @@ export const SettingsUserStylesContent = () => {
                 </NouText>
                 <View className="mt-1.5 flex-row items-center gap-1.5">
                   <MaterialIcons name="language" color="#71717a" size={12} />
-                  <NouText className="flex-1 text-xs text-zinc-400" numberOfLines={1}>
+                  <NouText className="flex-1 text-xs text-zinc-600 dark:text-zinc-400" numberOfLines={1}>
                     {formatHostGlobs(definition.hostGlobs)}
                   </NouText>
                 </View>
@@ -90,25 +94,29 @@ export const SettingsUserStylesContent = () => {
         <View className={surfaceCls}>
           {!hasStyles ? (
             <View className="items-center justify-center px-6 py-10">
-              <View className="h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950">
+              <View className="h-12 w-12 items-center justify-center rounded-2xl bg-zinc-200 dark:bg-zinc-950">
                 <MaterialIcons name="brush" color="#3f3f46" size={24} />
               </View>
-              <NouText className="mt-4 text-center text-sm leading-6 text-zinc-500">{t('settings.userStyles.custom.empty')}</NouText>
+              <NouText className="mt-4 text-center text-sm leading-6 text-zinc-600 dark:text-zinc-500">{t('settings.userStyles.custom.empty')}</NouText>
             </View>
           ) : null}
           {customStyles.map((style, index) => (
             <Pressable
               key={style.id}
               onPress={() => startEditCustomStyle(style.id)}
-              className={clsx(rowCls, 'flex-row items-center justify-between active:bg-zinc-800/50', index !== customStyles.length - 1 && rowBorderCls)}
+              className={clsx(
+                rowCls,
+                'flex-row items-center justify-between active:bg-zinc-200/50 dark:active:bg-zinc-800/50',
+                index !== customStyles.length - 1 && rowBorderCls,
+              )}
             >
               <View className="flex-1 pr-4">
-                <NouText className={clsx('font-medium', !style.enabled && 'text-zinc-500')} numberOfLines={1}>
+                <NouText className={clsx('font-medium', !style.enabled && 'text-zinc-600 dark:text-zinc-500')} numberOfLines={1}>
                   {style.name}
                 </NouText>
                 <View className="mt-1.5 flex-row items-center gap-1.5">
                   <MaterialIcons name="language" color="#71717a" size={12} />
-                  <NouText className="flex-1 text-xs text-zinc-400" numberOfLines={1}>
+                  <NouText className="flex-1 text-xs text-zinc-600 dark:text-zinc-400" numberOfLines={1}>
                     {formatHostGlobs(style.hostGlobs)}
                   </NouText>
                 </View>

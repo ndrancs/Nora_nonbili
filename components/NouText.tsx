@@ -3,5 +3,5 @@ import { ui$ } from '@/states/ui'
 import { clsx } from '@/lib/utils'
 
 export const NouText: React.FC<TextProps> = ({ className, ...rest }) => (
-  <Text className={clsx('text-gray-100', className)} {...rest} />
+  <Text className={clsx('text-zinc-900 dark:text-gray-100', className)} {...rest} />
 )

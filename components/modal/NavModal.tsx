@@ -2,7 +2,7 @@ import { ui$ } from '@/states/ui'
 import { useValue } from '@legendapp/state/react'
 import { BaseModal } from './BaseModal'
 import { services } from '../service/Services'
-import { View, Text, Pressable, ScrollView, TouchableHighlight, TextInput, Modal, useWindowDimensions } from 'react-native'
+import { View, Text, Pressable, ScrollView, TouchableHighlight, TextInput, Modal, useColorScheme, useWindowDimensions } from 'react-native'
 import { clsx, isIos, nIf } from '@/lib/utils'
 import { getHomeUrl } from '@/lib/page'
 import { settings$ } from '@/states/settings'
@@ -23,7 +23,7 @@ import { SearchProviderIcon } from '../service/SearchProviderIcon'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const cls = 'flex-row items-center gap-2 rounded-full bg-sky-50 w-40 py-2 px-3 overflow-hidden'
-const inputCls = 'flex-1 pl-3 pr-1 py-3 text-white'
+const inputCls = 'flex-1 pl-3 pr-1 py-3 text-zinc-900 dark:text-white'
 type Anchor = { x: number; y: number; width: number; height: number }
 
 interface NavModalContentProps {
@@ -52,6 +52,8 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
   const [providerAnchor, setProviderAnchor] = useState<Anchor | null>(null)
   const providerTriggerRef = useRef<View>(null)
   const { width: screenWidth, height: screenHeight } = useWindowDimensions()
+  const colorScheme = useColorScheme()
+  const isDark = colorScheme !== 'light'
   const insets = useSafeAreaInsets()
   const selectedProfile = profileId || currentTab?.profile || 'default'
   const enabledSearchProviders = getEnabledSearchProviders(enabledSearchProviderIds, customSearchProviders)
@@ -106,7 +108,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
   }
 
   return (
-    <View className="p-4 pt-8 bg-gray-950 h-full">
+    <View className="p-4 pt-8 bg-zinc-100 dark:bg-gray-950 h-full">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -117,13 +119,20 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
           <Pressable key={profile.id} onPress={() => selectProfile(profile.id)}>
             <View
               className={clsx(
-                'flex-row items-center gap-2 rounded-full px-4 py-2',
-                selectedProfile === profile.id ? 'bg-white/20' : 'bg-white/5',
+                'flex-row items-center gap-2 rounded-full px-4 py-2 border',
+                selectedProfile === profile.id
+                  ? 'bg-indigo-100 dark:bg-indigo-500/20 border-indigo-500 dark:border-indigo-400'
+                  : 'bg-zinc-200 dark:bg-white/5 border-zinc-300 dark:border-zinc-700/60',
               )}
             >
               <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: profile.color }} />
               <Text
-                className={clsx('text-sm', selectedProfile === profile.id ? 'text-white font-medium' : 'text-gray-400')}
+                className={clsx(
+                  'text-sm',
+                  selectedProfile === profile.id
+                    ? 'text-zinc-900 dark:text-indigo-100 font-semibold'
+                    : 'text-zinc-600 dark:text-gray-400',
+                )}
               >
                 {profile.name}
               </Text>
@@ -136,12 +145,12 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
         contentContainerClassName={clsx('pb-16 flex-grow', oneHandMode ? 'justify-end pt-[40vh]' : 'justify-center')}
       >
         <View className="mb-8 w-full max-w-2xl self-center px-4">
-          <View className="flex-row items-center overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900">
+          <View className="flex-row items-center overflow-hidden rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900">
             {isIos ? (
               <View ref={providerTriggerRef} collapsable={false}>
                 <Pressable
                   onPress={openProviderPicker}
-                  className="h-[52px] w-[48px] items-center justify-center border-r border-zinc-800 bg-zinc-900"
+                  className="h-[52px] w-[48px] items-center justify-center border-r border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900"
                 >
                   {selectedSearchProvider ? <SearchProviderIcon provider={selectedSearchProvider} size={22} /> : null}
                 </Pressable>
@@ -149,7 +158,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
             ) : (
               <NouMenu
                 trigger={
-                  <View className="h-[52px] w-[48px] items-center justify-center border-r border-zinc-800 bg-zinc-900">
+                  <View className="h-[52px] w-[48px] items-center justify-center border-r border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900">
                     {selectedSearchProvider ? <SearchProviderIcon provider={selectedSearchProvider} size={22} /> : null}
                   </View>
                 }
@@ -171,15 +180,15 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
               placeholder={
                 selectedSearchProvider?.kind === 'url' ? t('newTab.search.urlPlaceholder') : t('newTab.search.searchPlaceholder')
               }
-              placeholderTextColor="#71717a"
+              placeholderTextColor={isDark ? '#71717a' : '#52525b'}
             />
             <Pressable
               onPress={submitInput}
-              className="h-[52px] w-[52px] items-center justify-center border-l border-zinc-800 bg-zinc-900 active:bg-zinc-800"
+              className="h-[52px] w-[52px] items-center justify-center border-l border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 active:bg-zinc-200 dark:active:bg-zinc-800"
             >
               <MaterialIcons
                 name={selectedSearchProvider?.kind === 'url' ? 'arrow-forward' : 'search'}
-                color="white"
+                color={isDark ? '#f1f5f9' : '#334155'}
                 size={18}
               />
             </Pressable>
@@ -216,7 +225,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
           <View className="flex-1" pointerEvents="box-none">
             <Pressable className="absolute inset-0" onPress={() => setProviderPickerOpen(false)} />
             <View
-              className="absolute overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+              className="absolute overflow-hidden rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900"
               style={{
                 top: Math.min(
                   providerAnchor.y + providerAnchor.height + 6,
@@ -239,12 +248,12 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
                       setProviderPickerOpen(false)
                     }}
                     className={clsx(
-                      'flex-row items-center gap-3 px-4 py-3 active:bg-zinc-800',
-                      idx !== enabledSearchProviders.length - 1 && 'border-b border-zinc-800',
+                      'flex-row items-center gap-3 px-4 py-3 active:bg-zinc-200 dark:active:bg-zinc-800',
+                      idx !== enabledSearchProviders.length - 1 && 'border-b border-zinc-300 dark:border-zinc-800',
                     )}
                   >
                     <SearchProviderIcon provider={provider} size={20} />
-                    <Text className="flex-1 text-sm text-white">{provider.name}</Text>
+                    <Text className="flex-1 text-sm text-zinc-900 dark:text-white">{provider.name}</Text>
                     {selectedSearchProvider?.id === provider.id ? (
                       <MaterialIcons name="check" size={18} color="#f1f5f9" />
                     ) : null}

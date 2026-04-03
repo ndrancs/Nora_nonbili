@@ -112,7 +112,7 @@
     },
     "appearance": {
       "description": "Theme plus toolbar layout, placement, and button visibility.",
-      "theme": "Webview Theme",
+      "theme": "Theme",
       "toolbar": "Toolbar",
       "deckTabWidth": "Deck tab width",
       "deckTabWidthHint": "Current: {{value}}px"
@@ -208,11 +208,11 @@
     "oneTabPerSite": "One tab per site when opening shared link",
     "services": "Services",
     "theme": {
-      "label": "Webview theme",
+      "label": "Theme",
       "system": "System",
       "dark": "Dark",
       "light": "Light",
-      "hint": "Controls the website/webview theme, not the app UI. Restart manually if the change is not reflected in the webview."
+      "hint": "Controls app and web theme. If a page does not update immediately, reload the tab."
     },
     "injectCookie": "Inject cookie"
   },

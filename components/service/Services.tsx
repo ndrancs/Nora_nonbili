@@ -45,7 +45,7 @@ export const ServiceManager: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = 
     <View className="">
       {!hideTitle ? <NouText className="font-medium mb-2">{t('settings.services')}</NouText> : null}
       {entries.map(([value, [label, icon]], index) => (
-        <View className={clsx('px-4 py-4', index !== entries.length - 1 && 'border-b border-zinc-800')} key={value}>
+        <View className={clsx('px-4 py-4', index !== entries.length - 1 && 'border-b border-zinc-300 dark:border-zinc-800')} key={value}>
           <NouSwitch
             label={
               <View className="flex-row items-center gap-2">

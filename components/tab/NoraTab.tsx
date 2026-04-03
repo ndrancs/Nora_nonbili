@@ -3,7 +3,7 @@ import { useValue } from '@legendapp/state/react'
 import { ui$ } from '@/states/ui'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { settings$ } from '@/states/settings'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Appearance, StyleSheet, View } from 'react-native'
 import { ObservableHint } from '@legendapp/state'
 import type { WebviewTag } from 'electron'
 import { clsx, isWeb, isIos, nIf } from '@/lib/utils'
@@ -42,8 +42,18 @@ const forceHttps = (str: string) => {
   return url.replace('http://', 'https://')
 }
 
-const buildImageViewerUrl = (imageUrl: string) => {
+const buildImageViewerUrl = (imageUrl: string, theme: null | 'dark' | 'light') => {
   const escapedImageUrl = imageUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+  const resolvedTheme =
+    theme ||
+    (isWeb
+      ? window.matchMedia?.('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      : Appearance.getColorScheme()) ||
+    'dark'
+  const colorScheme = resolvedTheme === 'light' ? 'light' : 'dark'
+  const backgroundColor = resolvedTheme === 'light' ? '#f4f4f5' : '#09090b'
   const html = `<!doctype html>
 <html>
   <head>
@@ -51,13 +61,13 @@ const buildImageViewerUrl = (imageUrl: string) => {
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Image</title>
     <style>
-      :root { color-scheme: dark; }
+      :root { color-scheme: ${colorScheme}; }
       * { box-sizing: border-box; }
       html, body {
         margin: 0;
         width: 100%;
         min-height: 100vh;
-        background: #09090b;
+        background: ${backgroundColor};
       }
       body {
         display: grid;
@@ -121,6 +131,7 @@ export const NoraTab: React.FC<{
   const inspectable = useValue(settings$.inspectable)
   const videoEdgeLongPressTo2x = useValue(settings$.videoEdgeLongPressTo2x)
   const xDefaultHomeTimeline = useValue(settings$.xDefaultHomeTimeline)
+  const theme = useValue(settings$.theme)
   const userStyles = useValue(userStyles$)
   const nativeRef = useRef<any>(null)
   const webviewRef = useRef<WebviewTag>(null)
@@ -388,7 +399,7 @@ export const NoraTab: React.FC<{
       }
       case 'new-tab':
         if (!isExternalAppUrl(data.url)) {
-          const nextUrl = data.kind === 'image' ? buildImageViewerUrl(data.url) : forceHttps(data.url)
+          const nextUrl = data.kind === 'image' ? buildImageViewerUrl(data.url, theme) : forceHttps(data.url)
           tabs$.openTab(nextUrl, { parentTabId: tab.id, source: 'child' })
         }
         break

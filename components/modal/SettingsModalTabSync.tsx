@@ -17,16 +17,16 @@ import { prepareIosPurchase, syncIosTransaction } from '@/lib/query'
 import { queryClient } from '@/lib/query/client'
 import { useMe } from '@/lib/hooks/useMe'
 
-const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900/70'
-const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-500'
+const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70'
+const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-500'
 const IOS_SYNC_PRODUCT_ID = 'jp.nonbili.nora.sync'
 const TERMS_OF_USE_URL = 'https://www.apple.com/legal/macapps/stdeula/'
 const PRIVACY_POLICY_URL = 'https://inks.page/p/privacy'
 
 const SettingsBadge: React.FC<{ label: string }> = ({ label }) => {
   return (
-    <View className="rounded-full border border-zinc-700 bg-zinc-950 px-3 py-1">
-      <NouText className="text-xs text-zinc-300">{label}</NouText>
+    <View className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-950 px-3 py-1">
+      <NouText className="text-xs text-zinc-700 dark:text-zinc-300">{label}</NouText>
     </View>
   )
 }
@@ -170,7 +170,7 @@ export const SettingsModalTabSync = () => {
           <View className={surfaceCls}>
             <View className="px-5 py-5">
               <NouText className="text-lg font-semibold">{t('sync.label')}</NouText>
-              <NouText className="mt-2 text-sm leading-6 text-zinc-400">{syncHint}</NouText>
+              <NouText className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{syncHint}</NouText>
               <View className="mt-5">
                 <NouLink
                   className="rounded-full bg-zinc-100 px-5 py-2.5 text-center text-sm text-zinc-950"
@@ -200,7 +200,7 @@ export const SettingsModalTabSync = () => {
             />
             <View className="flex-1">
               <NouText className="font-medium">{userEmail || user?.email || 'Nora User'}</NouText>
-              <NouText className="mt-1 text-sm text-zinc-400">
+              <NouText className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                 {t('sync.currentPlan')}: {planLabel}
               </NouText>
             </View>
@@ -220,8 +220,8 @@ export const SettingsModalTabSync = () => {
               <SettingsBadge label={planLabel} />
               {me?.source === 'app_store' ? <SettingsBadge label={t('sync.activeViaIos')} /> : null}
             </View>
-            <NouText className="mt-4 text-sm leading-6 text-zinc-400">{syncHint}</NouText>
-            {iosStatusText ? <NouText className="mt-3 text-xs text-zinc-500">{iosStatusText}</NouText> : null}
+            <NouText className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{syncHint}</NouText>
+            {iosStatusText ? <NouText className="mt-3 text-xs text-zinc-600 dark:text-zinc-500">{iosStatusText}</NouText> : null}
             {actionError ? <NouText className="mt-3 text-sm text-red-400">{actionError}</NouText> : null}
             {restoreConflict ? (
               <View className="mt-3">
@@ -232,8 +232,8 @@ export const SettingsModalTabSync = () => {
             ) : null}
             {isIos ? (
               <View className="mt-5 gap-3">
-                {loadingProduct ? <NouText className="text-sm text-zinc-400">{t('sync.priceLoading')}</NouText> : null}
-                {!loadingProduct && !productPrice ? <NouText className="text-sm text-zinc-400">{t('sync.productUnavailable')}</NouText> : null}
+                {loadingProduct ? <NouText className="text-sm text-zinc-600 dark:text-zinc-400">{t('sync.priceLoading')}</NouText> : null}
+                {!loadingProduct && !productPrice ? <NouText className="text-sm text-zinc-600 dark:text-zinc-400">{t('sync.productUnavailable')}</NouText> : null}
                 {me?.source === 'app_store' && me?.plan === 'sync' ? (
                   busyAction === 'manage' || busyAction === 'restore' ? (
                     <NouText className="text-sm text-zinc-400">
@@ -249,16 +249,16 @@ export const SettingsModalTabSync = () => {
                     >
                       {productPrice ? `${t('sync.buy')} ${productPrice}` : t('sync.buy')}
                     </NouButton>
-                    {busyAction === 'restore' ? <NouText className="text-sm text-zinc-400">{t('sync.restore')}</NouText> : null}
+                    {busyAction === 'restore' ? <NouText className="text-sm text-zinc-600 dark:text-zinc-400">{t('sync.restore')}</NouText> : null}
                   </>
                 )}
-                <View className="gap-2 rounded-2xl border border-zinc-800 bg-zinc-950/70 px-4 py-3">
-                  <NouText className="text-xs leading-5 text-zinc-400">{t('sync.legalNotice')}</NouText>
+                <View className="gap-2 rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-950/70 px-4 py-3">
+                  <NouText className="text-xs leading-5 text-zinc-600 dark:text-zinc-400">{t('sync.legalNotice')}</NouText>
                   <View className="flex-row flex-wrap gap-3">
-                    <NouLink className="text-xs text-zinc-100 underline" href={TERMS_OF_USE_URL}>
+                    <NouLink className="text-xs text-zinc-900 dark:text-zinc-100 underline" href={TERMS_OF_USE_URL}>
                       {t('sync.termsOfUse')}
                     </NouLink>
-                    <NouLink className="text-xs text-zinc-100 underline" href={PRIVACY_POLICY_URL}>
+                    <NouLink className="text-xs text-zinc-900 dark:text-zinc-100 underline" href={PRIVACY_POLICY_URL}>
                       {t('sync.privacyPolicy')}
                     </NouLink>
                   </View>
@@ -267,10 +267,10 @@ export const SettingsModalTabSync = () => {
             ) : (
               <View className="mt-5">
                 {me?.source === 'app_store' ? (
-                  <NouText className="text-sm text-zinc-400">{t('sync.activeViaIos')}</NouText>
+                  <NouText className="text-sm text-zinc-600 dark:text-zinc-400">{t('sync.activeViaIos')}</NouText>
                 ) : (
                   <NouLink
-                    className="rounded-full border border-zinc-700 bg-zinc-950 px-5 py-2.5 text-center text-sm text-zinc-100"
+                    className="rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-950 px-5 py-2.5 text-center text-sm text-zinc-900 dark:text-zinc-100"
                     href="https://nora.inks.page/app"
                   >
                     {t('sync.managePlan')}

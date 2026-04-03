@@ -1,7 +1,7 @@
 import { colors } from '@/lib/colors'
 import type { Item } from './NouMenu'
 import { ReactNode, useRef, useState } from 'react'
-import { Modal, Pressable, ScrollView, useWindowDimensions, View } from 'react-native'
+import { Modal, Pressable, ScrollView, useColorScheme, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { NouText } from '../NouText'
 import { MaterialButton } from '../button/IconButtons'
@@ -16,6 +16,8 @@ type Anchor = {
 export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[] }> = ({ items, trigger }) => {
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<Anchor | null>(null)
+  const colorScheme = useColorScheme()
+  const isDark = colorScheme !== 'light'
   const { width: screenWidth, height: screenHeight } = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const triggerRef = useRef<View>(null)
@@ -75,25 +77,27 @@ export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[] }> = ({ item
         <View className="flex-1" pointerEvents="box-none">
           <Pressable className="absolute inset-0" onPress={closeMenu} />
           <View
-            className="absolute rounded-xl py-2 border border-zinc-700"
+            className="absolute rounded-xl py-2 border border-zinc-300 dark:border-zinc-700"
             style={{
               top,
               left,
               width: menuWidth,
               maxHeight: maxMenuHeight,
-              backgroundColor: colors.bg,
+              backgroundColor: isDark ? colors.bg : '#f8fafc',
             }}
           >
             <ScrollView showsVerticalScrollIndicator={false}>
               {items.map((item, index) => {
                 if (item.kind === 'separator') {
-                  return <View key={index} className="mx-3 my-1 h-px bg-zinc-700" />
+                  return <View key={index} className="mx-3 my-1 h-px bg-zinc-300 dark:bg-zinc-700" />
                 }
 
                 if (item.kind === 'label') {
                   return (
                     <View key={index} className="px-4 pt-2 pb-1">
-                      <NouText className="text-[11px] uppercase tracking-[1px] text-zinc-500">{item.label}</NouText>
+                      <NouText className="text-[11px] uppercase tracking-[1px] text-zinc-600 dark:text-zinc-500">
+                        {item.label}
+                      </NouText>
                     </View>
                   )
                 }
@@ -103,7 +107,7 @@ export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[] }> = ({ item
                     key={index}
                     className="px-4 flex-row items-center gap-3"
                     style={{ minHeight: getRowHeight(item) }}
-                    android_ripple={{ color: colors.underlay }}
+                    android_ripple={{ color: isDark ? colors.underlay : '#e5e7eb' }}
                     disabled={item.disabled}
                     onPress={() => {
                       closeMenu()

@@ -21,10 +21,10 @@ export const BaseModal: React.FC<{
     return (
       <Modal transparent visible onRequestClose={onRequestClose || onClose}>
         <View className="flex-1">
-          <Pressable className="absolute inset-0 bg-gray-600/50" onPress={onClose} />
+          <Pressable className="absolute inset-0 bg-zinc-300/50 dark:bg-gray-600/50" onPress={onClose} />
           <KeyboardAvoidingView
             behavior={isIos ? 'padding' : undefined}
-            className="bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw] flex-1"
+            className="bg-zinc-100 dark:bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw] flex-1"
             style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
           >
             {inner}
@@ -36,10 +36,10 @@ export const BaseModal: React.FC<{
 
   return (
     <View className={clsx('absolute inset-0 z-10', className)}>
-      <Pressable className="absolute inset-0 bg-gray-600/50" onPress={onClose} />
+      <Pressable className="absolute inset-0 bg-zinc-300/50 dark:bg-gray-600/50" onPress={onClose} />
       <KeyboardAvoidingView
         behavior={isIos ? 'padding' : undefined}
-        className="bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw] flex-1"
+        className="bg-zinc-100 dark:bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw] flex-1"
       >
         {inner}
       </KeyboardAvoidingView>

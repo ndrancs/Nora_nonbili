@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Alert, ScrollView, View, TextInput } from 'react-native'
+import { Alert, ScrollView, View, TextInput, useColorScheme } from 'react-native'
 import { NouButton } from '../button/NouButton'
 import { ui$ } from '@/states/ui'
 import { ServiceManager } from '../service/Services'
@@ -30,12 +30,12 @@ import { BaseCenterModal } from './BaseCenterModal'
 
 const headerPositions = ['top', 'bottom'] as const
 const themes = [null, 'dark', 'light'] as const
-const subheaderCls = 'mb-3 text-xs uppercase tracking-[0.18em] text-gray-500'
-const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900/70'
+const subheaderCls = 'mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500'
+const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70'
 const rowCls = 'px-4 py-4'
-const rowBorderCls = 'border-b border-zinc-800'
-const iconWrapCls = 'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-950'
-const textInputCls = 'rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-white'
+const rowBorderCls = 'border-b border-zinc-300 dark:border-zinc-800'
+const iconWrapCls = 'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-950'
+const textInputCls = 'rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 px-4 py-4 text-zinc-900 dark:text-white'
 const xTimelineLabels: Record<(typeof xHomeTimelineValues)[number], string> = {
   'for-you': 'settings.xHomeTimeline.forYou',
   following: 'settings.xHomeTimeline.following',
@@ -145,6 +145,8 @@ export const SettingsBrowsingContent: React.FC = () => {
 
 export const SettingsAppearanceContent = () => {
   const settings = useValue(settings$)
+  const colorScheme = useColorScheme()
+  const isDark = colorScheme !== 'light'
   const [deckTabWidthInput, setDeckTabWidthInput] = useState(settings.deckTabWidth.toString())
 
   useEffect(() => {
@@ -171,13 +173,13 @@ export const SettingsAppearanceContent = () => {
             <View className={clsx('items-center flex-row justify-between', rowCls)}>
               <View>
                 <NouText className="font-medium">{t('settings.appearance.deckTabWidth')}</NouText>
-                <NouText className="mt-1 text-sm leading-5 text-zinc-400">
+                <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">
                   {t('settings.appearance.deckTabWidthHint', { value: settings.deckTabWidth })}
                 </NouText>
               </View>
               <View className="flex-row items-center gap-2">
                 <TextInput
-                  className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white w-24 text-center"
+                  className="rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 px-3 py-2 text-zinc-900 dark:text-white w-24 text-center"
                   value={deckTabWidthInput}
                   onChangeText={setDeckTabWidthInput}
                   onEndEditing={submitDeckTabWidth}
@@ -209,15 +211,15 @@ export const SettingsAppearanceContent = () => {
             <View className="px-4 py-4">
               <View className="flex-row items-start gap-3">
                 <View className={iconWrapCls}>
-                  <MaterialIcons name="palette" color="#d4d4d8" size={18} />
+                  <MaterialIcons name="palette" color={isDark ? '#d4d4d8' : '#475569'} size={18} />
                 </View>
                 <View className="flex-1">
                   <NouText className="font-medium">{t('settings.theme.label')}</NouText>
-                  <NouText className="mt-1 text-sm leading-5 text-zinc-400">{t('settings.theme.hint')}</NouText>
+                  <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.theme.hint')}</NouText>
                 </View>
               </View>
             </View>
-            <View className="border-t border-zinc-800 px-4 py-4">
+            <View className="border-t border-zinc-300 dark:border-zinc-800 px-4 py-4">
               <View className="items-end">
                 <Segemented
                   options={[t('settings.theme.system'), t('settings.theme.dark'), t('settings.theme.light')]}
@@ -229,7 +231,7 @@ export const SettingsAppearanceContent = () => {
             </View>
           </View>
 
-          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-gray-500">{t('settings.appearance.toolbar')}</NouText>
+          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.appearance.toolbar')}</NouText>
           <View className={surfaceCls}>
             <View className={clsx('items-center flex-row justify-between', rowCls, rowBorderCls)}>
               <NouText className="font-medium">{t('settings.headerPosition.label')}</NouText>
@@ -299,7 +301,7 @@ export const SettingsProfilesContent = () => {
           <NouText className={subheaderCls}>{t('settings.profiles.injectCookie')}</NouText>
           <View className={surfaceCls}>
             <View className="px-4 py-4">
-              <NouText className="text-sm leading-6 text-gray-400">
+              <NouText className="text-sm leading-6 text-zinc-600 dark:text-gray-400">
                 {t('settings.profiles.injectCookieHint')}
               </NouText>
               <View className="mt-5 flex-row justify-end">
@@ -329,9 +331,16 @@ export const SettingsBookmarksContent = () => {
       <View className="mt-10">
         <NouText className={subheaderCls}>{t('settings.bookmarks.saved')}</NouText>
         <View className={surfaceCls}>
-          {!bookmarks.length ? <NouText className="px-4 py-4 text-sm text-gray-500">{t('settings.bookmarks.empty')}</NouText> : null}
+          {!bookmarks.length ? <NouText className="px-4 py-4 text-sm text-zinc-600 dark:text-gray-500">{t('settings.bookmarks.empty')}</NouText> : null}
           {bookmarks.map((bookmark, index) => (
-            <View className={clsx('flex-row items-center justify-between gap-5 px-4 py-4', index !== bookmarks.length - 1 && 'border-b border-zinc-800')} key={index}>
+            <View
+              className={clsx(
+                rowCls,
+                'flex-row items-center justify-between gap-5',
+                index !== bookmarks.length - 1 && rowBorderCls,
+              )}
+              key={index}
+            >
               <View className="flex-row items-center gap-2 w-[70%]">
                 <Image source={bookmark.icon} style={{ width: 24, height: 24 }} />
                 <NouText numberOfLines={1}>{bookmark.title}</NouText>
@@ -414,7 +423,7 @@ export const SettingsSearchContent = () => {
     <View className="pb-4">
       <View>
         <NouText className={subheaderCls}>{t('settings.search.builtin')}</NouText>
-        <NouText className="mb-3 px-1 text-sm leading-6 text-zinc-400">{t('settings.search.builtinHint')}</NouText>
+        <NouText className="mb-3 px-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{t('settings.search.builtinHint')}</NouText>
         <View className={surfaceCls}>
           {searchSettingsProviderIds.map((providerId, index) => {
             const provider = getResolvedSearchProvider(providerId, customSearchProviders)
@@ -433,7 +442,7 @@ export const SettingsSearchContent = () => {
                         <View className="pr-3">
                           <NouText className="font-medium">{provider.name}</NouText>
                           {provider.id === 'url' ? (
-                            <NouText className="mt-1 text-sm leading-5 text-zinc-400">{t('settings.search.urlHint')}</NouText>
+                            <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.search.urlHint')}</NouText>
                           ) : null}
                         </View>
                       }
@@ -465,7 +474,7 @@ export const SettingsSearchContent = () => {
         </View>
         <View className={surfaceCls}>
           {!customSearchProviders.length ? (
-            <NouText className="px-4 py-4 text-sm text-gray-500">{t('settings.search.empty')}</NouText>
+            <NouText className="px-4 py-4 text-sm text-zinc-600 dark:text-gray-500">{t('settings.search.empty')}</NouText>
           ) : null}
           {customSearchProviders.map((provider, index) => {
             const enabled = enabledSearchProviderIds.includes(provider.id)
@@ -474,13 +483,13 @@ export const SettingsSearchContent = () => {
             return (
               <View
                 key={provider.id}
-                className={clsx('px-4 py-4', index !== customSearchProviders.length - 1 && 'border-b border-zinc-800')}
+                className={clsx('px-4 py-4', index !== customSearchProviders.length - 1 && 'border-b border-zinc-300 dark:border-zinc-800')}
               >
                 <View className="flex-row items-center gap-3">
                   {resolved ? <SearchProviderIcon provider={resolved} /> : null}
                   <View className="flex-1">
                     <NouText className="font-medium">{provider.name}</NouText>
-                    <NouText className="mt-1 text-sm leading-5 text-zinc-400" numberOfLines={1}>
+                    <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400" numberOfLines={1}>
                       {provider.templateUrl}
                     </NouText>
                   </View>

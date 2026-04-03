@@ -56,7 +56,7 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
           ))}
         </View>
       ) : (
-        <View className="flex-1 bg-gray-950 lg:px-20">
+        <View className="flex-1 bg-zinc-100 dark:bg-gray-950 lg:px-20">
           <NavModalContent />
         </View>
       )}

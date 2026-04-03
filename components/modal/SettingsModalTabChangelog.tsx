@@ -9,7 +9,7 @@ import { clsx, isWeb } from '@/lib/utils'
 import { t } from 'i18next'
 import { getReleaseFeedQuery } from '@/lib/query/changelog'
 
-const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-900/70'
+const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70'
 
 function formatReleaseDate(value: string) {
   const date = new Date(value)
@@ -29,7 +29,7 @@ export const SettingsChangelogContent = () => {
   if (isLoading) {
     return (
       <View className={surfaceCls}>
-        <NouText className="px-4 py-4 text-sm text-zinc-400">{t('changelog.loading')}</NouText>
+        <NouText className="px-4 py-4 text-sm text-zinc-600 dark:text-zinc-400">{t('changelog.loading')}</NouText>
       </View>
     )
   }
@@ -38,7 +38,7 @@ export const SettingsChangelogContent = () => {
     return (
       <View className="gap-4">
         <View className={surfaceCls}>
-          <NouText className="px-4 py-4 text-sm leading-6 text-zinc-400">{t('changelog.error')}</NouText>
+          <NouText className="px-4 py-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{t('changelog.error')}</NouText>
         </View>
         <View className="items-end">
           <NouButton variant="outline" loading={isFetching} onPress={() => void refetch()}>
@@ -52,7 +52,7 @@ export const SettingsChangelogContent = () => {
   if (!data?.length) {
     return (
       <View className={surfaceCls}>
-        <NouText className="px-4 py-4 text-sm text-zinc-400">{t('changelog.empty')}</NouText>
+        <NouText className="px-4 py-4 text-sm text-zinc-600 dark:text-zinc-400">{t('changelog.empty')}</NouText>
       </View>
     )
   }
@@ -68,10 +68,10 @@ export const SettingsChangelogContent = () => {
             onPress={() => {
               void Linking.openURL(entry.url)
             }}
-            className="rounded-[24px] border border-zinc-800 bg-zinc-900/70 px-4 py-4 active:bg-zinc-800/80"
+            className="rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70 px-4 py-4 active:bg-zinc-200/80 dark:active:bg-zinc-800/80"
           >
             <View className="flex-row items-start gap-3">
-              <View className={clsx('mt-0.5 h-10 w-10 items-center justify-center rounded-2xl border bg-zinc-950', isCurrent ? 'border-indigo-500' : 'border-zinc-800')}>
+              <View className={clsx('mt-0.5 h-10 w-10 items-center justify-center rounded-2xl border bg-zinc-200 dark:bg-zinc-950', isCurrent ? 'border-indigo-500' : 'border-zinc-300 dark:border-zinc-800')}>
                 <MaterialIcons name="history" color={isCurrent ? '#a5b4fc' : '#d4d4d8'} size={18} />
               </View>
               <View className="flex-1">
@@ -83,17 +83,17 @@ export const SettingsChangelogContent = () => {
                     </View>
                   ) : null}
                 </View>
-                <NouText className="mt-1 text-sm text-zinc-500">{formatReleaseDate(entry.updatedAt)}</NouText>
+                <NouText className="mt-1 text-sm text-zinc-600 dark:text-zinc-500">{formatReleaseDate(entry.updatedAt)}</NouText>
                 <View className="mt-4 gap-2">
                   {entry.items.length ? (
                     entry.items.map((item) => (
                       <View className="flex-row gap-2" key={`${entry.url}-${item}`}>
-                        <NouText className="text-sm leading-6 text-zinc-500">{'\u2022'}</NouText>
-                        <NouText className="flex-1 text-sm leading-6 text-zinc-200">{item}</NouText>
+                        <NouText className="text-sm leading-6 text-zinc-600 dark:text-zinc-500">{'\u2022'}</NouText>
+                        <NouText className="flex-1 text-sm leading-6 text-zinc-800 dark:text-zinc-200">{item}</NouText>
                       </View>
                     ))
                   ) : (
-                    <NouText className="text-sm leading-6 text-zinc-400">{t('changelog.noNotes')}</NouText>
+                    <NouText className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">{t('changelog.noNotes')}</NouText>
                   )}
                 </View>
               </View>
