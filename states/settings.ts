@@ -3,6 +3,7 @@ import { syncObservable } from '@legendapp/state/sync'
 import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv'
 import { genId } from '@/lib/utils'
 import { normalizeXHomeTimeline, type XHomeTimeline } from '@/lib/settings/twitter'
+import { normalizeI18nLanguage, type SupportedI18nLanguage } from '@/lib/i18n'
 import {
   type CustomSearchProvider,
   normalizeCustomSearchProviders,
@@ -32,6 +33,7 @@ const ensureProfiles = (profiles?: (Profile | null | undefined)[]) => {
 }
 
 export interface Settings {
+  language: SupportedI18nLanguage | null
   autoHideHeader: boolean
   hideToolbarWhenScrolled: boolean
   headerPosition: 'top' | 'bottom'
@@ -63,6 +65,7 @@ export interface Settings {
 }
 
 interface Store extends Settings {
+  setLanguage: (language: SupportedI18nLanguage | null) => void
   toggleService: (service: string) => void
   toggleSearchProvider: (providerId: string) => void
   setSelectedSearchProvider: (providerId: string) => void
@@ -94,6 +97,11 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
   if (typeof data.videoEdgeLongPressTo2x !== 'boolean') {
     data.videoEdgeLongPressTo2x = true
   }
+  if (!('language' in data)) {
+    data.language = null
+  } else {
+    data.language = normalizeI18nLanguage(data.language as string | null | undefined)
+  }
   if (typeof data.doubleBackToExitApp !== 'boolean') {
     data.doubleBackToExitApp = false
   }
@@ -114,6 +122,7 @@ export const normalizeSettings = <T extends Partial<Settings> | undefined>(data:
 }
 
 export const settings$: Observable<Store> = observable<Store>({
+  language: null,
   autoHideHeader: false,
   hideToolbarWhenScrolled: false,
   headerPosition: 'top',
@@ -142,6 +151,9 @@ export const settings$: Observable<Store> = observable<Store>({
   selectedSearchProviderId: 'url',
   customSearchProviders: [],
   profiles: [DEFAULT_PROFILE],
+  setLanguage: (language) => {
+    settings$.language.set(normalizeI18nLanguage(language))
+  },
   toggleService: (service) => {
     const index = settings$.disabledServicesArr.indexOf(service)
     if (index === -1) {

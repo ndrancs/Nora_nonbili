@@ -219,7 +219,12 @@
       "system": "System",
       "dark": "Dark",
       "light": "Light",
-      "hint": "Controls app and web theme. If a page does not update immediately, reload the tab."
+      "hint": "App and webview theme. If a page does not update immediately, reload the tab."
+    },
+    "language": {
+      "label": "Language",
+      "system": "System",
+      "hint": "Choose a language or follow system language."
     },
     "injectCookie": "Inject cookie"
   },

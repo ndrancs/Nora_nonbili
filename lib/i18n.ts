@@ -11,8 +11,12 @@ import svText from '@/locales/sv.json'
 import trText from '@/locales/tr.json'
 import zhHansText from '@/locales/zh_Hans.json'
 import zhHantText from '@/locales/zh_Hant.json'
+import type { Locale } from 'expo-localization'
 
-const resources = {
+export const supportedI18nLanguages = ['ar', 'el', 'en', 'es', 'fr', 'it', 'pl', 'sv', 'tr', 'zh_Hans', 'zh_Hant'] as const
+export type SupportedI18nLanguage = (typeof supportedI18nLanguages)[number]
+
+const resources: Record<SupportedI18nLanguage, { translation: unknown }> = {
   ar: {
     translation: arText,
   },
@@ -47,6 +51,29 @@ const resources = {
     translation: zhHantText,
   },
 }
+
+const isSupportedLanguage = (value?: string | null): value is SupportedI18nLanguage =>
+  Boolean(value && supportedI18nLanguages.includes(value))
+
+export const resolveI18nLanguageFromExpoLocale = (locale?: Locale): SupportedI18nLanguage | undefined => {
+  if (!locale?.languageCode) {
+    return undefined
+  }
+
+  if (locale.languageCode === 'zh') {
+    const script = locale.languageScriptCode
+    if (script === 'Hans' || script === 'Hant') {
+      return `zh_${script}` as SupportedI18nLanguage
+    }
+    const region = locale.regionCode?.toUpperCase()
+    return region === 'TW' || region === 'HK' || region === 'MO' ? 'zh_Hant' : 'zh_Hans'
+  }
+
+  return isSupportedLanguage(locale.languageCode) ? locale.languageCode : undefined
+}
+
+export const normalizeI18nLanguage = (value?: string | null): SupportedI18nLanguage | null =>
+  value == null ? null : isSupportedLanguage(value) ? value : null
 
 i18n.use(initReactI18next).init({
   /* debug: true, */

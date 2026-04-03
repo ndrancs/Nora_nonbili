@@ -30,6 +30,8 @@ import { BaseCenterModal } from './BaseCenterModal'
 import { builtinUserStyleDefinitions } from '@/lib/user-styles'
 import { userStyles$ } from '@/states/user-styles'
 import { settingsUi, SettingsSurface, SettingsRow } from './SettingsPrimitives'
+import { useLocales } from 'expo-localization'
+import { resolveI18nLanguageFromExpoLocale, supportedI18nLanguages } from '@/lib/i18n'
 
 const headerPositions = ['top', 'bottom'] as const
 const themes = [null, 'dark', 'light'] as const
@@ -58,6 +60,19 @@ const serviceHosts: Record<string, string> = {
 }
 
 const normalizeHost = (host: string) => host.replace(/^\*\./, '').replace(/^www\./, '').toLowerCase()
+const languageNativeNames: Record<string, string> = {
+  ar: 'العربية',
+  el: 'Ελληνικά',
+  en: 'English',
+  es: 'Español',
+  fr: 'Français',
+  it: 'Italiano',
+  pl: 'Polski',
+  sv: 'Svenska',
+  tr: 'Türkçe',
+  zh_Hans: '简体中文',
+  zh_Hant: '繁體中文',
+}
 
 export const SettingsBrowsingContent: React.FC = () => {
   const settings = useValue(settings$)
@@ -144,7 +159,27 @@ export const SettingsAppearanceContent = () => {
   const settings = useValue(settings$)
   const colorScheme = useColorScheme()
   const isDark = colorScheme !== 'light'
+  const locales = useLocales()
   const [deckTabWidthInput, setDeckTabWidthInput] = useState(settings.deckTabWidth.toString())
+  const systemLanguage = resolveI18nLanguageFromExpoLocale(locales[0]) || 'en'
+  const effectiveLanguage = settings.language || systemLanguage
+  const isSystemLanguageSelected = settings.language == null
+  const toLanguageLabel = (code: string) => languageNativeNames[code] || code
+  const currentLanguageLabel = settings.language
+    ? toLanguageLabel(settings.language)
+    : `${t('settings.language.system')} (${toLanguageLabel(effectiveLanguage)})`
+  const languageMenuItems = [
+    {
+      label: `${t('settings.language.system')} (${toLanguageLabel(systemLanguage)})`,
+      handler: () => settings$.setLanguage(null),
+      metaLabel: isSystemLanguageSelected ? '✓' : undefined,
+    },
+    ...supportedI18nLanguages.map((language) => ({
+      label: toLanguageLabel(language),
+      handler: () => settings$.setLanguage(language),
+      metaLabel: settings.language === language ? '✓' : undefined,
+    })),
+  ]
 
   useEffect(() => {
     setDeckTabWidthInput(settings.deckTabWidth.toString())
@@ -196,6 +231,23 @@ export const SettingsAppearanceContent = () => {
                   ]}
                 />
               </View>
+            </View>
+          </View>
+          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.language.label')}</NouText>
+          <View className={surfaceCls}>
+            <View className={clsx('items-center flex-row justify-between', rowCls)}>
+              <View className="flex-1 pr-3">
+                <NouText className="font-medium">{t('settings.language.label')}</NouText>
+                <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.language.hint')}</NouText>
+              </View>
+              <NouMenu
+                trigger={
+                  <NouButton size="1" variant="outline">
+                    {currentLanguageLabel}
+                  </NouButton>
+                }
+                items={languageMenuItems}
+              />
             </View>
           </View>
         </View>,
@@ -261,6 +313,20 @@ export const SettingsAppearanceContent = () => {
                 label={<NouText className="font-medium">{t('settings.showScrollButton')}</NouText>}
                 value={settings.showScrollButtonInHeader}
                 onPress={() => settings$.showScrollButtonInHeader.toggle()}
+              />
+            </View>
+          </View>
+
+          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.language.label')}</NouText>
+          <View className={surfaceCls}>
+            <View className={clsx('items-center flex-row justify-between', rowCls)}>
+              <View className="flex-1 pr-3">
+                <NouText className="font-medium">{t('settings.language.label')}</NouText>
+                <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.language.hint')}</NouText>
+              </View>
+              <NouMenu
+                trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
+                items={languageMenuItems}
               />
             </View>
           </View>
