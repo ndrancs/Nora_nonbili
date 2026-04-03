@@ -86,6 +86,7 @@
     "allowHttpWebsite": "Allow HTTP websites",
     "inspectable": "Make webview inspectable",
     "videoEdgeLongPressTo2x": "Long press on edge to 2x playback",
+    "doubleBackToExitApp": "Double back to exit app",
     "hideHeader": "Hide and show toolbar on scroll direction",
     "hideToolbarWhenScrolled": "Hide toolbar when page is not at top",
     "xHomeTimeline": {
@@ -254,6 +255,7 @@
   },
   "toast": {
     "pinned": "Pinned to new tab page",
-    "blocklistUpdated": "Blocklist updated"
+    "blocklistUpdated": "Blocklist updated",
+    "pressBackAgainToExit": "Press back again to exit"
   }
 }

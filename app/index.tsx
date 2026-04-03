@@ -13,6 +13,8 @@ import { bookmarks$ } from '@/states/bookmarks'
 import { tabs$ } from '@/states/tabs'
 import { blocklist$ } from '@/states/blocklist'
 import { applyBlocklist, refreshBlocklistIfDue, supportsRuntimeBlocklist, waitForBlocklistPersist } from '@/lib/blocklist'
+import { showToast } from '@/lib/toast'
+import { t } from 'i18next'
 
 const getHost = (url: string | undefined) => {
   if (!url) return ''
@@ -54,6 +56,8 @@ const syncNativeSettings = () => {
   })
 }
 
+const EXIT_DOUBLE_BACK_WINDOW_MS = 2000
+
 export default function HomeScreen() {
   const [scriptOnStart, setScriptOnStart] = useState('')
   const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntent()
@@ -88,10 +92,23 @@ export default function HomeScreen() {
       console.log('[kotlin]', evt.msg)
     })
 
+    let lastBackPressAt = 0
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (tabs$.handleBackPress()) {
+        lastBackPressAt = 0
         return true
       }
+      if (settings$.doubleBackToExitApp.get()) {
+        const now = Date.now()
+        if (lastBackPressAt && now - lastBackPressAt < EXIT_DOUBLE_BACK_WINDOW_MS) {
+          BackHandler.exitApp()
+          return true
+        }
+        lastBackPressAt = now
+        showToast(t('toast.pressBackAgainToExit'))
+        return true
+      }
+      lastBackPressAt = 0
       BackHandler.exitApp()
       return true
     })

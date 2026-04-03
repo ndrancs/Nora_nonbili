@@ -65,6 +65,16 @@ export const SettingsBrowsingContent: React.FC = () => {
                 onPress={() => settings$.oneTabPerSite.toggle()}
               />
             </View>
+            {nIf(
+              isAndroid,
+              <View className={clsx(rowCls, rowBorderCls)}>
+                <NouSwitch
+                  label={<NouText className="font-medium">{t('settings.doubleBackToExitApp')}</NouText>}
+                  value={settings.doubleBackToExitApp}
+                  onPress={() => settings$.doubleBackToExitApp.toggle()}
+                />
+              </View>,
+            )}
             <View className={clsx(rowCls, rowBorderCls)}>
               <NouSwitch
                 label={<NouText className="font-medium">{t('settings.videoEdgeLongPressTo2x')}</NouText>}
