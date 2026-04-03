@@ -10,6 +10,7 @@ import {
 const HIDDEN_CLASS = '_nora_hidden_'
 const SWITCH_RETRY_MS = 1200
 const HIDE_X_HOME_TABS_STYLE_ID = builtinUserStyleIds.find((id) => id === 'hide-x-home-tabs')!
+const DEFAULT_TIMELINE_APPLIED_SESSION_KEY = '_nora_x_home_timeline_applied_'
 
 const normalizeLabel = (value?: string | null) => value?.replace(/\s+/g, ' ').trim().toLowerCase() || ''
 
@@ -85,6 +86,20 @@ const getHideTarget = (tabList: HTMLElement) => {
   return tabList.parentElement instanceof HTMLElement ? tabList.parentElement : tabList
 }
 
+const hasAppliedDefaultTimelineThisSession = () => {
+  try {
+    return window.sessionStorage.getItem(DEFAULT_TIMELINE_APPLIED_SESSION_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+const markDefaultTimelineAppliedThisSession = () => {
+  try {
+    window.sessionStorage.setItem(DEFAULT_TIMELINE_APPLIED_SESSION_KEY, '1')
+  } catch {}
+}
+
 export function runXHomeTabsController() {
   const root = window as Window &
     typeof globalThis & {
@@ -104,7 +119,7 @@ export function runXHomeTabsController() {
   let hiddenTarget: HTMLElement | null = null
   let pendingTimeline: XHomeTimeline | null = null
   let pendingAt = 0
-  let shouldRespectDefaultTimeline = true
+  let shouldRespectDefaultTimeline = !hasAppliedDefaultTimelineThisSession()
 
   const clearHiddenTarget = () => {
     if (hiddenTarget) {
@@ -146,6 +161,7 @@ export function runXHomeTabsController() {
     const activeTimeline = getActiveTimeline(tabs)
     if (activeTimeline === settings.xDefaultHomeTimeline) {
       shouldRespectDefaultTimeline = false
+      markDefaultTimelineAppliedThisSession()
     }
     const decision = resolveXHomeTabsDecision(settings, {
       activeTimeline,
@@ -188,21 +204,11 @@ export function runXHomeTabsController() {
     settings = {
       xDefaultHomeTimeline: normalizeXHomeTimeline(detail?.xDefaultHomeTimeline),
     }
-    shouldRespectDefaultTimeline = true
     scheduleApply()
   })
 
   window.addEventListener(noraUserStylesEvent, (event) => {
     hideTabs = shouldHideHomeTabs((event as CustomEvent<UserStylesSnapshot>).detail)
-    scheduleApply()
-  })
-
-  window.addEventListener('popstate', () => {
-    shouldRespectDefaultTimeline = true
-    scheduleApply()
-  })
-  window.addEventListener('hashchange', () => {
-    shouldRespectDefaultTimeline = true
     scheduleApply()
   })
 
