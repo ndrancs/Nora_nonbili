@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Alert, ScrollView, View, TextInput, useColorScheme } from 'react-native'
+import { Alert, Pressable, ScrollView, View, TextInput, useColorScheme } from 'react-native'
 import { NouButton } from '../button/NouButton'
 import { ui$ } from '@/states/ui'
-import { ServiceManager } from '../service/Services'
+import { services } from '../service/Services'
 import { clsx, isWeb, isIos, isAndroid, nIf } from '@/lib/utils'
 import { useValue } from '@legendapp/state/react'
 import { NouText } from '../NouText'
@@ -27,94 +27,81 @@ import {
 import { SearchProviderIcon } from '../service/SearchProviderIcon'
 import { showToast } from '@/lib/toast'
 import { BaseCenterModal } from './BaseCenterModal'
+import { builtinUserStyleDefinitions } from '@/lib/user-styles'
+import { userStyles$ } from '@/states/user-styles'
+import { settingsUi, SettingsSurface, SettingsRow } from './SettingsPrimitives'
 
 const headerPositions = ['top', 'bottom'] as const
 const themes = [null, 'dark', 'light'] as const
-const subheaderCls = 'mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500'
-const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70'
-const rowCls = 'px-4 py-4'
-const rowBorderCls = 'border-b border-zinc-300 dark:border-zinc-800'
-const iconWrapCls = 'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-950'
-const textInputCls = 'rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 px-4 py-4 text-zinc-900 dark:text-white'
+const subheaderCls = settingsUi.subheaderCls
+const surfaceCls = settingsUi.surfaceCls
+const rowCls = settingsUi.rowCls
+const rowBorderCls = settingsUi.rowBorderCls
+const iconWrapCls = settingsUi.iconWrapCls
+const textInputCls = settingsUi.textInputCls
 const xTimelineLabels: Record<(typeof xHomeTimelineValues)[number], string> = {
   'for-you': 'settings.xHomeTimeline.forYou',
   following: 'settings.xHomeTimeline.following',
 }
+const serviceHosts: Record<string, string> = {
+  bluesky: 'bsky.app',
+  facebook: 'facebook.com',
+  'facebook-messenger': 'messenger.com',
+  instagram: 'instagram.com',
+  linkedin: 'linkedin.com',
+  reddit: 'reddit.com',
+  threads: 'threads.net',
+  tiktok: 'tiktok.com',
+  tumblr: 'tumblr.com',
+  vk: 'vk.com',
+  x: 'x.com',
+}
+
+const normalizeHost = (host: string) => host.replace(/^\*\./, '').replace(/^www\./, '').toLowerCase()
 
 export const SettingsBrowsingContent: React.FC = () => {
   const settings = useValue(settings$)
-  const xTimelineIndex = xHomeTimelineValues.indexOf(settings.xDefaultHomeTimeline)
 
   return (
     <View className="pb-4">
       {!isWeb ? (
         <>
           <NouText className={subheaderCls}>{t('settings.browsing.features')}</NouText>
-          <View className={surfaceCls}>
-            <View className={clsx(rowCls, rowBorderCls)}>
+          <SettingsSurface>
+            <SettingsRow>
               <NouSwitch
                 label={<NouText className="font-medium">{t('settings.openExternalLink')}</NouText>}
                 value={settings.openExternalLinkInSystemBrowser}
                 onPress={() => settings$.openExternalLinkInSystemBrowser.toggle()}
               />
-            </View>
-            <View className={clsx(rowCls, rowBorderCls)}>
+            </SettingsRow>
+            <SettingsRow>
               <NouSwitch
                 label={<NouText className="font-medium">{t('settings.oneTabPerSite')}</NouText>}
                 value={settings.oneTabPerSite}
                 onPress={() => settings$.oneTabPerSite.toggle()}
               />
-            </View>
+            </SettingsRow>
             {nIf(
               isAndroid,
-              <View className={clsx(rowCls, rowBorderCls)}>
+              <SettingsRow>
                 <NouSwitch
                   label={<NouText className="font-medium">{t('settings.doubleBackToExitApp')}</NouText>}
                   value={settings.doubleBackToExitApp}
                   onPress={() => settings$.doubleBackToExitApp.toggle()}
                 />
-              </View>,
+              </SettingsRow>,
             )}
-            <View className={clsx(rowCls, rowBorderCls)}>
+            <SettingsRow isLast>
               <NouSwitch
                 label={<NouText className="font-medium">{t('settings.videoEdgeLongPressTo2x')}</NouText>}
                 value={settings.videoEdgeLongPressTo2x}
                 onPress={() => settings$.videoEdgeLongPressTo2x.toggle()}
               />
-            </View>
-          </View>
+            </SettingsRow>
+          </SettingsSurface>
         </>
       ) : null}
-
-      {!isWeb ? (
-        <View className="mt-10">
-          <NouText className={subheaderCls}>Reddit</NouText>
-          <View className={surfaceCls}>
-            <View className={rowCls}>
-              <NouSwitch
-                label={<NouText className="font-medium">{t('settings.redirectToOldReddit')}</NouText>}
-                value={settings.redirectToOldReddit}
-                onPress={() => settings$.redirectToOldReddit.toggle()}
-              />
-            </View>
-          </View>
-        </View>
-      ) : null}
-
-      <View className="mt-10">
-        <NouText className={subheaderCls}>X (Twitter)</NouText>
-        <View className={surfaceCls}>
-          <View className={clsx(rowCls, rowBorderCls, 'flex-row items-center justify-between gap-3')}>
-            <NouText className="flex-1 font-medium">{t('settings.xHomeTimeline.label')}</NouText>
-            <Segemented
-              options={xHomeTimelineValues.map((value) => t(xTimelineLabels[value]))}
-              selectedIndex={Math.max(0, xTimelineIndex)}
-              size={1}
-              onChange={(index) => settings$.xDefaultHomeTimeline.set(xHomeTimelineValues[index])}
-            />
-          </View>
-        </View>
-      </View>
 
       <View className="mt-10">
         <NouText className={subheaderCls}>{t('blocklist.label')}</NouText>
@@ -216,32 +203,7 @@ export const SettingsAppearanceContent = () => {
       {nIf(
         !isWeb,
         <View className="pb-4">
-          <NouText className={subheaderCls}>{t('settings.theme.label')}</NouText>
-          <View className={surfaceCls}>
-            <View className="px-4 py-4">
-              <View className="flex-row items-start gap-3">
-                <View className={iconWrapCls}>
-                  <MaterialIcons name="palette" color={isDark ? '#d4d4d8' : '#475569'} size={18} />
-                </View>
-                <View className="flex-1">
-                  <NouText className="font-medium">{t('settings.theme.label')}</NouText>
-                  <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.theme.hint')}</NouText>
-                </View>
-              </View>
-            </View>
-            <View className="border-t border-zinc-300 dark:border-zinc-800 px-4 py-4">
-              <View className="items-end">
-                <Segemented
-                  options={[t('settings.theme.system'), t('settings.theme.dark'), t('settings.theme.light')]}
-                  selectedIndex={themes.indexOf(settings.theme)}
-                  size={1}
-                  onChange={(index) => settings$.theme.set(themes[index])}
-                />
-              </View>
-            </View>
-          </View>
-
-          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.appearance.toolbar')}</NouText>
+          <NouText className={subheaderCls}>{t('settings.appearance.toolbar')}</NouText>
           <View className={surfaceCls}>
             <View className={clsx('items-center flex-row justify-between', rowCls, rowBorderCls)}>
               <NouText className="font-medium">{t('settings.headerPosition.label')}</NouText>
@@ -302,6 +264,31 @@ export const SettingsAppearanceContent = () => {
               />
             </View>
           </View>
+
+          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.theme.label')}</NouText>
+          <View className={surfaceCls}>
+            <View className="px-4 py-4">
+              <View className="flex-row items-start gap-3">
+                <View className={iconWrapCls}>
+                  <MaterialIcons name="palette" color={isDark ? '#d4d4d8' : '#475569'} size={18} />
+                </View>
+                <View className="flex-1">
+                  <NouText className="font-medium">{t('settings.theme.label')}</NouText>
+                  <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.theme.hint')}</NouText>
+                </View>
+              </View>
+            </View>
+            <View className="border-t border-zinc-300 dark:border-zinc-800 px-4 py-4">
+              <View className="items-end">
+                <Segemented
+                  options={[t('settings.theme.system'), t('settings.theme.dark'), t('settings.theme.light')]}
+                  selectedIndex={themes.indexOf(settings.theme)}
+                  size={1}
+                  onChange={(index) => settings$.theme.set(themes[index])}
+                />
+              </View>
+            </View>
+          </View>
         </View>,
       )}
     </>
@@ -334,41 +321,128 @@ export const SettingsProfilesContent = () => {
   )
 }
 
+export const SettingsServicesContent = () => {
+  const settings = useValue(settings$)
+  const builtinStyles = useValue(userStyles$.builtins)
+  const xTimelineIndex = xHomeTimelineValues.indexOf(settings.xDefaultHomeTimeline)
+  const entries = Object.entries(services)
+    .map(([serviceId, [serviceName, serviceIcon]]) => {
+      const host = serviceHosts[serviceId] || `${serviceId}.com`
+      const hostKey = normalizeHost(host)
+      const matchingBuiltins = builtinUserStyleDefinitions.filter((definition) =>
+        definition.hostGlobs.some((glob) => normalizeHost(glob) === hostKey),
+      )
+      return {
+        serviceId,
+        serviceName,
+        serviceIcon,
+        host,
+        matchingBuiltins,
+      }
+    })
+    .sort((a, b) => a.serviceName.localeCompare(b.serviceName))
+
+  return (
+    <View>
+      <View className="gap-5">
+        {entries.map((entry) => {
+          const serviceEnabled = !settings.disabledServicesArr.includes(entry.serviceId)
+          const hasRedditSettings = !isWeb && entry.serviceId === 'reddit'
+          const hasXSettings = entry.serviceId === 'x'
+          const rowCount = serviceEnabled
+            ? 1 + entry.matchingBuiltins.length + (hasRedditSettings ? 1 : 0) + (hasXSettings ? 1 : 0)
+            : 1
+          let rowIndex = 0
+          const nextRowBorderClass = () => {
+            const borderCls = rowIndex !== rowCount - 1 ? rowBorderCls : ''
+            rowIndex += 1
+            return borderCls
+          }
+
+          return (
+            <View key={entry.serviceId}>
+              <View className={surfaceCls}>
+                <View className={clsx(rowCls, nextRowBorderClass())}>
+                  <NouSwitch
+                    label={
+                      <View className="flex-row items-center gap-2">
+                        {entry.serviceIcon()}
+                        <NouText className="font-medium">{entry.serviceName}</NouText>
+                      </View>
+                    }
+                    value={serviceEnabled}
+                    onPress={() => settings$.toggleService(entry.serviceId)}
+                  />
+                </View>
+                {serviceEnabled ? (
+                  <>
+                    {entry.matchingBuiltins.map((definition) => (
+                      <View key={definition.id} className={clsx(rowCls, nextRowBorderClass())}>
+                        <NouSwitch
+                          label={<NouText className="font-medium">{t(definition.labelKey)}</NouText>}
+                          value={builtinStyles[definition.id]?.enabled ?? true}
+                          onPress={() => userStyles$.toggleBuiltin(definition.id)}
+                        />
+                      </View>
+                    ))}
+                    {hasRedditSettings ? (
+                      <View className={clsx(rowCls, nextRowBorderClass())}>
+                        <NouSwitch
+                          label={<NouText className="font-medium">{t('settings.redirectToOldReddit')}</NouText>}
+                          value={settings.redirectToOldReddit}
+                          onPress={() => settings$.redirectToOldReddit.toggle()}
+                        />
+                      </View>
+                    ) : null}
+                    {hasXSettings ? (
+                      <View className={clsx(rowCls, nextRowBorderClass(), 'flex-row items-center justify-between gap-3')}>
+                        <NouText className="flex-1 font-medium">{t('settings.xHomeTimeline.label')}</NouText>
+                        <Segemented
+                          options={xHomeTimelineValues.map((value) => t(xTimelineLabels[value]))}
+                          selectedIndex={Math.max(0, xTimelineIndex)}
+                          size={1}
+                          onChange={(index) => settings$.xDefaultHomeTimeline.set(xHomeTimelineValues[index])}
+                        />
+                      </View>
+                    ) : null}
+                  </>
+                ) : null}
+              </View>
+            </View>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
 export const SettingsBookmarksContent = () => {
   const bookmarks = useValue(bookmarks$.bookmarks)
 
   return (
     <View className="pb-4">
-      <View>
-        <NouText className={subheaderCls}>{t('settings.bookmarks.builtin')}</NouText>
-        <View className={surfaceCls}>
-          <ServiceManager hideTitle />
-        </View>
-      </View>
-      <View className="mt-10">
-        <NouText className={subheaderCls}>{t('settings.bookmarks.saved')}</NouText>
-        <View className={surfaceCls}>
-          {!bookmarks.length ? <NouText className="px-4 py-4 text-sm text-zinc-600 dark:text-gray-500">{t('settings.bookmarks.empty')}</NouText> : null}
-          {bookmarks.map((bookmark, index) => (
-            <View
-              className={clsx(
-                rowCls,
-                'flex-row items-center justify-between gap-5',
-                index !== bookmarks.length - 1 && rowBorderCls,
-              )}
-              key={index}
-            >
-              <View className="flex-row items-center gap-2 w-[70%]">
-                <Image source={bookmark.icon} style={{ width: 24, height: 24 }} />
-                <NouText numberOfLines={1}>{bookmark.title}</NouText>
-              </View>
-              <NouMenu
-                trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
-                items={[{ label: t('menus.delete'), handler: () => bookmarks$.deleteBookmark(index) }]}
-              />
+      <NouText className={subheaderCls}>{t('settings.bookmarks.saved')}</NouText>
+      <View className={surfaceCls}>
+        {!bookmarks.length ? <NouText className="px-4 py-4 text-sm text-zinc-600 dark:text-gray-500">{t('settings.bookmarks.empty')}</NouText> : null}
+        {bookmarks.map((bookmark, index) => (
+          <View
+            className={clsx(
+              rowCls,
+              'flex-row items-center justify-between gap-5',
+              index !== bookmarks.length - 1 && rowBorderCls,
+            )}
+            key={index}
+          >
+            <View className="flex-row items-center gap-2 w-[70%]">
+              <Image source={bookmark.icon} style={{ width: 24, height: 24 }} />
+              <NouText numberOfLines={1}>{bookmark.title}</NouText>
             </View>
-          ))}
-        </View>
+            <NouMenu
+              trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
+              items={[{ label: t('menus.delete'), handler: () => bookmarks$.deleteBookmark(index) }]}
+            />
+          </View>
+        ))}
       </View>
     </View>
   )
@@ -440,7 +514,6 @@ export const SettingsSearchContent = () => {
     <View className="pb-4">
       <View>
         <NouText className={subheaderCls}>{t('settings.search.builtin')}</NouText>
-        <NouText className="mb-3 px-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">{t('settings.search.builtinHint')}</NouText>
         <View className={surfaceCls}>
           {searchSettingsProviderIds.map((providerId, index) => {
             const provider = getResolvedSearchProvider(providerId, customSearchProviders)
@@ -477,17 +550,16 @@ export const SettingsSearchContent = () => {
 
       <View className="mt-10">
         <View className="mb-3 flex-row items-center justify-between gap-3">
-          <NouText className={subheaderCls}>{t('settings.search.custom')}</NouText>
-          <NouButton
-            size="1"
-            variant="outline"
+          <NouText className="text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.search.custom')}</NouText>
+          <Pressable
             onPress={() => {
               setDraft(emptySearchProviderDraft)
               setEditorOpen(true)
             }}
+            className="h-8 w-8 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 active:bg-zinc-200 dark:active:bg-zinc-800"
           >
-            {t('settings.search.addAction')}
-          </NouButton>
+            <MaterialIcons name="add" size={18} color="#6366f1" />
+          </Pressable>
         </View>
         <View className={surfaceCls}>
           {!customSearchProviders.length ? (

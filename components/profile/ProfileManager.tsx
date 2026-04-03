@@ -29,7 +29,7 @@ export const ProfileManager = () => {
         <View
           key={profile.id}
           className={clsx(
-            'border-x border-zinc-800 bg-zinc-900/70 px-4 py-2',
+            'border-x border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70 px-4 py-2',
             index === 0 && 'rounded-t-[20px] border-t',
             index !== 0 && 'border-t',
             index === profiles.length - 1 && 'rounded-b-[20px] border-b',

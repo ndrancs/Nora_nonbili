@@ -2,8 +2,8 @@ import { BackHandler, Linking, Pressable, ScrollView, View, useColorScheme, useW
 import { NouText } from '../NouText'
 import { version } from '../../package.json'
 import { version as desktopVersion } from '../../desktop/package.json'
-import { PropsWithChildren, useCallback, useEffect, useState } from 'react'
-import { clsx, isIos, isWeb } from '@/lib/utils'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { clsx, isWeb } from '@/lib/utils'
 import { useValue } from '@legendapp/state/react'
 import { settings$ } from '@/states/settings'
 import { ui$ } from '@/states/ui'
@@ -12,6 +12,7 @@ import {
   SettingsBrowsingContent,
   SettingsAppearanceContent,
   SettingsProfilesContent,
+  SettingsServicesContent,
   SettingsBookmarksContent,
   SettingsSearchContent,
 } from './SettingsModalTabSettings'
@@ -26,6 +27,7 @@ import { supportsRuntimeBlocklist } from '@/lib/blocklist'
 import { SettingsChangelogContent } from './SettingsModalTabChangelog'
 import { queryClient } from '@/lib/query/client'
 import { getReleaseFeedQuery } from '@/lib/query/changelog'
+import { settingsUi, SettingsSection, SettingsSurface } from './SettingsPrimitives'
 
 const repo = 'https://github.com/nonbili/Nora'
 const donateLinks = [
@@ -33,21 +35,7 @@ const donateLinks = [
   { label: 'Liberapay', detail: 'liberapay.com/rnons', url: 'https://liberapay.com/rnons' },
   { label: 'PayPal', detail: 'paypal.me/rnons', url: 'https://paypal.me/rnons' },
 ]
-const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70'
-const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-500'
-const iconWrapCls =
-  'h-10 w-10 items-center justify-center rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-950'
-
-type SettingsPage = 'home' | 'browsing' | 'styles' | 'appearance' | 'profiles' | 'bookmarks' | 'search' | 'sync' | 'about' | 'changelog'
-
-const SettingsSection = ({ label, children }: PropsWithChildren<{ label?: string }>) => {
-  return (
-    <View>
-      {label ? <NouText className={sectionLabelCls}>{label}</NouText> : null}
-      {children}
-    </View>
-  )
-}
+type SettingsPage = 'home' | 'browsing' | 'styles' | 'appearance' | 'services' | 'profiles' | 'bookmarks' | 'search' | 'sync' | 'about' | 'changelog'
 
 const SettingsNavRow: React.FC<{
   title: string
@@ -67,7 +55,7 @@ const SettingsNavRow: React.FC<{
         !isLast && 'border-b border-zinc-300 dark:border-zinc-800',
       )}
     >
-      <View className={iconWrapCls}>
+      <View className={settingsUi.iconWrapCls}>
         <MaterialIcons name={icon} color={isDark ? '#d4d4d8' : '#475569'} size={18} />
       </View>
       <View className="flex-1">
@@ -101,7 +89,7 @@ const SettingsExternalRow: React.FC<{
         !isLast && 'border-b border-zinc-300 dark:border-zinc-800',
       )}
     >
-      <View className={iconWrapCls}>
+      <View className={settingsUi.iconWrapCls}>
         <MaterialIcons name={icon} color={isDark ? '#d4d4d8' : '#475569'} size={18} />
       </View>
       <View className="flex-1">
@@ -128,6 +116,8 @@ export const SettingsModal = () => {
   const isDark = colorScheme !== 'light'
   const { width } = useWindowDimensions()
   const [pageStack, setPageStack] = useState<SettingsPage[]>(['home'])
+  const scrollRef = useRef<ScrollView>(null)
+  const scrollPositionsRef = useRef<Partial<Record<SettingsPage, number>>>({ home: 0 })
 
   const isNarrowNative = !isWeb && width < 768
   const currentPage = pageStack[pageStack.length - 1]
@@ -232,11 +222,17 @@ export const SettingsModal = () => {
     return () => window.removeEventListener('keyup', onKeyUp, true)
   }, [handleBack, settingsModalOpen])
 
+  useEffect(() => {
+    const y = scrollPositionsRef.current[currentPage] ?? 0
+    scrollRef.current?.scrollTo({ y, animated: false })
+  }, [currentPage])
+
   const pageMeta: Record<SettingsPage, string> = {
     home: t('settings.label'),
     browsing: t('settings.pages.browsing'),
     styles: t('settings.userStyles.label'),
     appearance: t('settings.pages.appearance'),
+    services: t('settings.pages.services'),
     profiles: t('settings.pages.profiles'),
     bookmarks: t('settings.pages.bookmarks'),
     search: t('settings.pages.search'),
@@ -249,8 +245,8 @@ export const SettingsModal = () => {
     if (currentPage === 'home') {
       return (
         <View className="gap-8">
-          <SettingsSection label={t('settings.sections.experience')}>
-            <View className={surfaceCls}>
+          <SettingsSection label={t('settings.sections.general')}>
+            <SettingsSurface>
               {showBrowsing ? (
                 <SettingsNavRow
                   title={t('settings.pages.browsing')}
@@ -267,10 +263,28 @@ export const SettingsModal = () => {
                 onPress={() => pushPage('appearance')}
               />
               <SettingsNavRow
+                title={t('settings.pages.services')}
+                description={t('settings.services.description')}
+                icon="apps"
+                onPress={() => pushPage('services')}
+              />
+              <SettingsNavRow
                 title={t('settings.userStyles.label')}
-                description={t('settings.userStyles.hint')}
+                description={t('settings.userStyles.customHint')}
                 icon="brush"
                 onPress={() => pushPage('styles')}
+                isLast
+              />
+            </SettingsSurface>
+          </SettingsSection>
+
+          <SettingsSection label={t('settings.sections.bookmarksSearch')}>
+            <SettingsSurface>
+              <SettingsNavRow
+                title={t('settings.pages.bookmarks')}
+                description={t('settings.bookmarks.description')}
+                icon="bookmark"
+                onPress={() => pushPage('bookmarks')}
               />
               <SettingsNavRow
                 title={t('settings.pages.search')}
@@ -279,22 +293,16 @@ export const SettingsModal = () => {
                 onPress={() => pushPage('search')}
                 isLast
               />
-            </View>
+            </SettingsSurface>
           </SettingsSection>
 
           <SettingsSection label={t('settings.sections.accounts')}>
-            <View className={surfaceCls}>
+            <SettingsSurface>
               <SettingsNavRow
                 title={t('settings.pages.profiles')}
                 description={t('settings.profiles.description')}
                 icon="people"
                 onPress={() => pushPage('profiles')}
-              />
-              <SettingsNavRow
-                title={t('settings.pages.bookmarks')}
-                description={t('settings.bookmarks.description')}
-                icon="bookmark"
-                onPress={() => pushPage('bookmarks')}
                 isLast={!showSync}
               />
               {showSync ? (
@@ -307,11 +315,11 @@ export const SettingsModal = () => {
                   isLast
                 />
               ) : null}
-            </View>
+            </SettingsSurface>
           </SettingsSection>
 
           <SettingsSection label={t('common.about')}>
-            <View className={surfaceCls}>
+            <SettingsSurface>
               <SettingsNavRow
                 title={t('common.about')}
                 description={t('about.hint')}
@@ -326,7 +334,7 @@ export const SettingsModal = () => {
                 onPress={() => pushPage('changelog')}
                 isLast
               />
-            </View>
+            </SettingsSurface>
           </SettingsSection>
         </View>
       )
@@ -335,6 +343,7 @@ export const SettingsModal = () => {
     if (currentPage === 'browsing') return <SettingsBrowsingContent />
     if (currentPage === 'styles') return <SettingsUserStylesContent />
     if (currentPage === 'appearance') return <SettingsAppearanceContent />
+    if (currentPage === 'services') return <SettingsServicesContent />
     if (currentPage === 'profiles') return <SettingsProfilesContent />
     if (currentPage === 'bookmarks') return <SettingsBookmarksContent />
     if (currentPage === 'search') return <SettingsSearchContent />
@@ -352,13 +361,13 @@ export const SettingsModal = () => {
         </View>
 
         <SettingsSection label={t('about.code')}>
-          <View className={surfaceCls}>
+          <SettingsSurface>
             <SettingsExternalRow title="GitHub" detail="github.com/nonbili/Nora" href={repo} icon="code" isLast />
-          </View>
+          </SettingsSurface>
         </SettingsSection>
 
         <SettingsSection label={t('about.donate')}>
-          <View className={surfaceCls}>
+          <SettingsSurface>
             {donateLinks.map((item, index) => (
               <SettingsExternalRow
                 key={item.url}
@@ -368,7 +377,7 @@ export const SettingsModal = () => {
                 isLast={index === donateLinks.length - 1}
               />
             ))}
-          </View>
+          </SettingsSurface>
         </SettingsSection>
       </View>
     )
@@ -387,7 +396,15 @@ export const SettingsModal = () => {
         </View>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={scrollRef}
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={(e) => {
+          scrollPositionsRef.current[currentPage] = e.nativeEvent.contentOffset.y
+        }}
+      >
         <View className="px-4 py-5">
           {renderPage()}
           <View className="h-16" />

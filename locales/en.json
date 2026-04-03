@@ -95,25 +95,27 @@
       "following": "Following"
     },
     "sections": {
-      "experience": "Experience",
+      "general": "General",
       "accounts": "Accounts & Data",
+      "bookmarksSearch": "Bookmarks & Search",
       "advanced": "Advanced",
       "about": "About"
     },
     "pages": {
-      "browsing": "Browsing",
+      "browsing": "Preferences",
       "appearance": "Appearance",
+      "services": "Services",
       "profiles": "Profiles & Sessions",
       "bookmarks": "Bookmarks",
       "search": "Search"
     },
     "browsing": {
-      "descriptionNative": "Tabs, site handling, blocklist controls, and advanced webview settings.",
+      "descriptionNative": "Feature toggles.",
       "descriptionWeb": "Network blocking and advanced browsing controls.",
       "features": "Features"
     },
     "appearance": {
-      "description": "Theme plus toolbar layout, placement, and button visibility.",
+      "description": "Theme and toolbar settings.",
       "theme": "Theme",
       "toolbar": "Toolbar",
       "deckTabWidth": "Deck tab width",
@@ -125,13 +127,16 @@
       "injectCookieHint": "Paste a Cookie header from another browser to restore a session manually."
     },
     "bookmarks": {
-      "description": "Manage built-in services and pinned websites.",
-      "builtin": "Built-In Services",
+      "description": "Manage pinned websites.",
       "saved": "Saved Bookmarks",
       "empty": "No bookmarks yet."
     },
+    "services": {
+      "title": "Built-In Services",
+      "description": "Manage built-in services."
+    },
     "search": {
-      "description": "Choose search providers for the new tab input and add your own engines.",
+      "description": "Manage search providers.",
       "builtin": "Built-In Search Providers",
       "builtinHint": "Turn on the providers you want to show in the new tab search menu.",
       "custom": "Custom Search Providers",
@@ -157,6 +162,7 @@
     "userStyles": {
       "label": "User Styles",
       "hint": "Toggle builtin CSS tweaks and add your own host-based styles.",
+      "customHint": "Customize any website with CSS.",
       "copyCss": "Copy CSS",
       "cssCopied": "CSS copied",
       "copyFailed": "Failed to copy CSS",
@@ -208,7 +214,6 @@
     "showScrollButton": "Show scroll to top button",
     "oneHandMode": "One hand mode",
     "oneTabPerSite": "One tab per site when opening shared link",
-    "services": "Services",
     "theme": {
       "label": "Theme",
       "system": "System",

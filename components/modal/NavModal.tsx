@@ -21,6 +21,7 @@ import {
 } from '@/lib/search'
 import { SearchProviderIcon } from '../service/SearchProviderIcon'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ProfileSelectorChips } from '../profile/ProfileSelectorChips'
 
 const cls = 'flex-row items-center gap-2 rounded-full bg-sky-50 w-40 py-2 px-3 overflow-hidden'
 const inputCls = 'flex-1 pl-3 pr-1 py-3 text-zinc-900 dark:text-white'
@@ -115,30 +116,12 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
         contentContainerClassName="gap-4 px-4 flex-grow justify-center"
         className="flex-grow-0"
       >
-        {profiles.map((profile) => (
-          <Pressable key={profile.id} onPress={() => selectProfile(profile.id)}>
-            <View
-              className={clsx(
-                'flex-row items-center gap-2 rounded-full px-4 py-2 border',
-                selectedProfile === profile.id
-                  ? 'bg-indigo-100 dark:bg-indigo-500/20 border-indigo-500 dark:border-indigo-400'
-                  : 'bg-zinc-200 dark:bg-white/5 border-zinc-300 dark:border-zinc-700/60',
-              )}
-            >
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: profile.color }} />
-              <Text
-                className={clsx(
-                  'text-sm',
-                  selectedProfile === profile.id
-                    ? 'text-zinc-900 dark:text-indigo-100 font-semibold'
-                    : 'text-zinc-600 dark:text-gray-400',
-                )}
-              >
-                {profile.name}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
+        <ProfileSelectorChips
+          profiles={profiles}
+          selectedProfileId={selectedProfile}
+          onSelectProfile={selectProfile}
+          containerClassName="flex-row gap-4"
+        />
       </ScrollView>
       <ScrollView
         className="flex-1"

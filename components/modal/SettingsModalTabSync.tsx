@@ -16,9 +16,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { prepareIosPurchase, syncIosTransaction } from '@/lib/query'
 import { queryClient } from '@/lib/query/client'
 import { useMe } from '@/lib/hooks/useMe'
+import { settingsUi } from './SettingsPrimitives'
 
-const surfaceCls = 'overflow-hidden rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70'
-const sectionLabelCls = 'mb-2 px-1 text-[11px] uppercase tracking-[0.18em] text-zinc-600 dark:text-zinc-500'
+const surfaceCls = settingsUi.surfaceCls
+const sectionLabelCls = settingsUi.sectionLabelCls
 const IOS_SYNC_PRODUCT_ID = 'jp.nonbili.nora.sync'
 const TERMS_OF_USE_URL = 'https://www.apple.com/legal/macapps/stdeula/'
 const PRIVACY_POLICY_URL = 'https://inks.page/p/privacy'

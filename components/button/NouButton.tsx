@@ -38,7 +38,12 @@ export const NouButton = ({
       onPress={() => (isDisabled ? {} : onPress())}
     >
       {nIf(loading, <ActivityIndicator color="white" />)}
-      <NouText className={clsx(variant == 'soft' && 'text-indigo-600', textClassName)}>{children}</NouText>
+      <NouText
+        className={clsx(variant == 'solid' && 'text-white', variant == 'soft' && 'text-indigo-600', textClassName)}
+        style={variant === 'solid' ? { color: '#ffffff' } : undefined}
+      >
+        {children}
+      </NouText>
     </TouchableOpacity>
   )
 }

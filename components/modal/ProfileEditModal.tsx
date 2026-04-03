@@ -7,6 +7,7 @@ import { t } from 'i18next'
 import { useEffect, useState } from 'react'
 import { BaseCenterModal } from './BaseCenterModal'
 import { ui$ } from '@/states/ui'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 
 const profileColors = [
   '#6366f1', // indigo
@@ -62,17 +63,22 @@ export const ProfileEditModal = () => {
   const ColorPicker: React.FC<{ selected: string; onSelect: (c: string) => void }> = ({ selected, onSelect }) => (
     <View className="flex-row flex-wrap gap-2 mt-1">
       {profileColors.map((color) => (
-        <Pressable key={color} onPress={() => onSelect(color)}>
+        <Pressable key={color} onPress={() => onSelect(color)} className="relative">
           <View
             style={{
-              width: 28,
-              height: 28,
-              borderRadius: 14,
+              width: 30,
+              height: 30,
+              borderRadius: 15,
               backgroundColor: color,
-              borderWidth: selected === color ? 3 : 0,
-              borderColor: 'white',
+              borderWidth: selected === color ? 3 : 1,
+              borderColor: selected === color ? '#111827' : '#a1a1aa',
             }}
           />
+          {selected === color ? (
+            <View className="absolute inset-0 items-center justify-center">
+              <MaterialIcons name="check" size={14} color="#ffffff" />
+            </View>
+          ) : null}
         </Pressable>
       ))}
     </View>
@@ -87,7 +93,7 @@ export const ProfileEditModal = () => {
           {editingProfileId ? t('common.edit') : t('profiles.add')}
         </NouText>
         <TextInput
-          className="border border-gray-600 text-white px-3 py-2 rounded-md mb-2"
+          className="border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 rounded-md mb-2"
           value={name}
           onChangeText={setName}
           placeholder={t('profiles.namePlaceholder')}
@@ -99,7 +105,7 @@ export const ProfileEditModal = () => {
           <NouButton className="flex-1" variant="outline" onPress={onClose}>
             {t('buttons.cancel')}
           </NouButton>
-          <NouButton className="flex-1" onPress={handleSave}>
+          <NouButton className="flex-1" textClassName="text-white" onPress={handleSave}>
             {editingProfileId ? t('common.save') : t('profiles.add')}
           </NouButton>
         </View>

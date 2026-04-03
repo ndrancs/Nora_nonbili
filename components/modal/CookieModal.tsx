@@ -1,17 +1,18 @@
 import { NoraView } from '@/modules/nora-view'
 import { getUserAgent } from '@/lib/useragent'
-import { clsx, isIos, isWeb } from '@/lib/utils'
+import { isIos, isWeb } from '@/lib/utils'
 import { showToast } from '@/lib/toast'
 import { settings$ } from '@/states/settings'
 import { tabs$ } from '@/states/tabs'
 import { ui$ } from '@/states/ui'
 import { useValue } from '@legendapp/state/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Pressable, TextInput, View } from 'react-native'
+import { ScrollView, TextInput, View, useWindowDimensions } from 'react-native'
 import { NouButton } from '../button/NouButton'
 import { NouText } from '../NouText'
 import { BaseCenterModal } from './BaseCenterModal'
 import { executeWebviewJavaScript, executeWebviewJavaScriptQuietly } from '@/lib/webview'
+import { ProfileSelectorChips } from '../profile/ProfileSelectorChips'
 
 type InjectionRequest = {
   id: number
@@ -101,6 +102,7 @@ export const CookieModal = () => {
   const tabs = useValue(tabs$.tabs)
   const activeTabIndex = useValue(tabs$.activeTabIndex)
   const lastSelectedProfileId = useValue(ui$.lastSelectedProfileId)
+  const { height: viewportHeight } = useWindowDimensions()
 
   const currentTab = tabs[activeTabIndex]
 
@@ -268,10 +270,16 @@ export const CookieModal = () => {
   }
 
   const canSubmit = Boolean(text.trim() && injectionContext?.url && !submitting)
+  const modalMaxHeight = Math.min(Math.max(360, viewportHeight * 0.72), 720)
 
   return (
     <BaseCenterModal onClose={onClose}>
-      <View className="w-full p-5">
+      <ScrollView
+        className="w-full"
+        style={{ maxHeight: modalMaxHeight }}
+        contentContainerStyle={{ padding: 20 }}
+        keyboardShouldPersistTaps="handled"
+      >
         <NouText className="text-lg font-semibold">Inject cookies into the webview</NouText>
         <NouText className="mt-2 text-sm leading-6 text-gray-400">
           Paste a Cookie header from your desktop browser, or import a `cookies.txt` export. This is a workaround when
@@ -280,28 +288,12 @@ export const CookieModal = () => {
 
         <View className="mt-5">
           <NouText className="mb-3 text-sm font-medium text-gray-200">Target profile</NouText>
-          <View className="flex-row flex-wrap gap-2">
-            {profiles.map((profile) => {
-              const selected = profile.id === selectedProfileId
-              return (
-                <Pressable
-                  key={profile.id}
-                  disabled={submitting}
-                  onPress={() => setSelectedProfileId(profile.id)}
-                >
-                  <View
-                    className={clsx(
-                      'flex-row items-center gap-2 rounded-full border px-4 py-2',
-                      selected ? 'border-white bg-white/10' : 'border-zinc-800 bg-zinc-900',
-                    )}
-                  >
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: profile.color }} />
-                    <NouText className={clsx(selected ? 'text-white' : 'text-gray-400')}>{profile.name}</NouText>
-                  </View>
-                </Pressable>
-              )
-            })}
-          </View>
+          <ProfileSelectorChips
+            profiles={profiles}
+            selectedProfileId={selectedProfileId}
+            onSelectProfile={setSelectedProfileId}
+            disabled={submitting}
+          />
         </View>
 
         <View className="mt-5">
@@ -350,7 +342,7 @@ export const CookieModal = () => {
             />
           </View>
         ) : null}
-      </View>
+      </ScrollView>
     </BaseCenterModal>
   )
 }
