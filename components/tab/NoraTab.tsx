@@ -162,6 +162,7 @@ export const NoraTab: React.FC<{
   const profileColor = getProfileColor(tab.profile)
   const isActive = activeTabIndex === index
   const viewKey = getProfileViewKey(tab)
+  const viewInstanceKey = `${viewKey}:${tab.url ? 'page' : 'blank'}`
   const refreshCanGoBack = useCallback(
     async (target?: any) => {
       const webview = target || webviewRef.current || nativeRef.current
@@ -309,7 +310,7 @@ export const NoraTab: React.FC<{
   useEffect(() => {
     pageUrlRef.current = ''
     setCanGoBack(false)
-  }, [viewKey])
+  }, [viewInstanceKey])
 
   useEffect(() => {
     const webview = nativeRef.current
@@ -491,7 +492,7 @@ export const NoraTab: React.FC<{
           useragent={getUserAgent(window.electron.process.platform, true)}
           inspectable={inspectable}
           allowpopups="true"
-          key={viewKey}
+          key={viewInstanceKey}
         />
         {nIf(!tab.url, <NavModalContent index={index} />)}
       </View>
@@ -504,7 +505,7 @@ export const NoraTab: React.FC<{
       style={[StyleSheet.absoluteFillObject, { opacity: isActive ? 1 : 0, zIndex: isActive ? 1 : 0 }]}
     >
       <NoraView
-        key={viewKey}
+        key={viewInstanceKey}
         ref={onNativeRef}
         className={clsx(!tab.url && 'hidden')}
         style={StyleSheet.absoluteFillObject}

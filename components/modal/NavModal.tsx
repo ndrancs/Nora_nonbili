@@ -182,7 +182,11 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
           {Object.entries(services).map(([value, [label, icon]]) =>
             nIf(
               !disabledServices.includes(value),
-              <TouchableHighlight key={value} onPress={() => onPress(getHomeUrl(value))}>
+              <TouchableHighlight
+                key={value}
+                onPress={() => onPress(getHomeUrl(value))}
+                underlayColor={isDark ? '#1f2937' : '#e0f2fe'}
+              >
                 <View className={cls}>
                   {icon()}
                   <Text className="text-sm" numberOfLines={1}>
@@ -193,7 +197,11 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
             ),
           )}
           {bookmarks.map((bookmark, index) => (
-            <TouchableHighlight key={index} onPress={() => onPress(bookmark.url)}>
+            <TouchableHighlight
+              key={index}
+              onPress={() => onPress(bookmark.url)}
+              underlayColor={isDark ? '#1f2937' : '#e0f2fe'}
+            >
               <View className={cls}>
                 <Image source={bookmark.icon} style={{ width: 24, height: 24 }} />
                 <Text className="text-sm" numberOfLines={1}>

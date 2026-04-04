@@ -138,7 +138,11 @@ export const TabModal = () => {
               </View>
             ) : (
               <NouMenu
-                trigger={<MaterialIcons name="more-vert" size={20} color={iconColor} />}
+                trigger={
+                  <View className="h-10 w-10 items-center justify-center rounded-full">
+                    <MaterialIcons name="more-vert" size={20} color={iconColor} />
+                  </View>
+                }
                 items={menuItems}
               />
             )}

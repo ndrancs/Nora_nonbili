@@ -150,6 +150,9 @@ export const NouHeader: React.FC<{}> = ({}) => {
       urlModalTargetTabId: currentTab?.id || null,
     })
   }
+  const handleBack = () => {
+    tabs$.handleBackPress()
+  }
 
   const Root = AnimatedView
 
@@ -166,7 +169,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
         !isWeb,
         <View className="flex-row items-center gap-1">
           {nIf(settings.showNewTabButtonInHeader, <MaterialButton name="add" size={22} color={headerControlColor} onPress={() => tabs$.openTab('')} />)}
-          {nIf(settings.showBackButtonInHeader, <MaterialButton name="arrow-back" size={22} color={headerControlColor} onPress={() => webview?.goBack()} />)}
+          {nIf(settings.showBackButtonInHeader, <MaterialButton name="arrow-back" size={22} color={headerControlColor} onPress={handleBack} />)}
           {nIf(settings.showForwardButtonInHeader, <MaterialButton name="arrow-forward" size={22} color={headerControlColor} onPress={goForward} />)}
           {nIf(settings.showReloadButtonInHeader, <MaterialButton name="refresh" size={22} color={headerControlColor} onPress={reloadPage} />)}
           {nIf(settings.showScrollButtonInHeader, <MaterialButton name="arrow-upward" color={headerControlColor} onPress={scrollToTop} />)}

@@ -34,7 +34,7 @@ export const ProfileSelectorChips: React.FC<ProfileSelectorChipsProps> = ({
                 'flex-row items-center gap-2 rounded-full px-4 py-2 border',
                 selected
                   ? 'bg-indigo-100 dark:bg-indigo-500/20 border-indigo-500 dark:border-indigo-400'
-                  : 'bg-zinc-200 dark:bg-white/5 border-zinc-300 dark:border-zinc-700/60',
+                  : 'bg-white/80 dark:bg-white/5 border-zinc-200 dark:border-zinc-700/60',
               )}
             >
               <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: profile.color }} />
@@ -43,7 +43,7 @@ export const ProfileSelectorChips: React.FC<ProfileSelectorChipsProps> = ({
                   'text-sm',
                   selected
                     ? 'text-zinc-900 dark:text-indigo-100 font-semibold'
-                    : 'text-zinc-600 dark:text-gray-400',
+                    : 'text-zinc-500 dark:text-gray-400',
                 )}
               >
                 {profile.name}
