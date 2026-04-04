@@ -22,6 +22,7 @@ import {
 import { SearchProviderIcon } from '../service/SearchProviderIcon'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ProfileSelectorChips } from '../profile/ProfileSelectorChips'
+import { colors } from '@/lib/colors'
 
 const cls =
   'flex-row items-center gap-2 rounded-full w-40 py-2 px-3 overflow-hidden border border-zinc-200 bg-white/90 dark:border-zinc-800 dark:bg-zinc-900/90'
@@ -172,7 +173,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
             >
               <MaterialIcons
                 name={selectedSearchProvider?.kind === 'url' ? 'arrow-forward' : 'search'}
-                color={isDark ? '#f1f5f9' : '#334155'}
+                color={isDark ? colors.icon : colors.iconLightStrong}
                 size={18}
               />
             </Pressable>

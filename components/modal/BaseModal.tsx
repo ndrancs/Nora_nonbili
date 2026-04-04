@@ -8,16 +8,18 @@ export const BaseModal: React.FC<{
   children: ReactNode
   onClose: () => void
   onRequestClose?: () => void
+  useNativeModal?: boolean
 }> = ({
   className,
   children,
   onClose,
   onRequestClose,
+  useNativeModal = !isWeb,
 }) => {
   const insets = useSafeAreaInsets()
   const inner = isWeb ? children : <SafeAreaView className="flex-1 max-h-full">{children}</SafeAreaView>
 
-  if (!isWeb) {
+  if (!isWeb && useNativeModal) {
     return (
       <Modal transparent visible onRequestClose={onRequestClose || onClose}>
         <View className="flex-1">
@@ -40,6 +42,7 @@ export const BaseModal: React.FC<{
       <KeyboardAvoidingView
         behavior={isIos ? 'padding' : undefined}
         className="bg-zinc-100 dark:bg-gray-950 absolute top-0 left-0 bottom-0 w-[30rem] max-w-[80vw] flex-1"
+        style={!isWeb ? { paddingTop: insets.top, paddingBottom: insets.bottom } : undefined}
       >
         {inner}
       </KeyboardAvoidingView>

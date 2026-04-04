@@ -1,10 +1,9 @@
-import { colors } from '@/lib/colors'
 import { Button, ContextMenu, Divider, Host, Section } from '@expo/ui/swift-ui'
 import { frame } from '@expo/ui/swift-ui/modifiers'
 import type { Item } from './NouMenu'
 import { Fragment, ReactNode } from 'react'
 
-export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor?: string }> = ({ trigger, items }) => {
+export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor?: string }> = ({ trigger, items, triggerColor }) => {
   const groups = items.reduce<Item[][]>((acc, item) => {
     if (item.kind === 'separator') {
       acc.push([])
@@ -53,7 +52,12 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor
         <ContextMenu.Items>{menuItems}</ContextMenu.Items>
         <ContextMenu.Trigger>
           {typeof trigger === 'string' ? (
-            <Button variant="borderless" color={colors.text} systemImage={trigger as any} modifiers={[frame({ width: 44, height: 44 })]} />
+            <Button
+              variant="borderless"
+              color={triggerColor}
+              systemImage={trigger as any}
+              modifiers={[frame({ width: 44, height: 44 })]}
+            />
           ) : (
             trigger
           )}

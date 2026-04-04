@@ -375,7 +375,14 @@ export const SettingsProfilesContent = () => {
                 {t('settings.profiles.injectCookieHint')}
               </NouText>
               <View className="mt-5 flex-row justify-end">
-                <NouButton variant="outline" onPress={() => ui$.cookieModalOpen.set(true)}>
+                  <NouButton
+                    variant="outline"
+                    onPress={() =>
+                      ui$.assign({
+                        cookieModalOpen: true,
+                      })
+                    }
+                  >
                   {t('settings.injectCookie')}
                 </NouButton>
               </View>

@@ -23,8 +23,8 @@ export const TabModal = () => {
   const oneHandMode = useValue(settings$.oneHandMode)
   const { tabs, activeTabIndex, recentlyClosedTabs } = useValue(tabs$)
   const colorScheme = useColorScheme()
-  const isDark = colorScheme !== 'light'
-  const iconColor = isDark ? colors.icon : '#334155'
+  const isDark = colorScheme === 'dark'
+  const iconColor = isDark ? colors.icon : colors.iconLight
   const [iosMenuOpen, setIosMenuOpen] = useState(false)
   const [iosMenuAnchor, setIosMenuAnchor] = useState<Anchor | null>(null)
   const iosMenuTriggerRef = useRef<View>(null)
@@ -50,7 +50,7 @@ export const TabModal = () => {
   const menuItems = [
     {
       label: t('settings.oneHandMode'),
-      icon: <MaterialIcons name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'} size={18} color={oneHandMode ? '#818cf8' : '#71717a'} />,
+      icon: <MaterialIcons name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'} size={18} color={oneHandMode ? '#818cf8' : colors.iconSubtle} />,
       metaLabel: oneHandMode ? t('common.on') : t('common.off'),
       meta: isIos
         ? undefined

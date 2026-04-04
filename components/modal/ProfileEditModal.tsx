@@ -4,7 +4,7 @@ import { useValue } from '@legendapp/state/react'
 import { NouText } from '../NouText'
 import { settings$ } from '@/states/settings'
 import { t } from 'i18next'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BaseCenterModal } from './BaseCenterModal'
 import { ui$ } from '@/states/ui'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
@@ -29,6 +29,7 @@ export const ProfileEditModal = () => {
 
   const [name, setName] = useState('')
   const [color, setColor] = useState(profileColors[0])
+  const savingRef = useRef(false)
 
   useEffect(() => {
     if (profileModalOpen) {
@@ -46,18 +47,26 @@ export const ProfileEditModal = () => {
   }, [profileModalOpen, editingProfileId])
 
   const handleSave = () => {
-    if (name.trim()) {
-      if (editingProfileId) {
-        settings$.updateProfile(editingProfileId, name.trim(), color)
-      } else {
-        settings$.addProfile(name.trim(), color)
-      }
-      onClose()
+    const trimmedName = name.trim()
+    if (!trimmedName || savingRef.current) {
+      return
     }
+
+    savingRef.current = true
+    if (editingProfileId) {
+      settings$.updateProfile(editingProfileId, trimmedName, color)
+    } else {
+      settings$.addProfile(trimmedName, color)
+    }
+    onClose()
   }
 
   const onClose = () => {
-    ui$.assign({ profileModalOpen: false, editingProfileId: null })
+    savingRef.current = false
+    ui$.assign({
+      profileModalOpen: false,
+      editingProfileId: null,
+    })
   }
 
   const ColorPicker: React.FC<{ selected: string; onSelect: (c: string) => void }> = ({ selected, onSelect }) => (

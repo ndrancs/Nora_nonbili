@@ -235,13 +235,21 @@ export const settings$: Observable<Store> = observable<Store>({
     }
   },
   addProfile: (name, color) => {
-    settings$.profiles.push({ id: genId(), name, color })
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      return
+    }
+    settings$.profiles.push({ id: genId(), name: trimmedName, color })
   },
   updateProfile: (id, name, color) => {
     const profiles = settings$.profiles.get()
     const index = profiles.findIndex((p) => p?.id === id)
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      return
+    }
     if (index !== -1) {
-      settings$.profiles[index].assign({ name, color })
+      settings$.profiles[index].assign({ name: trimmedName, color })
     }
   },
   deleteProfile: (id) => {

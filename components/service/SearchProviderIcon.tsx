@@ -1,8 +1,9 @@
 import { Image } from 'expo-image'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import { View } from 'react-native'
+import { View, useColorScheme } from 'react-native'
 import { services } from './Services'
 import { getFaviconUrl, ResolvedSearchProvider } from '@/lib/search'
+import { colors } from '@/lib/colors'
 
 const SearchIcon = ({ name, size, color }: { name: keyof typeof MaterialIcons.glyphMap; size: number; color: string }) => (
   <MaterialIcons name={name} size={size} color={color} />
@@ -12,8 +13,11 @@ export const SearchProviderIcon: React.FC<{
   provider: Pick<ResolvedSearchProvider, 'id' | 'kind' | 'serviceId' | 'iconUrl'>
   size?: number
 }> = ({ provider, size = 20 }) => {
+  const colorScheme = useColorScheme()
+  const isDark = colorScheme === 'dark'
+
   if (provider.kind === 'url') {
-    return <SearchIcon name="language" size={size} color="#d4d4d8" />
+    return <SearchIcon name="language" size={size} color={isDark ? colors.iconMutedDark : colors.iconLight} />
   }
 
   const faviconUrl =

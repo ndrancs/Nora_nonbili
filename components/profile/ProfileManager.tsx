@@ -13,14 +13,23 @@ export const ProfileManager = () => {
   const profiles = useValue(settings$.profiles)
 
   const startEdit = (profile: Profile) => {
-    ui$.assign({ profileModalOpen: true, editingProfileId: profile.id })
+    ui$.assign({
+      profileModalOpen: true,
+      editingProfileId: profile.id,
+    })
   }
 
   return (
     <View className="mb-4">
       <View className="flex-row items-center justify-between mb-3">
         <NouText className="font-medium">{t('profiles.label')}</NouText>
-        <Pressable onPress={() => ui$.profileModalOpen.set(true)}>
+        <Pressable
+          onPress={() =>
+            ui$.assign({
+              profileModalOpen: true,
+            })
+          }
+        >
           <MaterialIcons name="add-circle-outline" size={22} color="#6366f1" />
         </Pressable>
       </View>
