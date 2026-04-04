@@ -7,6 +7,7 @@ import { tabs$ } from '@/states/tabs'
 import { ui$ } from '@/states/ui'
 import { useValue } from '@legendapp/state/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getDocumentAsync } from 'expo-document-picker'
 import { ScrollView, TextInput, View, useWindowDimensions } from 'react-native'
 import { NouButton } from '../button/NouButton'
 import { NouText } from '../NouText'
@@ -217,12 +218,23 @@ export const CookieModal = () => {
   }, [onClose])
 
   const onPickFile = useCallback(async () => {
-    if (!isWeb) {
-      showToast('Paste cookies.txt content directly on mobile')
-      return
-    }
-
     try {
+      if (!isWeb) {
+        const result = await getDocumentAsync({
+          type: ['text/plain', 'text/tab-separated-values'],
+          copyToCacheDirectory: true,
+          multiple: false,
+        })
+
+        if (result.canceled || !result.assets?.[0]) {
+          return
+        }
+
+        const response = await fetch(result.assets[0].uri)
+        setText(await response.text())
+        return
+      }
+
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = '.txt,text/plain,text/tab-separated-values'
@@ -269,7 +281,6 @@ export const CookieModal = () => {
     return null
   }
 
-  const canSubmit = Boolean(text.trim() && injectionContext?.url && !submitting)
   const modalMaxHeight = Math.min(Math.max(360, viewportHeight * 0.72), 720)
 
   return (
@@ -326,7 +337,7 @@ export const CookieModal = () => {
               Import
             </NouButton>
           </View>
-          <NouButton size="1" onPress={onSubmit} disabled={!canSubmit} loading={submitting}>
+          <NouButton size="1" onPress={onSubmit} disabled={submitting} loading={submitting}>
             Inject
           </NouButton>
         </View>

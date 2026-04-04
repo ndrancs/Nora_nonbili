@@ -190,7 +190,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
               >
                 <View className={cls}>
                   {icon()}
-                  <Text className="text-sm" numberOfLines={1}>
+                  <Text className="text-sm text-zinc-900 dark:text-zinc-100" numberOfLines={1}>
                     {label}
                   </Text>
                 </View>
@@ -205,7 +205,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
             >
               <View className={cls}>
                 <Image source={bookmark.icon} style={{ width: 24, height: 24 }} />
-                <Text className="text-sm" numberOfLines={1}>
+                <Text className="text-sm text-zinc-900 dark:text-zinc-100" numberOfLines={1}>
                   {bookmark.title}
                 </Text>
               </View>
