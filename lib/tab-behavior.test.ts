@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'bun:test'
 import {
+  addNewTabBackTarget,
+  consumeNewTabBackTarget,
   consumeChildBackTarget,
   getChildBackTarget,
+  hasNewTabBackTarget,
   invalidateChildBackTargetOnUserSwitch,
   pruneChildBackParentByTabId,
+  pruneNewTabBackTargets,
   pruneRecentTabIds,
   resolveCloseTarget,
   updateRecentTabIds,
@@ -85,5 +89,28 @@ describe('child back fallback', () => {
 describe('pruneRecentTabIds', () => {
   it('drops closed tabs from MRU history', () => {
     expect(pruneRecentTabIds(['tab-5', 'tab-3', 'tab-2'], ['tab-2', 'tab-5'])).toEqual(['tab-5', 'tab-2'])
+  })
+})
+
+describe('new tab back fallback', () => {
+  it('tracks tabs that should fall back to the new tab page', () => {
+    expect(addNewTabBackTarget([], 'tab-5')).toEqual(['tab-5'])
+  })
+
+  it('does not duplicate tracked tabs', () => {
+    expect(addNewTabBackTarget(['tab-5'], 'tab-5')).toEqual(['tab-5'])
+  })
+
+  it('reports whether a tab has a new-tab fallback target', () => {
+    expect(hasNewTabBackTarget(['tab-5'], 'tab-5')).toBe(true)
+    expect(hasNewTabBackTarget(['tab-5'], 'tab-2')).toBe(false)
+  })
+
+  it('consumes the fallback once the tab returns to the new tab page', () => {
+    expect(consumeNewTabBackTarget(['tab-5', 'tab-6'], 'tab-5')).toEqual(['tab-6'])
+  })
+
+  it('prunes tracked tabs that no longer exist', () => {
+    expect(pruneNewTabBackTargets(['tab-5', 'tab-6'], ['tab-5'])).toEqual(['tab-5'])
   })
 })

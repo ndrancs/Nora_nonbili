@@ -13,7 +13,7 @@ export interface Item {
   metaLabel?: string
 }
 
-export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigger, items }) => {
+export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor?: string }> = ({ trigger, items }) => {
   const menuItems = items.map((item, index) => {
     if (item.kind === 'separator') {
       return <DropdownMenu.Separator key={index} />
@@ -41,7 +41,7 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
             </div>
           ) : null}
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[13px] leading-[20px]">{item.label}</div>
+            <div className="truncate text-[13px] leading-[20px] text-zinc-900 dark:text-zinc-100">{item.label}</div>
             {item.description ? <div className="truncate text-xs text-zinc-600 dark:text-zinc-500">{item.description}</div> : null}
           </div>
           {item.meta ? <div className="shrink-0">{item.meta}</div> : item.metaLabel ? <div className="shrink-0 text-xs text-zinc-600 dark:text-zinc-500">{item.metaLabel}</div> : null}
@@ -55,7 +55,7 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigg
       <DropdownMenu.Trigger>
         <div className="flex shrink min-w-0 items-center justify-center">{trigger}</div>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Content variant="soft" className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-300/70 dark:border-zinc-800/80">
+      <DropdownMenu.Content variant="soft" className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-300/70 dark:border-zinc-800/80 shadow-xl shadow-zinc-900/15 dark:shadow-black/40">
         {menuItems}
       </DropdownMenu.Content>
     </DropdownMenu.Root>

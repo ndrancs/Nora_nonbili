@@ -59,9 +59,9 @@ export const UrlModal = () => {
     <BaseCenterModal onClose={onClose}>
       <View className="p-5">
         <NouText className="text-lg font-semibold mb-4">{t(isEditingTab ? 'menus.editUrl' : 'buttons.openUrl')}</NouText>
-        <NouText className="mb-1 font-semibold text-gray-300">URL</NouText>
+        <NouText className="mb-1 font-semibold text-zinc-700 dark:text-zinc-300">URL</NouText>
         <TextInput
-          className="border border-gray-600 rounded mb-3 text-white p-2 text-sm"
+          className="border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded mb-3 text-zinc-900 dark:text-zinc-100 p-2 text-sm"
           value={url}
           onChangeText={setUrl}
           onSubmitEditing={() => onSubmit()}

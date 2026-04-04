@@ -13,7 +13,7 @@ type Anchor = {
   height: number
 }
 
-export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[] }> = ({ items, trigger }) => {
+export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[]; triggerColor?: string }> = ({ items, trigger, triggerColor }) => {
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<Anchor | null>(null)
   const colorScheme = useColorScheme()
@@ -64,13 +64,13 @@ export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[] }> = ({ item
     <>
       <View ref={triggerRef} collapsable={false}>
         {typeof trigger === 'string' ? (
-          <MaterialButton name="more-vert" onPress={openMenu} />
+          <MaterialButton name="more-vert" color={triggerColor} onPress={openMenu} />
         ) : trigger ? (
           <Pressable onPress={openMenu}>
             <View>{trigger}</View>
           </Pressable>
         ) : (
-          <MaterialButton name="more-vert" onPress={openMenu} />
+          <MaterialButton name="more-vert" color={triggerColor} onPress={openMenu} />
         )}
       </View>
       <Modal transparent visible={open} animationType="fade" onRequestClose={closeMenu}>
@@ -84,6 +84,11 @@ export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[] }> = ({ item
               width: menuWidth,
               maxHeight: maxMenuHeight,
               backgroundColor: isDark ? colors.bg : '#f8fafc',
+              shadowColor: '#000',
+              shadowOpacity: isDark ? 0.42 : 0.18,
+              shadowRadius: isDark ? 18 : 14,
+              shadowOffset: { width: 0, height: isDark ? 12 : 8 },
+              elevation: isDark ? 20 : 12,
             }}
           >
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -116,7 +121,7 @@ export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[] }> = ({ item
                   >
                     {item.icon ? <View className="shrink-0">{item.icon}</View> : null}
                     <View className="flex-1 min-w-0 py-2">
-                      <NouText className="text-sm" numberOfLines={1}>
+                      <NouText className="text-sm text-zinc-900 dark:text-zinc-100" numberOfLines={1}>
                         {item.label}
                       </NouText>
                       {item.description ? (
@@ -125,10 +130,11 @@ export const NouMenu: React.FC<{ trigger?: ReactNode; items: Item[] }> = ({ item
                         </NouText>
                       ) : null}
                     </View>
-                    {item.metaLabel ? (
+                    {item.meta ? (
+                      <View className="shrink-0">{item.meta}</View>
+                    ) : item.metaLabel ? (
                       <NouText className="shrink-0 text-xs text-zinc-600 dark:text-zinc-500">{item.metaLabel}</NouText>
                     ) : null}
-                    {item.meta ? <View className="shrink-0">{item.meta}</View> : null}
                   </Pressable>
                 )
               })}

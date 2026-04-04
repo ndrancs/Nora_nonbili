@@ -4,7 +4,7 @@ import { frame } from '@expo/ui/swift-ui/modifiers'
 import type { Item } from './NouMenu'
 import { Fragment, ReactNode } from 'react'
 
-export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[] }> = ({ trigger, items }) => {
+export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor?: string }> = ({ trigger, items }) => {
   const groups = items.reduce<Item[][]>((acc, item) => {
     if (item.kind === 'separator') {
       acc.push([])

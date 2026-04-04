@@ -23,6 +23,26 @@ export function pruneRecentTabIds(recentTabIds: string[], existingTabIds: Iterab
   return recentTabIds.filter((tabId) => existingTabIdSet.has(tabId))
 }
 
+export function addNewTabBackTarget(newTabBackTabIds: string[], tabId?: string) {
+  if (!tabId) {
+    return newTabBackTabIds
+  }
+
+  return newTabBackTabIds.includes(tabId) ? newTabBackTabIds : [...newTabBackTabIds, tabId]
+}
+
+export function consumeNewTabBackTarget(newTabBackTabIds: string[], tabId?: string) {
+  if (!tabId) {
+    return newTabBackTabIds
+  }
+
+  return newTabBackTabIds.filter((id) => id !== tabId)
+}
+
+export function hasNewTabBackTarget(newTabBackTabIds: string[], tabId?: string) {
+  return Boolean(tabId) && newTabBackTabIds.includes(tabId)
+}
+
 export function resolveCloseTarget({
   activeTabId,
   closingTabId,
@@ -68,6 +88,11 @@ export function pruneChildBackParentByTabId(
       ([childTabId, parentTabId]) => existingTabIdSet.has(childTabId) && existingTabIdSet.has(parentTabId),
     ),
   )
+}
+
+export function pruneNewTabBackTargets(newTabBackTabIds: string[], existingTabIds: Iterable<string>) {
+  const existingTabIdSet = new Set(existingTabIds)
+  return newTabBackTabIds.filter((tabId) => existingTabIdSet.has(tabId))
 }
 
 export function invalidateChildBackTargetOnUserSwitch(

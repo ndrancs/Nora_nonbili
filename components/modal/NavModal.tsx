@@ -23,7 +23,8 @@ import { SearchProviderIcon } from '../service/SearchProviderIcon'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ProfileSelectorChips } from '../profile/ProfileSelectorChips'
 
-const cls = 'flex-row items-center gap-2 rounded-full bg-sky-50 w-40 py-2 px-3 overflow-hidden'
+const cls =
+  'flex-row items-center gap-2 rounded-full w-40 py-2 px-3 overflow-hidden border border-zinc-200 bg-white/90 dark:border-zinc-800 dark:bg-zinc-900/90'
 const inputCls = 'flex-1 pl-3 pr-1 py-3 text-zinc-900 dark:text-white'
 type Anchor = { x: number; y: number; width: number; height: number }
 

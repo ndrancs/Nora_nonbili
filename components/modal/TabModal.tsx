@@ -3,7 +3,7 @@ import { useValue } from '@legendapp/state/react'
 import { BaseModal } from './BaseModal'
 import { ServiceIcon } from '../service/Services'
 import { View, Text, ScrollView, TouchableOpacity, Pressable, Modal, useColorScheme, useWindowDimensions } from 'react-native'
-import { clsx, isWeb, isIos, nIf } from '@/lib/utils'
+import { clsx, isIos, nIf } from '@/lib/utils'
 import { settings$ } from '@/states/settings'
 import { Tab, tabs$ } from '@/states/tabs'
 import { NouMenu } from '../menu/NouMenu'
@@ -35,12 +35,11 @@ export const TabModal = () => {
     return null
   }
 
+  const closeModal = () => ui$.tabModalOpen.set(false)
   const onPress = (index: number) => {
     tabs$.setActiveTabIndex(index, 'user')
-    ui$.assign({ tabModalOpen: false })
+    closeModal()
   }
-
-  const closeModal = () => ui$.tabModalOpen.set(false)
   const openIosMenu = () => {
     iosMenuTriggerRef.current?.measureInWindow((x, y, width, height) => {
       setIosMenuAnchor({ x, y, width, height })
@@ -121,6 +120,7 @@ export const TabModal = () => {
               tabs.length,
               <NouButton
                 variant="outline"
+                className="mr-1"
                 size="1"
                 onPress={() => {
                   tabs$.closeAll()
@@ -138,27 +138,33 @@ export const TabModal = () => {
               </View>
             ) : (
               <NouMenu
-                trigger={isWeb ? <MaterialIcons name="more-vert" size={20} color={iconColor} /> : 'filled.MoreVert'}
+                trigger={<MaterialIcons name="more-vert" size={20} color={iconColor} />}
                 items={menuItems}
               />
             )}
           </View>
         </View>
         {tabs.map((tab, index) => (
-          <View className="flex-row items-center justify-between gap-2 pr-4" key={tab.id || index}>
+          <View
+            className={clsx('flex-row items-center justify-between gap-2 pr-4', index !== tabs.length - 1 && 'mb-3')}
+            key={tab.id || index}
+          >
             <TouchableOpacity className="flex-1 min-w-0" onPress={() => onPress(index)}>
               <View
                 className={clsx(
-                  'flex-1 flex-row items-center gap-2 rounded-md',
-                  'py-2 px-2 my-3',
-                  index === activeTabIndex ? 'bg-indigo-200' : 'bg-white',
+                  'flex-1 flex-row items-center gap-3 rounded-md border py-2 px-2',
+                  index === activeTabIndex
+                    ? 'bg-indigo-200 border-indigo-300 dark:bg-indigo-500/30 dark:border-indigo-400/40'
+                    : 'bg-white border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800',
                 )}
                 style={{ borderLeftWidth: 5, borderLeftColor: getProfileColor(tab.profile) }}
               >
                 <ServiceIcon url={tab.url} icon={tab.icon} />
-                <Text className="text-sm" numberOfLines={1}>
-                  {getTabLabel(tab)}
-                </Text>
+                <View className="min-w-0 flex-1">
+                  <Text className="text-sm text-zinc-900 dark:text-zinc-100" numberOfLines={1} ellipsizeMode="tail">
+                    {getTabLabel(tab)}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
             <TouchableOpacity
@@ -227,11 +233,6 @@ export const TabModal = () => {
                         <Text className="text-sm text-zinc-900 dark:text-white" numberOfLines={1}>
                           {getTabLabel(tab)}
                         </Text>
-                        {tab.title && tab.url && tab.title !== tab.url ? (
-                          <Text className="text-xs text-zinc-600 dark:text-zinc-500" numberOfLines={1}>
-                            {tab.url}
-                          </Text>
-                        ) : null}
                       </View>
                     </Pressable>
                   ))

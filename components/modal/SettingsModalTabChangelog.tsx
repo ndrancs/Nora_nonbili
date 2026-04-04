@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Linking, Pressable, View } from 'react-native'
+import { Linking, Pressable, View, useColorScheme } from 'react-native'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { version } from '../../package.json'
 import { version as desktopVersion } from '../../desktop/package.json'
@@ -23,6 +23,10 @@ function formatReleaseDate(value: string) {
 }
 
 export const SettingsChangelogContent = () => {
+  const colorScheme = useColorScheme()
+  const isDark = colorScheme !== 'light'
+  const cardIconColor = isDark ? '#c4b5fd' : '#4338ca'
+  const externalIconColor = isDark ? '#a1a1aa' : '#3f3f46'
   const currentVersion = `v${isWeb ? desktopVersion : version}`
   const { data, isLoading, isError, refetch, isFetching } = useQuery(getReleaseFeedQuery())
 
@@ -71,15 +75,15 @@ export const SettingsChangelogContent = () => {
             className="rounded-[24px] border border-zinc-300 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/70 px-4 py-4 active:bg-zinc-200/80 dark:active:bg-zinc-800/80"
           >
             <View className="flex-row items-start gap-3">
-              <View className={clsx('mt-0.5 h-10 w-10 items-center justify-center rounded-2xl border bg-zinc-200 dark:bg-zinc-950', isCurrent ? 'border-indigo-500' : 'border-zinc-300 dark:border-zinc-800')}>
-                <MaterialIcons name="history" color={isCurrent ? '#a5b4fc' : '#d4d4d8'} size={18} />
+              <View className={clsx('mt-0.5 h-10 w-10 items-center justify-center rounded-2xl border bg-zinc-200 dark:bg-zinc-950', isCurrent ? 'border-indigo-500/70 dark:border-indigo-500' : 'border-zinc-300 dark:border-zinc-800')}>
+                <MaterialIcons name="history" color={isCurrent ? cardIconColor : externalIconColor} size={18} />
               </View>
               <View className="flex-1">
                 <View className="flex-row items-center gap-2">
                   <NouText className="flex-1 text-base font-semibold tracking-tight">{entry.tag}</NouText>
                   {isCurrent ? (
                     <View className="rounded-full border border-indigo-500/40 bg-indigo-500/10 px-2 py-1">
-                      <NouText className="text-[10px] uppercase tracking-[0.16em] text-indigo-300">{t('changelog.current')}</NouText>
+                      <NouText className="text-[10px] uppercase tracking-[0.16em] text-indigo-700 dark:text-indigo-300">{t('changelog.current')}</NouText>
                     </View>
                   ) : null}
                 </View>
@@ -97,7 +101,7 @@ export const SettingsChangelogContent = () => {
                   )}
                 </View>
               </View>
-              <MaterialIcons name="open-in-new" color="#71717a" size={18} />
+              <MaterialIcons name="open-in-new" color={externalIconColor} size={18} />
             </View>
           </Pressable>
         )

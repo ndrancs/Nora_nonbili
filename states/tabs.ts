@@ -4,21 +4,23 @@ import { ObservablePersistMMKV } from '@legendapp/state/persist-plugins/mmkv'
 import { genId } from '@/lib/utils'
 import { ui$ } from './ui'
 import { settings$ } from './settings'
-import { savedViews$ } from './saved-views'
+import { DECK_VIEW_ID, savedViews$ } from './saved-views'
 import { sortBy } from 'es-toolkit'
 import {
+  addNewTabBackTarget,
+  consumeNewTabBackTarget,
   consumeChildBackTarget,
   getChildBackTarget,
+  hasNewTabBackTarget,
   invalidateChildBackTargetOnUserSwitch,
   pruneChildBackParentByTabId,
+  pruneNewTabBackTargets,
   pruneRecentTabIds,
   resolveCloseTarget,
   updateRecentTabIds,
   type ChildBackParentByTabId,
 } from '@/lib/tab-behavior'
-
 import { removeTrackingParams } from '@/lib/url'
-import { DECK_VIEW_ID } from './saved-views'
 
 export interface Tab {
   id: string
@@ -58,6 +60,7 @@ interface Store {
 let lastOpenedUrl = ''
 let recentTabIds: string[] = []
 let childBackParentByTabId: ChildBackParentByTabId = {}
+let newTabBackTabIds: string[] = []
 const MAX_RECENTLY_CLOSED_TABS = 10
 
 const pushRecentlyClosedTabs = (closedTabs: Tab[]) => {
@@ -113,6 +116,7 @@ const syncRuntimeTabMetadata = () => {
   const existingTabIds = tabs$.tabs.get().map((tab) => tab.id)
   recentTabIds = pruneRecentTabIds(recentTabIds, existingTabIds)
   childBackParentByTabId = pruneChildBackParentByTabId(childBackParentByTabId, existingTabIds)
+  newTabBackTabIds = pruneNewTabBackTargets(newTabBackTabIds, existingTabIds)
 }
 
 const getClosePreferredTabIds = (availableTabIds: string[]) => {
@@ -276,6 +280,7 @@ export const tabs$: Observable<Store> = observable<Store>({
     tabs$.assign({ tabs: [{ id: genId(), url: '' }], activeTabIndex: 0 })
     recentTabIds = []
     childBackParentByTabId = {}
+    newTabBackTabIds = []
     ui$.activeCanGoBack.set(false)
     savedViews$.cleanupClosedTabIds(closedTabIds)
   },
@@ -340,8 +345,17 @@ export const tabs$: Observable<Store> = observable<Store>({
     const targetIndex = index ?? tabs$.activeTabIndex.get()
     const tab$ = tabs$.tabs[targetIndex]
     if (tab$.get()) {
+      const previousUrl = tab$.url.get()
+      const tabId = tab$.id.get()
       tab$.url.set(url)
       tab$.isLoading.set(Boolean(url))
+      if (!url) {
+        tab$.title.set(undefined)
+        tab$.icon.set(undefined)
+        newTabBackTabIds = consumeNewTabBackTarget(newTabBackTabIds, tabId)
+      } else if (!previousUrl) {
+        newTabBackTabIds = addNewTabBackTarget(newTabBackTabIds, tabId)
+      }
     }
   },
 
@@ -380,6 +394,14 @@ export const tabs$: Observable<Store> = observable<Store>({
       tabs$.tabs.get().map((tab) => tab.id),
     )
     if (!targetTabId) {
+      const activeIndex = tabs$.activeTabIndex.get()
+      const activeTab = tabs$.tabs[activeIndex].get()
+      if (activeTab?.url && hasNewTabBackTarget(newTabBackTabIds, activeTab.id)) {
+        tabs$.updateTabUrl('', activeIndex)
+        ui$.webview.set(undefined)
+        ui$.activeCanGoBack.set(false)
+        return true
+      }
       return false
     }
 

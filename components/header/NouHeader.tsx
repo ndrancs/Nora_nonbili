@@ -43,7 +43,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
   const settings = useValue(settings$)
   const colorScheme = useColorScheme()
   const isDark = colorScheme !== 'light'
-  const iconColor = isDark ? colors.icon : '#64748b'
+  const headerControlColor = isDark ? colors.icon : '#334155'
   const { tabs, activeTabIndex } = useValue(tabs$)
   const currentTab = useValue(tabs$.currentTab)
   const webview = ui$.webview.get()
@@ -165,11 +165,11 @@ export const NouHeader: React.FC<{}> = ({}) => {
       {nIf(
         !isWeb,
         <View className="flex-row items-center gap-1">
-          {nIf(settings.showNewTabButtonInHeader, <MaterialButton name="add" onPress={() => tabs$.openTab('')} />)}
-          {nIf(settings.showBackButtonInHeader, <MaterialButton name="arrow-back" onPress={() => webview?.goBack()} />)}
-          {nIf(settings.showForwardButtonInHeader, <MaterialButton name="arrow-forward" onPress={goForward} />)}
-          {nIf(settings.showReloadButtonInHeader, <MaterialButton name="refresh" onPress={reloadPage} />)}
-          {nIf(settings.showScrollButtonInHeader, <MaterialButton name="arrow-upward" onPress={scrollToTop} />)}
+          {nIf(settings.showNewTabButtonInHeader, <MaterialButton name="add" size={22} color={headerControlColor} onPress={() => tabs$.openTab('')} />)}
+          {nIf(settings.showBackButtonInHeader, <MaterialButton name="arrow-back" size={22} color={headerControlColor} onPress={() => webview?.goBack()} />)}
+          {nIf(settings.showForwardButtonInHeader, <MaterialButton name="arrow-forward" size={22} color={headerControlColor} onPress={goForward} />)}
+          {nIf(settings.showReloadButtonInHeader, <MaterialButton name="refresh" size={22} color={headerControlColor} onPress={reloadPage} />)}
+          {nIf(settings.showScrollButtonInHeader, <MaterialButton name="arrow-upward" color={headerControlColor} onPress={scrollToTop} />)}
         </View>,
       )}
       {nIf(
@@ -186,41 +186,51 @@ export const NouHeader: React.FC<{}> = ({}) => {
       >
         {nIf(
           canDownload,
-          <MaterialButton name="download" onPress={() => ui$.downloadVideoModalUrl.set(currentTab?.url || '')} />,
+          <MaterialButton name="download" color={headerControlColor} onPress={() => ui$.downloadVideoModalUrl.set(currentTab?.url || '')} />,
         )}
         {nIf(
           !isWeb && currentTab?.isLoading,
-          <ActivityIndicator size="small" color={isDark ? '#e4e4e7' : '#64748b'} style={{ marginRight: 4 }} />,
+          <ActivityIndicator size="small" color={headerControlColor} style={{ marginRight: 4 }} />,
         )}
         {nIf(
           !isWeb,
           <TouchableOpacity className="flex-row items-center p-3" onPress={() => ui$.tabModalOpen.set(true)}>
-            <View className="rounded-md px-2 py-1 border border-zinc-700 dark:border-white">
-              <NouText className="text-xs">{tabs.length}</NouText>
+            <View
+              className="rounded-md px-2 py-1 border"
+              style={{ borderColor: headerControlColor, borderWidth: isDark ? 1 : 1.25 }}
+            >
+              <NouText className="text-xs font-semibold" style={{ color: headerControlColor }}>{tabs.length}</NouText>
             </View>
           </TouchableOpacity>,
         )}
         <NouMenu
-          trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
+          triggerColor={headerControlColor}
+          trigger={
+            isWeb
+              ? <MaterialButton name="more-vert" color={headerControlColor} />
+              : isIos
+                ? 'ellipsis'
+                : 'filled.MoreVert'
+          }
           items={[
             ...(isWeb
               ? []
               : [
                   {
                     label: t('menus.reload'),
-                    icon: <MaterialIcons name="refresh" size={18} color={iconColor} />,
+                    icon: <MaterialIcons name="refresh" size={18} color={headerControlColor} />,
                     systemImage: 'arrow.clockwise',
                     handler: reloadPage,
                   },
                   {
                     label: t('menus.scroll'),
-                    icon: <MaterialIcons name="vertical-align-top" size={18} color={iconColor} />,
+                    icon: <MaterialIcons name="vertical-align-top" size={18} color={headerControlColor} />,
                     systemImage: 'arrow.up.to.line',
                     handler: scrollToTop,
                   },
                   {
                     label: t('menus.editUrl'),
-                    icon: <MaterialIcons name="edit" size={18} color={iconColor} />,
+                    icon: <MaterialIcons name="edit" size={18} color={headerControlColor} />,
                     systemImage: 'pencil',
                     handler: editTabUrl,
                   },
@@ -229,7 +239,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
                     : [
                         {
                           label: t('menus.desktop'),
-                          icon: <MaterialIcons name="desktop-windows" size={18} color={iconColor} />,
+                          icon: <MaterialIcons name="desktop-windows" size={18} color={headerControlColor} />,
                           systemImage: 'desktopcomputer',
                           metaLabel: currentTab?.desktopMode ? t('common.on') : t('common.off'),
                           meta: (
@@ -259,13 +269,13 @@ export const NouHeader: React.FC<{}> = ({}) => {
                       ]),
                   {
                     label: t('menus.addBookmark'),
-                    icon: <MaterialIcons name="bookmark-add" size={18} color={iconColor} />,
+                    icon: <MaterialIcons name="bookmark-add" size={18} color={headerControlColor} />,
                     systemImage: 'bookmark',
                     handler: addBookmark,
                   },
                   {
                     label: t('menus.share'),
-                    icon: <MaterialIcons name="share" size={18} color={iconColor} />,
+                    icon: <MaterialIcons name="share" size={18} color={headerControlColor} />,
                     systemImage: 'square.and.arrow.up',
                     handler: () => (currentTab ? share(currentTab.url) : {}),
                   },
@@ -274,7 +284,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
               ? [
                   {
                     label: t('buttons.closeAll'),
-                    icon: <MaterialIcons name="tab-unselected" size={18} color={iconColor} />,
+                    icon: <MaterialIcons name="tab-unselected" size={18} color={headerControlColor} />,
                     systemImage: 'xmark.square',
                     handler: () => tabs$.closeAll(),
                   },
@@ -282,13 +292,13 @@ export const NouHeader: React.FC<{}> = ({}) => {
               : []),
             {
               label: t('menus.tools'),
-              icon: <MaterialIcons name="build" size={18} color={iconColor} />,
+              icon: <MaterialIcons name="build" size={18} color={headerControlColor} />,
               systemImage: 'wrench.and.screwdriver',
               handler: () => ui$.toolsModalOpen.set(true),
             },
             {
               label: t('settings.label'),
-              icon: <MaterialIcons name="settings" size={18} color={iconColor} />,
+              icon: <MaterialIcons name="settings" size={18} color={headerControlColor} />,
               systemImage: 'gearshape',
               handler: () => ui$.settingsModalOpen.set(true),
             },
