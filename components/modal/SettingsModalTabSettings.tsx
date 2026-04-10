@@ -368,31 +368,28 @@ export const SettingsProfilesContent = () => {
   return (
     <View className="pb-4">
       <ProfileManager />
-      {nIf(
-        !isWeb,
-        <View className="mt-10">
-          <NouText className={subheaderCls}>{t('settings.profiles.injectCookie')}</NouText>
-          <View className={surfaceCls}>
-            <View className="px-4 py-4">
-              <NouText className="text-sm leading-6 text-zinc-600 dark:text-gray-400">
-                {t('settings.profiles.injectCookieHint')}
-              </NouText>
-              <View className="mt-5 flex-row justify-end">
-                  <NouButton
-                    variant="outline"
-                    onPress={() =>
-                      ui$.assign({
-                        cookieModalOpen: true,
-                      })
-                    }
-                  >
-                  {t('settings.injectCookie')}
-                </NouButton>
-              </View>
+      <View className="mt-10">
+        <NouText className={subheaderCls}>{t('settings.profiles.injectCookie')}</NouText>
+        <View className={surfaceCls}>
+          <View className="px-4 py-4">
+            <NouText className="text-sm leading-6 text-zinc-600 dark:text-gray-400">
+              {t('settings.profiles.injectCookieHint')}
+            </NouText>
+            <View className="mt-5 flex-row justify-end">
+              <NouButton
+                variant="outline"
+                onPress={() =>
+                  ui$.assign({
+                    cookieModalOpen: true,
+                  })
+                }
+              >
+                {t('settings.injectCookie')}
+              </NouButton>
             </View>
           </View>
-        </View>,
-      )}
+        </View>
+      </View>
     </View>
   )
 }

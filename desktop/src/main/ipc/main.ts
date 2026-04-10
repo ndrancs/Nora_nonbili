@@ -37,6 +37,41 @@ const interfaces = {
   downloadVideo: (url: string) => {
     openDownloadWindow(url)
   },
+  setCookie: async (profile: string, url: string, cookie: string) => {
+    const targetProfile = profile || 'default'
+    const targetUrl = new URL(url)
+    const ses = session.fromPartition(`persist:${targetProfile}`)
+    const items = cookie.split(';').map((x) => x.trim())
+
+    for (const item of items) {
+      const index = item.indexOf('=')
+      if (index === -1) continue
+
+      const name = item.slice(0, index)
+      const value = item.slice(index + 1)
+      if (!name || !value) continue
+
+      const details: any = {
+        url: targetUrl.origin,
+        name,
+        value,
+        path: '/',
+        expirationDate: Math.floor(Date.now() / 1000) + 31536000,
+      }
+
+      if (name.startsWith('__Host-')) {
+        details.secure = true
+      } else if (name.startsWith('__Secure-')) {
+        details.secure = true
+      }
+
+      try {
+        await ses.cookies.set(details)
+      } catch (error) {
+        console.error(`Failed to set cookie ${name} for ${targetProfile}`, error)
+      }
+    }
+  },
   deleteBlocklistMatcherSnapshot: deleteDesktopBlocklistMatcherSnapshot,
   deleteBlocklistSources: deleteDesktopBlocklistSources,
   hasBlocklistSourceFiles: hasDesktopBlocklistSourceFiles,

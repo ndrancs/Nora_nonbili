@@ -1,4 +1,5 @@
 import { NoraView } from '@/modules/nora-view'
+import { mainClient } from '@/desktop/src/renderer/ipc/main'
 import { getUserAgent } from '@/lib/useragent'
 import { isIos, isWeb } from '@/lib/utils'
 import { showToast } from '@/lib/toast'
@@ -63,6 +64,20 @@ const buildCookieScript = (entries: string[]) => `(() => {
   return document.cookie;
 })()`
 
+const loadInjectorUrl = (injector: any, url: string) => {
+  if (injector && 'src' in injector) {
+    injector.src = url
+    return Promise.resolve()
+  }
+  if (typeof injector?.loadUrl === 'function') {
+    return injector.loadUrl(url)
+  }
+  if (typeof injector?.loadURL === 'function') {
+    return injector.loadURL(url)
+  }
+  return Promise.reject(new TypeError('Injector does not support loading URLs'))
+}
+
 const getHost = (url?: string) => {
   if (!url) {
     return ''
@@ -119,6 +134,7 @@ export const CookieModal = () => {
   const injectorRef = useRef<any>(null)
   const requestRef = useRef<InjectionRequest | null>(null)
   const startedRequestIdRef = useRef<number | null>(null)
+  const wasOpenRef = useRef(false)
 
   const resetState = useCallback(() => {
     setText('')
@@ -137,10 +153,16 @@ export const CookieModal = () => {
 
   useEffect(() => {
     if (!cookieModalOpen) {
+      wasOpenRef.current = false
       resetState()
       return
     }
 
+    if (wasOpenRef.current) {
+      return
+    }
+
+    wasOpenRef.current = true
     setSelectedProfileId(currentTab?.profile || lastSelectedProfileId || profiles[0]?.id || 'default')
     setText('')
     setSubmitting(false)
@@ -170,7 +192,7 @@ export const CookieModal = () => {
         return
       }
 
-      void Promise.resolve(injector.loadUrl(request.url)).catch(() => {
+      void Promise.resolve(loadInjectorUrl(injector, request.url)).catch(() => {
         if (requestRef.current?.id !== request.id) {
           return
         }
@@ -266,6 +288,30 @@ export const CookieModal = () => {
     }
 
     ui$.lastSelectedProfileId.set(effectiveProfileId)
+
+    if (isWeb) {
+      setSubmitting(true)
+      void mainClient
+        .setCookie(effectiveProfileId, injectionContext.url, entries.join('; '))
+        .then(() => {
+          const activeProfileId = tabs$.currentTab()?.profile || 'default'
+          if (activeProfileId === effectiveProfileId) {
+            const webview = ui$.webview.get()
+            void executeWebviewJavaScriptQuietly(webview, 'document.location.reload()')
+          }
+
+          const profileName =
+            settings$.profiles.get().find((profile) => profile.id === effectiveProfileId)?.name || 'selected profile'
+          showToast(`Injected ${entries.length} cookies into ${profileName}`)
+          onClose()
+        })
+        .catch(() => {
+          showToast('Failed to inject cookie')
+          setSubmitting(false)
+        })
+      return
+    }
+
     setSubmitting(true)
     setInjectorReady(false)
     setRequest({
@@ -275,7 +321,7 @@ export const CookieModal = () => {
       url: injectionContext.url,
       desktopMode: injectionContext.desktopMode,
     })
-  }, [effectiveProfileId, injectionContext, text])
+  }, [effectiveProfileId, injectionContext, onClose, text])
 
   if (!cookieModalOpen) {
     return null

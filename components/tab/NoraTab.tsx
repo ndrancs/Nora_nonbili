@@ -1,9 +1,10 @@
 import { NoraView } from '@/modules/nora-view'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { useValue } from '@legendapp/state/react'
 import { ui$ } from '@/states/ui'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { settings$ } from '@/states/settings'
-import { ActivityIndicator, Appearance, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Appearance, StyleSheet, View, useColorScheme } from 'react-native'
 import { ObservableHint } from '@legendapp/state'
 import type { WebviewTag } from 'electron'
 import { clsx, isWeb, isIos, nIf } from '@/lib/utils'
@@ -23,6 +24,7 @@ import { getProfileColor } from '@/lib/profile'
 import { getProfileViewKey } from '@/lib/profile-view'
 import { executeWebviewJavaScript, executeWebviewJavaScriptQuietly } from '@/lib/webview'
 import { getUserStylesSnapshot, userStyles$ } from '@/states/user-styles'
+import { colors } from '@/lib/colors'
 
 const getRedirectTo = (str: string) => {
   try {
@@ -153,6 +155,7 @@ export const NoraTab: React.FC<{
   const xDefaultHomeTimeline = useValue(settings$.xDefaultHomeTimeline)
   const theme = useValue(settings$.theme)
   const userStyles = useValue(userStyles$)
+  const colorScheme = useColorScheme()
   const nativeRef = useRef<any>(null)
   const webviewRef = useRef<WebviewTag>(null)
   const { activeTabIndex } = useValue(tabs$)
@@ -161,6 +164,7 @@ export const NoraTab: React.FC<{
   const contentJs = useContentJs()
   const profileColor = getProfileColor(tab.profile)
   const isActive = activeTabIndex === index
+  const menuIconColor = colorScheme === 'light' ? colors.iconLightStrong : colors.icon
   const viewKey = getProfileViewKey(tab)
   const viewInstanceKey = `${viewKey}:${tab.url ? 'page' : 'blank'}`
   const refreshCanGoBack = useCallback(
@@ -364,6 +368,13 @@ export const NoraTab: React.FC<{
 
   const webview = webviewRef.current || nativeRef.current
   const goBack = () => webview?.goBack?.()
+  const editTabUrl = () => {
+    ui$.assign({
+      urlModalOpen: true,
+      urlModalMode: 'editTab',
+      urlModalTargetTabId: tab.id,
+    })
+  }
   const reloadPage = () => {
     if (!webview) return
     if (typeof webview.reload === 'function') {
@@ -468,20 +479,36 @@ export const NoraTab: React.FC<{
             items={[
               {
                 label: t('menus.reload'),
+                icon: <MaterialIcons name="refresh" size={18} color={menuIconColor} />,
                 handler: reloadPage,
               },
               {
+                label: t('menus.editUrl'),
+                icon: <MaterialIcons name="edit" size={18} color={menuIconColor} />,
+                handler: editTabUrl,
+              },
+              {
                 label: t('menus.scroll'),
+                icon: <MaterialIcons name="vertical-align-top" size={18} color={menuIconColor} />,
                 handler: () => {
                   void executeWebviewJavaScriptQuietly(webview, `window.scrollTo(0, 0, {behavior: 'smooth'})`)
                 },
               },
               {
                 label: t('menus.addBookmark'),
+                icon: <MaterialIcons name="bookmark-add" size={18} color={menuIconColor} />,
                 handler: () => addBookmark(tab),
               },
-              { label: t('menus.share'), handler: () => share(pageUrlRef.current) },
-              { label: t('menus.close'), handler: () => tabs$.closeTab(index) },
+              {
+                label: t('menus.share'),
+                icon: <MaterialIcons name="share" size={18} color={menuIconColor} />,
+                handler: () => share(pageUrlRef.current),
+              },
+              {
+                label: t('menus.close'),
+                icon: <MaterialIcons name="close" size={18} color={menuIconColor} />,
+                handler: () => tabs$.closeTab(index),
+              },
             ]}
           />
         </View>

@@ -67,7 +67,6 @@ export const NouHeader: React.FC<{}> = ({}) => {
   const marginTop = useSharedValueSafe(0)
   const flingStart = useSharedValueSafe(0)
   const panStart = useSharedValueSafe(0)
-
   let hostname = '',
     canDownload = false
 
