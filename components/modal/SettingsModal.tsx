@@ -37,6 +37,8 @@ const donateLinks = [
 ]
 type SettingsPage = 'home' | 'browsing' | 'styles' | 'appearance' | 'services' | 'profiles' | 'bookmarks' | 'search' | 'sync' | 'about' | 'changelog'
 
+import { colors } from '@/lib/colors'
+
 const SettingsNavRow: React.FC<{
   title: string
   description: string
@@ -56,7 +58,7 @@ const SettingsNavRow: React.FC<{
       )}
     >
       <View className={settingsUi.iconWrapCls}>
-        <MaterialIcons name={icon} color={isDark ? '#d4d4d8' : '#475569'} size={18} />
+        <MaterialIcons name={icon} color={isDark ? colors.icon : colors.iconLightStrong} size={18} />
       </View>
       <View className="flex-1">
         <View className="flex-row items-center gap-2">
@@ -90,7 +92,7 @@ const SettingsExternalRow: React.FC<{
       )}
     >
       <View className={settingsUi.iconWrapCls}>
-        <MaterialIcons name={icon} color={isDark ? '#d4d4d8' : '#475569'} size={18} />
+        <MaterialIcons name={icon} color={isDark ? colors.icon : colors.iconLightStrong} size={18} />
       </View>
       <View className="flex-1">
         <NouText className="font-medium">{title}</NouText>

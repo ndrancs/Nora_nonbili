@@ -111,7 +111,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
   }
 
   return (
-    <View className="p-4 pt-8 bg-zinc-100 dark:bg-gray-950 h-full">
+    <View className="p-4 pt-8 bg-zinc-100 dark:bg-zinc-950 h-full">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

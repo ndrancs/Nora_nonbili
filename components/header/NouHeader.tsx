@@ -43,7 +43,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
   const settings = useValue(settings$)
   const colorScheme = useColorScheme()
   const isDark = colorScheme === 'dark'
-  const headerControlColor = isDark ? colors.icon : colors.iconLight
+  const headerControlColor = isDark ? colors.icon : colors.iconLightStrong
   const { tabs, activeTabIndex } = useValue(tabs$)
   const currentTab = useValue(tabs$.currentTab)
   const webview = ui$.webview.get()

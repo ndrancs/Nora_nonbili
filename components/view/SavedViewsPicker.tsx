@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native'
+import { Pressable, ScrollView, View, useColorScheme, useWindowDimensions } from 'react-native'
 import { useValue } from '@legendapp/state/react'
 import { NouMenu } from '../menu/NouMenu'
 import { NouText } from '../NouText'
@@ -30,6 +30,8 @@ export const SavedViewsPicker = () => {
   const { activeViewId, savedViews } = useValue(savedViews$)
   const { tabs, orders } = useValue(tabs$)
   const { width } = useWindowDimensions()
+  const colorScheme = useColorScheme()
+  const isDark = colorScheme === 'dark'
   const activeView = savedViews.find((view) => view.id === activeViewId) || null
   const isVertical = width >= 1024
 
@@ -125,18 +127,32 @@ export const SavedViewsPicker = () => {
                     className={clsx(
                       'w-10 h-10 items-center justify-center rounded-xl transition-all duration-200',
                       isActive
-                        ? 'bg-indigo-500/25'
-                        : 'border border-zinc-800/50 bg-zinc-900/50 hover:bg-zinc-800',
+                        ? isDark
+                          ? 'border border-indigo-400/30 bg-indigo-500/25'
+                          : 'border border-indigo-300 bg-indigo-500/12 shadow-sm shadow-indigo-500/10'
+                        : isDark
+                          ? 'border border-zinc-800/50 bg-zinc-900/50 hover:bg-zinc-800'
+                          : 'border border-zinc-300 bg-white hover:bg-zinc-100 shadow-sm shadow-zinc-900/5',
                     )}
                   >
-                    <ViewTypeIcon layout={view.layout} color={isActive ? '#f4f4f5' : '#a1a1aa'} size={22} />
+                    <ViewTypeIcon
+                      layout={view.layout}
+                      color={isActive ? (isDark ? '#f4f4f5' : '#312e81') : isDark ? '#a1a1aa' : '#52525b'}
+                      size={22}
+                    />
                   </View>
                   {nIf(
                     isVertical && view.label,
                     <NouText
                       className={clsx(
-                        'mt-1 max-w-[48px] text-xs text-center text-zinc-500',
-                        isActive && 'text-zinc-300',
+                        'mt-1 max-w-[48px] text-xs text-center',
+                        isActive
+                          ? isDark
+                            ? 'text-zinc-300'
+                            : 'text-zinc-700'
+                          : isDark
+                            ? 'text-zinc-500'
+                            : 'text-zinc-500',
                       )}
                       numberOfLines={1}
                     >
@@ -159,11 +175,14 @@ export const SavedViewsPicker = () => {
             trigger={
               <Pressable
                 className={clsx(
-                  'w-10 h-10 items-center justify-center rounded-xl border border-zinc-800/50 bg-zinc-900/30 hover:bg-zinc-800',
+                  'w-10 h-10 items-center justify-center rounded-xl border',
+                  isDark
+                    ? 'border-zinc-800/50 bg-zinc-900/30 hover:bg-zinc-800'
+                    : 'border-zinc-300 bg-white hover:bg-zinc-100 shadow-sm shadow-zinc-900/5',
                   isVertical ? 'mt-2' : 'ml-2',
                 )}
               >
-                <MaterialIcons name="add" size={20} color="#a1a1aa" />
+                <MaterialIcons name="add" size={20} color={isDark ? '#a1a1aa' : '#52525b'} />
               </Pressable>
             }
             items={[

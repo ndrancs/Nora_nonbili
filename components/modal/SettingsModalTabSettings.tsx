@@ -32,6 +32,7 @@ import { userStyles$ } from '@/states/user-styles'
 import { settingsUi, SettingsSurface, SettingsRow } from './SettingsPrimitives'
 import { useLocales } from 'expo-localization'
 import { resolveI18nLanguageFromExpoLocale, supportedI18nLanguages } from '@/lib/i18n'
+import { colors } from '@/lib/colors'
 
 const headerPositions = ['top', 'bottom'] as const
 const themes = [null, 'dark', 'light'] as const
@@ -196,10 +197,10 @@ export const SettingsAppearanceContent = () => {
   }
 
   return (
-    <>
+    <View className="pb-4">
       {nIf(
         isWeb,
-        <View className="pb-4">
+        <>
           <NouText className={subheaderCls}>{t('settings.appearance.toolbar')}</NouText>
           <View className={surfaceCls}>
             <View className={clsx('items-center flex-row justify-between', rowCls)}>
@@ -233,28 +234,12 @@ export const SettingsAppearanceContent = () => {
               </View>
             </View>
           </View>
-          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.language.label')}</NouText>
-          <View className={surfaceCls}>
-            <View className={clsx('items-center flex-row justify-between', rowCls)}>
-              <View className="flex-1 pr-3">
-                <NouText className="font-medium">{t('settings.language.label')}</NouText>
-                <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.language.hint')}</NouText>
-              </View>
-              <NouMenu
-                trigger={
-                  <NouButton size="1" variant="outline">
-                    {currentLanguageLabel}
-                  </NouButton>
-                }
-                items={languageMenuItems}
-              />
-            </View>
-          </View>
-        </View>,
+        </>,
       )}
+
       {nIf(
         !isWeb,
-        <View className="pb-4">
+        <>
           <NouText className={subheaderCls}>{t('settings.appearance.toolbar')}</NouText>
           <View className={surfaceCls}>
             <View className={clsx('items-center flex-row justify-between', rowCls, rowBorderCls)}>
@@ -316,48 +301,66 @@ export const SettingsAppearanceContent = () => {
               />
             </View>
           </View>
-
-          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.language.label')}</NouText>
-          <View className={surfaceCls}>
-            <View className={clsx('items-center flex-row justify-between', rowCls)}>
-              <View className="flex-1 pr-3">
-                <NouText className="font-medium">{t('settings.language.label')}</NouText>
-                <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.language.hint')}</NouText>
-              </View>
-              <NouMenu
-                trigger={isWeb ? <MaterialButton name="more-vert" /> : isIos ? 'ellipsis' : 'filled.MoreVert'}
-                items={languageMenuItems}
-              />
-            </View>
-          </View>
-
-          <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">{t('settings.theme.label')}</NouText>
-          <View className={surfaceCls}>
-            <View className="px-4 py-4">
-              <View className="flex-row items-start gap-3">
-                <View className={iconWrapCls}>
-                  <MaterialIcons name="palette" color={isDark ? '#d4d4d8' : '#475569'} size={18} />
-                </View>
-                <View className="flex-1">
-                  <NouText className="font-medium">{t('settings.theme.label')}</NouText>
-                  <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">{t('settings.theme.hint')}</NouText>
-                </View>
-              </View>
-            </View>
-            <View className="border-t border-zinc-300 dark:border-zinc-800 px-4 py-4">
-              <View className="items-end">
-                <Segemented
-                  options={[t('settings.theme.system'), t('settings.theme.dark'), t('settings.theme.light')]}
-                  selectedIndex={themes.indexOf(settings.theme)}
-                  size={1}
-                  onChange={(index) => settings$.theme.set(themes[index])}
-                />
-              </View>
-            </View>
-          </View>
-        </View>,
+        </>,
       )}
-    </>
+
+      <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">
+        {t('settings.language.label')}
+      </NouText>
+      <View className={surfaceCls}>
+        <View className={clsx('items-center flex-row justify-between', rowCls)}>
+          <View className="flex-1 pr-3">
+            <NouText className="font-medium">{t('settings.language.label')}</NouText>
+            <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">
+              {t('settings.language.hint')}
+            </NouText>
+          </View>
+              <NouMenu
+                trigger={
+                  isWeb ? (
+                    <NouButton size="1" variant="outline" onPress={() => {}}>
+                      {currentLanguageLabel}
+                    </NouButton>
+                  ) : isIos ? (
+                    'ellipsis'
+                  ) : (
+                'filled.MoreVert'
+              )
+            }
+            items={languageMenuItems}
+          />
+        </View>
+      </View>
+
+      <NouText className="mt-8 mb-3 text-xs uppercase tracking-[0.18em] text-zinc-600 dark:text-gray-500">
+        {t('settings.theme.label')}
+      </NouText>
+      <View className={surfaceCls}>
+        <View className="px-4 py-4">
+          <View className="flex-row items-start gap-3">
+            <View className={iconWrapCls}>
+              <MaterialIcons name="palette" color={isDark ? colors.icon : colors.iconLightStrong} size={18} />
+            </View>
+            <View className="flex-1">
+              <NouText className="font-medium">{t('settings.theme.label')}</NouText>
+              <NouText className="mt-1 text-sm leading-5 text-zinc-600 dark:text-zinc-400">
+                {t('settings.theme.hint')}
+              </NouText>
+            </View>
+          </View>
+        </View>
+        <View className="border-t border-zinc-300 dark:border-zinc-800 px-4 py-4">
+          <View className="items-end">
+            <Segemented
+              options={[t('settings.theme.system'), t('settings.theme.dark'), t('settings.theme.light')]}
+              selectedIndex={themes.indexOf(settings.theme)}
+              size={1}
+              onChange={(index) => settings$.theme.set(themes[index])}
+            />
+          </View>
+        </View>
+      </View>
+    </View>
   )
 }
 

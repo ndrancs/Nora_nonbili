@@ -9,7 +9,7 @@ export const AntButton = (props: ComponentProps<typeof AntDesign.Button>) => {
   const isDark = colorScheme !== 'light'
   return (
     <AntDesign.Button
-      color={isDark ? colors.icon : '#64748b'}
+      color={isDark ? colors.icon : colors.iconLightStrong}
       backgroundColor="transparent"
       underlayColor={isDark ? colors.underlay : '#e5e7eb'}
       iconStyle={{ marginRight: 0 }}
@@ -25,7 +25,7 @@ export const MaterialButton = (props: ComponentProps<typeof MaterialIcons.Button
   const isDark = colorScheme !== 'light'
   return (
     <MaterialIcons.Button
-      color={isDark ? colors.icon : '#64748b'}
+      color={isDark ? colors.icon : colors.iconLightStrong}
       backgroundColor="transparent"
       underlayColor={isDark ? colors.underlay : '#e5e7eb'}
       iconStyle={{ marginRight: 0 }}

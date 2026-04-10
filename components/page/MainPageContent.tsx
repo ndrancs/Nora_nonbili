@@ -41,7 +41,7 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
   return (
     <View
       className={clsx(
-        'flex-1 h-full overflow-hidden',
+        'flex-1 h-full overflow-hidden bg-zinc-100 dark:bg-zinc-950',
         headerPosition === 'bottom' && 'flex-col-reverse',
         isWeb && 'lg:flex-row',
       )}
@@ -56,7 +56,7 @@ export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) 
           ))}
         </View>
       ) : (
-        <View className="flex-1 bg-zinc-100 dark:bg-gray-950 lg:px-20">
+        <View className="flex-1 bg-zinc-100 dark:bg-zinc-950 lg:px-20">
           <NavModalContent />
         </View>
       )}

@@ -117,13 +117,13 @@ const EmptySlot: React.FC<{
       className={clsx(
         isSplit
           ? 'flex-1 min-w-0 h-full overflow-hidden'
-          : 'absolute overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950',
+          : 'absolute overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950',
       )}
       style={!isSplit ? getSlotStyle(view.layout, slotIndex) : { flex: 1, minWidth: 0, order: slotIndex }}
     >
       <View className="flex h-full min-h-0 min-w-0 flex-col">
         <View
-          className="flex-row items-center justify-between gap-2 bg-zinc-800 pl-2 pr-1"
+          className="flex-row items-center justify-between gap-2 bg-zinc-100 dark:bg-zinc-800 pl-2 pr-1"
           style={{ borderLeftWidth: 4, borderLeftColor: profileColor, height: 36 }}
         >
           <View className="flex-row items-center gap-2 shrink-0">
@@ -197,8 +197,9 @@ const SortableDesktopTab: React.FC<{
           : isSplit && isVisible
             ? 'flex-1 min-w-0 h-full overflow-hidden'
             : viewLayout && slotIndex != null
-              ? 'absolute overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950'
+              ? 'absolute overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950'
               : 'absolute overflow-hidden',
+
         isDeck && over && 'pointer-events-none',
         isDeck && active?.id === tab.id && 'rotate-[1deg] translate-y-[-16px]',
         isDeck &&
@@ -350,7 +351,7 @@ export const DesktopWorkspace: React.FC = () => {
             {isDeck ? (
               <div style={{ order: tabs.length + 1 }}>
                 <Pressable
-                  className="flex h-full w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900/70"
+                  className="flex h-full w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950/40 hover:bg-zinc-200 dark:hover:bg-zinc-900/70"
                   onPress={createDeckTab}
                 >
                   <MaterialIcons name="add" size={22} color="#a1a1aa" />
