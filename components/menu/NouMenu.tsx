@@ -1,5 +1,6 @@
 import { DropdownMenu } from '@radix-ui/themes'
 import { ReactNode } from 'react'
+import { clsx } from '@/lib/utils'
 
 export interface Item {
   label: string
@@ -21,7 +22,10 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor
 
     if (item.kind === 'label') {
       return (
-        <DropdownMenu.Label key={index} className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
+        <DropdownMenu.Label
+          key={index}
+          className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-zinc-600 dark:text-zinc-500"
+        >
           {item.label}
         </DropdownMenu.Label>
       )
@@ -32,19 +36,23 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor
         key={index}
         onClick={item.handler}
         disabled={item.disabled}
-        className="min-w-[160px] max-w-[320px] px-3 py-2"
+        className={clsx('min-w-[160px] max-w-[320px] px-3', item.description ? 'py-1 h-auto' : 'py-2')}
       >
         <div className="flex min-w-0 flex-row items-center gap-3 leading-none">
-          {item.icon ? (
-            <div className="flex shrink-0 items-center justify-center h-5 w-5">
-              {item.icon}
-            </div>
-          ) : null}
+          {item.icon ? <div className="flex shrink-0 items-center justify-center h-5 w-5">{item.icon}</div> : null}
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[13px] leading-[20px] text-zinc-900 dark:text-zinc-100">{item.label}</div>
-            {item.description ? <div className="truncate text-xs text-zinc-600 dark:text-zinc-500">{item.description}</div> : null}
+            <div className="truncate text-[13px] leading-[18px] text-zinc-900 dark:text-zinc-100">{item.label}</div>
+            {item.description ? (
+              <div className="truncate text-[11px] leading-[12px] text-zinc-600 dark:text-zinc-500">
+                {item.description}
+              </div>
+            ) : null}
           </div>
-          {item.meta ? <div className="shrink-0">{item.meta}</div> : item.metaLabel ? <div className="shrink-0 text-xs text-zinc-600 dark:text-zinc-500">{item.metaLabel}</div> : null}
+          {item.meta ? (
+            <div className="shrink-0">{item.meta}</div>
+          ) : item.metaLabel ? (
+            <div className="shrink-0 text-xs text-zinc-600 dark:text-zinc-500">{item.metaLabel}</div>
+          ) : null}
         </div>
       </DropdownMenu.Item>
     )
@@ -55,7 +63,10 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor
       <DropdownMenu.Trigger>
         <div className="flex shrink min-w-0 items-center justify-center">{trigger}</div>
       </DropdownMenu.Trigger>
-      <DropdownMenu.Content variant="soft" className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-300/70 dark:border-zinc-800/80 shadow-xl shadow-zinc-900/15 dark:shadow-black/40">
+      <DropdownMenu.Content
+        variant="soft"
+        className="max-h-[70vh] overflow-auto rounded-xl border border-zinc-300/70 dark:border-zinc-800/80 shadow-xl shadow-zinc-900/15 dark:shadow-black/40"
+      >
         {menuItems}
       </DropdownMenu.Content>
     </DropdownMenu.Root>

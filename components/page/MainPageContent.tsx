@@ -12,13 +12,9 @@ import { DesktopWorkspace } from '../tab/DesktopWorkspace'
 import { auth$ } from '@/states/auth'
 import { useMe } from '@/lib/hooks/useMe'
 import { syncSupabase } from '@/lib/supabase/sync'
-import { useShortcuts } from '@/lib/hooks/useShortcuts'
-
 const logger = createLogger('sync')
 
 export const MainPageContent: React.FC<{ contentJs: string }> = ({ contentJs }) => {
-  useShortcuts()
-
   const headerPosition = useValue(settings$.headerPosition)
   const { tabs } = useValue(tabs$)
   const { userId, me } = useMe()

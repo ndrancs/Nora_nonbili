@@ -25,6 +25,7 @@ import { showToast } from '@/lib/toast'
 import { Directions, Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 import { executeWebviewJavaScriptQuietly } from '@/lib/webview'
 import { SavedViewsPicker } from '../view/SavedViewsPicker'
+import { ServiceIcon } from '../service/Services'
 
 function prevTab() {
   const activeIndex = tabs$.activeTabIndex.get()
@@ -44,7 +45,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
   const colorScheme = useColorScheme()
   const isDark = colorScheme === 'dark'
   const headerControlColor = isDark ? colors.icon : colors.iconLightStrong
-  const { tabs, activeTabIndex } = useValue(tabs$)
+  const { tabs, activeTabIndex, recentlyClosedTabs } = useValue(tabs$)
   const currentTab = useValue(tabs$.currentTab)
   const webview = ui$.webview.get()
   const { AnimatedView, useSharedValueSafe, withTimingSafe } = (() => {
@@ -159,7 +160,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
     <Root
       className={clsx(
         'bg-zinc-100 dark:bg-zinc-800 flex-row items-center justify-between pl-2 py-1',
-        isWeb && 'lg:w-[52px] lg:flex-col lg:items-center lg:justify-start lg:gap-4 lg:px-0 lg:py-4',
+        isWeb && 'lg:w-[52px] lg:flex-col lg:items-center lg:justify-start lg:gap-4 lg:bg-zinc-50 lg:px-0 lg:py-4',
       )}
       style={{ marginTop: isWeb ? marginTopWeb : marginTop }}
       onLayout={onLayout}
@@ -204,6 +205,18 @@ export const NouHeader: React.FC<{}> = ({}) => {
               <NouText className="text-xs font-semibold" style={{ color: headerControlColor }}>{tabs.length}</NouText>
             </View>
           </TouchableOpacity>,
+        )}
+        {nIf(
+          isWeb && recentlyClosedTabs.length > 0,
+          <NouMenu
+            trigger={<MaterialButton name="restore" color={headerControlColor} />}
+            items={recentlyClosedTabs.map((tab) => ({
+              label: tab.title || tab.url || t('tabs.new'),
+              description: tab.title && tab.url && tab.title !== tab.url ? tab.url : undefined,
+              icon: <ServiceIcon url={tab.url} icon={tab.icon} />,
+              handler: () => tabs$.reopenClosedTab(tab.id),
+            }))}
+          />,
         )}
         <NouMenu
           triggerColor={headerControlColor}

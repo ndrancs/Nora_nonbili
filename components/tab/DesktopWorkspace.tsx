@@ -123,7 +123,7 @@ const EmptySlot: React.FC<{
     >
       <View className="flex h-full min-h-0 min-w-0 flex-col">
         <View
-          className="flex-row items-center justify-between gap-2 bg-zinc-100 dark:bg-zinc-800 pl-2 pr-1"
+          className="flex-row items-center justify-between gap-2 bg-indigo-100 dark:bg-indigo-500/20 pl-2 pr-1"
           style={{ borderLeftWidth: 4, borderLeftColor: profileColor, height: 36 }}
         >
           <View className="flex-row items-center gap-2 shrink-0">
