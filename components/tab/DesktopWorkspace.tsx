@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import React, { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -187,7 +187,7 @@ const EmptySlot: React.FC<{
                 : 'border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950',
             )
           : clsx(
-              'absolute overflow-hidden rounded-[20px] border transition-all',
+              'absolute overflow-hidden border transition-all',
               isActive
                 ? 'border-indigo-300 bg-indigo-50/40 shadow-[0_0_0_1px_rgba(165,180,252,0.9)] dark:border-indigo-300/40 dark:bg-indigo-400/10'
                 : 'border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950',
@@ -331,7 +331,7 @@ const SortableDesktopTab: React.FC<{
           : isSplit && isVisible
             ? 'flex-1 min-w-0 h-full overflow-hidden'
             : viewLayout && slotIndex != null
-              ? 'absolute overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950'
+              ? 'absolute overflow-hidden border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950'
               : 'absolute overflow-hidden',
 
         isDeck && over && 'pointer-events-none',
@@ -355,31 +355,52 @@ const SortableDesktopTab: React.FC<{
 }
 
 export const DesktopWorkspace: React.FC = () => {
-  const { tabs, activeTabIndex, orders } = useValue(tabs$)
-  const { activeViewId, savedViews } = useValue(savedViews$)
+  const tabs = useValue(tabs$.tabs)
+  const activeTabIndex = useValue(tabs$.activeTabIndex)
+  const orders = useValue(tabs$.orders)
+  const activeViewId = useValue(savedViews$.activeViewId)
+  const savedViews = useValue(savedViews$.savedViews)
   const [focusedEmptySlotByView, setFocusedEmptySlotByView] = useState<Record<string, number>>({})
+  const deckScrollRef = useRef<HTMLDivElement>(null)
+  const prevTabCountRef = useRef(tabs.length)
   const activeView = savedViews.find((view) => view.id === activeViewId)
   const isDeck = !activeView || activeViewId === DECK_VIEW_ID
   const tabIdsKey = tabs.map((tab) => tab.id).join('|')
-  const orderedTabIds = getOrderedTabIds(tabs, orders)
-  const orderedTabs = sortTabsByOrder(tabs, orders)
-  const tabIdSet = new Set(tabs.map((tab) => tab.id))
+  const orderedTabIds = useMemo(() => getOrderedTabIds(tabs, orders), [tabIdsKey, orders])
+  const orderedTabs = useMemo(() => sortTabsByOrder(tabs, orders), [tabIdsKey, orders])
+  const tabIdSet = useMemo(() => new Set(tabs.map((tab) => tab.id)), [tabIdsKey])
   const visibleSlots = activeView?.slotTabIds ?? []
   const visibleTabIds = visibleSlots.filter((tabId): tabId is string => typeof tabId === 'string' && tabIdSet.has(tabId))
   const activeTabId = tabs[activeTabIndex]?.id
 
+  // Sync orders without causing a render loop.
+  // Use a ref to compare against previous orders so the effect doesn't
+  // depend on `orders` directly (which would re-trigger when we set it).
+  const ordersRef = useRef(orders)
+  ordersRef.current = orders
   useEffect(() => {
+    const currentOrders = ordersRef.current
     const nextOrders: Record<string, number> = {}
     orderedTabIds.forEach((tabId, order) => {
       nextOrders[tabId] = order
     })
 
-    const hasSameSize = Object.keys(nextOrders).length === Object.keys(orders).length
-    const hasSameOrder = hasSameSize && orderedTabIds.every((tabId, index) => orders[tabId] === index)
+    const hasSameSize = Object.keys(nextOrders).length === Object.keys(currentOrders).length
+    const hasSameOrder = hasSameSize && orderedTabIds.every((tabId, index) => currentOrders[tabId] === index)
     if (!hasSameOrder) {
       tabs$.orders.set(nextOrders)
     }
-  }, [orderedTabIds.join('|'), orders, tabIdsKey])
+  }, [orderedTabIds])
+
+  // Scroll to the end of the deck when a new tab is added
+  useEffect(() => {
+    if (isDeck && tabs.length > prevTabCountRef.current && deckScrollRef.current) {
+      requestAnimationFrame(() => {
+        deckScrollRef.current?.scrollTo({ left: deckScrollRef.current.scrollWidth, behavior: 'smooth' })
+      })
+    }
+    prevTabCountRef.current = tabs.length
+  }, [isDeck, tabs.length])
 
   useEffect(() => {
     if (isDeck || !tabs.length) {
@@ -467,6 +488,7 @@ export const DesktopWorkspace: React.FC = () => {
       <SortableContext items={tabs.map((tab) => tab.id)} strategy={horizontalListSortingStrategy}>
         <div className="relative flex-1 flex flex-col overflow-hidden">
           <div
+            ref={isDeck ? deckScrollRef : undefined}
             className={clsx(
               isDeck
                 ? 'flex-1 flex gap-2 overflow-x-auto overflow-y-hidden p-2'

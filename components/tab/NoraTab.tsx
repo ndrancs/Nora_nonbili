@@ -159,7 +159,7 @@ export const NoraTab: React.FC<{
   const colorScheme = useColorScheme()
   const nativeRef = useRef<any>(null)
   const webviewRef = useRef<WebviewTag>(null)
-  const { activeTabIndex } = useValue(tabs$)
+  const activeTabIndex = useValue(tabs$.activeTabIndex)
   const pageUrlRef = useRef('')
   const [canGoBack, setCanGoBack] = useState(false)
   const contentJs = useContentJs()

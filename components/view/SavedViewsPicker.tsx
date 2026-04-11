@@ -30,7 +30,8 @@ const ViewTypeIcon = ({ layout, size = 20, color = '#71717a' }: { layout: string
 
 export const SavedViewsPicker = () => {
   const { activeViewId, savedViews } = useValue(savedViews$)
-  const { tabs, orders } = useValue(tabs$)
+  const tabs = useValue(tabs$.tabs)
+  const orders = useValue(tabs$.orders)
   const { width } = useWindowDimensions()
   const colorScheme = useColorScheme()
   const isDark = colorScheme === 'dark'
