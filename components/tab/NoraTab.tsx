@@ -18,6 +18,7 @@ import { getUserAgent } from '@/lib/useragent'
 import { useContentJs } from '@/lib/hooks/useContentJs'
 import { parseJson } from '@/content/utils'
 import { NavModalContent } from '../modal/NavModal'
+import { handleShortcuts } from '@/desktop/src/renderer/lib/shortcuts'
 import { t } from 'i18next'
 import { addBookmark } from '@/lib/bookmark'
 import { getProfileColor } from '@/lib/profile'
@@ -258,6 +259,15 @@ export const NoraTab: React.FC<{
       })
       webview.addEventListener('page-favicon-updated', (e) => {
         tabs$.tabs[index].assign({ title: webview.getTitle(), icon: e.favicons.at(-1) })
+      })
+      webview.addEventListener('before-input-event', (e) => {
+        if (e.input.type === 'keyDown') {
+          if ((e.input.meta || e.input.control) && e.input.key.toLowerCase() === 'r') {
+            reloadPage()
+          } else {
+            handleShortcuts(e.input)
+          }
+        }
       })
       webview.addEventListener('ipc-message', (e) => {})
     },
