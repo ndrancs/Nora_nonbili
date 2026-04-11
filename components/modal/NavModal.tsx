@@ -3,7 +3,7 @@ import { useValue } from '@legendapp/state/react'
 import { BaseModal } from './BaseModal'
 import { services } from '../service/Services'
 import { View, Text, Pressable, ScrollView, TouchableHighlight, TextInput, Modal, useColorScheme, useWindowDimensions } from 'react-native'
-import { clsx, isIos, nIf } from '@/lib/utils'
+import { clsx, isIos, isWeb, nIf } from '@/lib/utils'
 import { getHomeUrl } from '@/lib/page'
 import { settings$ } from '@/states/settings'
 import { tabs$ } from '@/states/tabs'
@@ -45,7 +45,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
   const disabledServices = useValue(settings$.disabledServicesArr)
   const profiles = useValue(settings$.profiles)
   const bookmarks = useValue(bookmarks$.bookmarks)
-  const oneHandMode = useValue(settings$.oneHandMode)
+  const oneHandMode = !isWeb && useValue(settings$.oneHandMode)
   const enabledSearchProviderIds = useValue(settings$.enabledSearchProviderIds)
   const customSearchProviders = useValue(settings$.customSearchProviders)
   const selectedSearchProviderId = useValue(settings$.selectedSearchProviderId)
@@ -111,7 +111,7 @@ export const NavModalContent: React.FC<NavModalContentProps> = ({
   }
 
   return (
-    <View className="p-4 pt-8 bg-zinc-100 dark:bg-zinc-950 h-full">
+    <View className="h-full bg-zinc-100 p-4 pt-8 dark:bg-zinc-950 lg:bg-zinc-50 lg:dark:bg-zinc-900">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

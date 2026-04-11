@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import React, { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -14,7 +14,6 @@ import { t } from 'i18next'
 import { Pressable, View } from 'react-native'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { ServiceIcon } from '../service/Services'
-import { NavModalContent } from '../modal/NavModal'
 import { getProfileColor } from '@/lib/profile'
 import { ui$ } from '@/states/ui'
 
@@ -95,14 +94,18 @@ const SlotTabPicker: React.FC<{
 
 const EmptySlot: React.FC<{
   slotIndex: number
-  slotSwitcher?: ReactNode
+  orderedTabs: Tab[]
+  tabIdSet: Set<string>
   view: CustomSavedView
   isSplit?: boolean
-}> = ({ slotIndex, slotSwitcher, view, isSplit }) => {
+}> = ({ slotIndex, orderedTabs, tabIdSet, view, isSplit }) => {
   const lastSelectedProfileId = useValue(ui$.lastSelectedProfileId)
-  const [selectedProfileId, setSelectedProfileId] = useState(lastSelectedProfileId)
+  const selectedProfileId = lastSelectedProfileId
   const profileColor = getProfileColor(selectedProfileId)
   const canCloseSlot = isSplit && slotIndex >= 2 && view.slotTabIds.length > 2
+  const usedTabIds = new Set(view.slotTabIds.filter((tabId): tabId is string => Boolean(tabId)))
+  const availableTabs = orderedTabs.filter((tab) => !usedTabIds.has(tab.id) && tabIdSet.has(tab.id))
+  const targetLayoutLabel = view.layout === 'split-view' ? 'split view' : 'grid view'
 
   const createTabInSlot = (url: string, profileId: string) => {
     const tabId = openDesktopTab(url, { profile: profileId })
@@ -110,6 +113,11 @@ const EmptySlot: React.FC<{
       savedViews$.assignSlotTab(view.id, slotIndex, tabId)
       tabs$.setActiveTabById(tabId, 'open')
     }
+  }
+
+  const assignExistingTab = (tabId: string) => {
+    savedViews$.assignSlotTab(view.id, slotIndex, tabId)
+    tabs$.setActiveTabById(tabId, 'user')
   }
 
   return (
@@ -123,18 +131,16 @@ const EmptySlot: React.FC<{
     >
       <View className="flex h-full min-h-0 min-w-0 flex-col">
         <View
-          className="flex-row items-center justify-between gap-2 bg-indigo-100 dark:bg-indigo-500/20 pl-2 pr-1"
+          className="flex-row items-center justify-between gap-2 bg-zinc-100 dark:bg-zinc-800 pl-2 pr-1"
           style={{ borderLeftWidth: 4, borderLeftColor: profileColor, height: 36 }}
         >
           <View className="flex-row items-center gap-2 shrink-0">
             <ServiceIcon url="" />
           </View>
           <View className="flex-1 min-w-0 flex-row items-center justify-center">
-            {slotSwitcher || (
-              <NouText className="text-[11px] font-bold text-zinc-500 tracking-wider text-center px-2">
-                {t('tabs.new')}
-              </NouText>
-            )}
+            <NouText className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 tracking-wider text-center px-2">
+              {t('tabs.new')}
+            </NouText>
           </View>
           {canCloseSlot ? (
             <Pressable
@@ -147,11 +153,61 @@ const EmptySlot: React.FC<{
             <View className="w-7 shrink-0" />
           )}
         </View>
-        <NavModalContent
-          profileId={selectedProfileId}
-          onOpenUrl={createTabInSlot}
-          onSelectProfile={setSelectedProfileId}
-        />
+        <View className="flex-1 items-center justify-center bg-zinc-50 px-6 dark:bg-zinc-900">
+          <View className="w-full max-w-[28rem] items-center">
+            <NouText className="mb-6 text-center text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              {`Choose a tab to add to ${targetLayoutLabel}`}
+            </NouText>
+            <View className="w-full overflow-hidden rounded-[28px] border border-zinc-200 bg-white/95 shadow-sm shadow-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-950/90">
+              <Pressable
+                className="flex-row items-center gap-3 px-5 py-4 active:bg-zinc-100 dark:active:bg-zinc-900"
+                onPress={() => createTabInSlot('', selectedProfileId)}
+              >
+                <View className="h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900">
+                  <MaterialIcons name="add" size={20} color="#f97316" />
+                </View>
+                <View className="min-w-0 flex-1">
+                  <NouText className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                    {t('tabs.new')}
+                  </NouText>
+                  <NouText className="text-sm text-zinc-500 dark:text-zinc-400">
+                    Create a new blank tab in this slot
+                  </NouText>
+                </View>
+              </Pressable>
+
+              {availableTabs.length ? <View className="mx-5 h-px bg-zinc-200 dark:bg-zinc-800" /> : null}
+
+              {availableTabs.map((tab, index) => (
+                <Pressable
+                  key={tab.id}
+                  className={clsx(
+                    'flex-row items-center gap-3 px-5 py-4 active:bg-zinc-100 dark:active:bg-zinc-900',
+                    index !== availableTabs.length - 1 && 'border-b border-zinc-200 dark:border-zinc-800',
+                  )}
+                  onPress={() => assignExistingTab(tab.id)}
+                >
+                  <View className="h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900">
+                    <ServiceIcon url={tab.url} icon={tab.icon} />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <NouText className="text-lg font-semibold text-zinc-900 dark:text-zinc-50" numberOfLines={1}>
+                      {getTabLabel(tab)}
+                    </NouText>
+                    <NouText className="text-sm text-zinc-500 dark:text-zinc-400" numberOfLines={1}>
+                      {tab.url || 'Blank tab'}
+                    </NouText>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+            {availableTabs.length ? null : (
+              <NouText className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                No other tabs are available. Create a new one for this slot.
+              </NouText>
+            )}
+          </View>
+        </View>
       </View>
     </div>
   )
@@ -365,15 +421,8 @@ export const DesktopWorkspace: React.FC = () => {
                     <EmptySlot
                       key={`${activeView.id}-${slotIndex}`}
                       slotIndex={slotIndex}
-                      slotSwitcher={
-                        <SlotTabPicker
-                          currentTabId={null}
-                          orderedTabs={orderedTabs}
-                          slotIndex={slotIndex}
-                          tabIdSet={tabIdSet}
-                          view={activeView}
-                        />
-                      }
+                      orderedTabs={orderedTabs}
+                      tabIdSet={tabIdSet}
                       view={activeView}
                       isSplit={isSplit}
                     />

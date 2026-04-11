@@ -3,7 +3,7 @@ import { useValue } from '@legendapp/state/react'
 import { BaseModal } from './BaseModal'
 import { ServiceIcon } from '../service/Services'
 import { View, Text, ScrollView, TouchableOpacity, Pressable, Modal, useColorScheme, useWindowDimensions } from 'react-native'
-import { clsx, isIos, nIf } from '@/lib/utils'
+import { clsx, isIos, isWeb, nIf } from '@/lib/utils'
 import { settings$ } from '@/states/settings'
 import { Tab, tabs$ } from '@/states/tabs'
 import { NouMenu } from '../menu/NouMenu'
@@ -20,7 +20,7 @@ type Anchor = { x: number; y: number; width: number; height: number }
 
 export const TabModal = () => {
   const tabModalOpen = useValue(ui$.tabModalOpen)
-  const oneHandMode = useValue(settings$.oneHandMode)
+  const oneHandMode = !isWeb && useValue(settings$.oneHandMode)
   const { tabs, activeTabIndex, recentlyClosedTabs } = useValue(tabs$)
   const colorScheme = useColorScheme()
   const isDark = colorScheme === 'dark'
@@ -48,33 +48,34 @@ export const TabModal = () => {
   }
 
   const menuItems = [
-    {
-      label: t('settings.oneHandMode'),
-      icon: <MaterialIcons name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'} size={18} color={oneHandMode ? '#818cf8' : colors.iconSubtle} />,
-      metaLabel: oneHandMode ? t('common.on') : t('common.off'),
-      meta: isIos
-        ? undefined
-        : (
-            <View
-              className={clsx(
-                'rounded-full px-2 py-1',
-                oneHandMode
-                  ? 'bg-indigo-500/20 border border-indigo-400/40'
-                  : 'bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700',
-              )}
-            >
-              <Text className={clsx('text-[11px] font-medium', oneHandMode ? 'text-indigo-200' : 'text-zinc-400')}>
-                {oneHandMode ? t('common.on') : t('common.off')}
-              </Text>
-            </View>
-          ),
-      handler: () => settings$.oneHandMode.toggle(),
-    },
-    {
-      label: '',
-      handler: () => {},
-      kind: 'separator' as const,
-    },
+    ...(!isWeb
+      ? [{
+          label: t('settings.oneHandMode'),
+          icon: <MaterialIcons name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'} size={18} color={oneHandMode ? '#818cf8' : colors.iconSubtle} />,
+          metaLabel: oneHandMode ? t('common.on') : t('common.off'),
+          meta: isIos
+            ? undefined
+            : (
+                <View
+                  className={clsx(
+                    'rounded-full px-2 py-1',
+                    oneHandMode
+                      ? 'bg-indigo-500/20 border border-indigo-400/40'
+                      : 'bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700',
+                  )}
+                >
+                  <Text className={clsx('text-[11px] font-medium', oneHandMode ? 'text-indigo-200' : 'text-zinc-400')}>
+                    {oneHandMode ? t('common.on') : t('common.off')}
+                  </Text>
+                </View>
+              ),
+          handler: () => settings$.oneHandMode.toggle(),
+        }, {
+          label: '',
+          handler: () => {},
+          kind: 'separator' as const,
+        }]
+      : []),
     {
       label: t('tabs.recentlyClosed'),
       handler: () => {},
@@ -202,22 +203,25 @@ export const TabModal = () => {
               }}
             >
               <ScrollView showsVerticalScrollIndicator={false}>
-                <Pressable
-                  className="flex-row items-center gap-3 px-4 py-3 active:bg-zinc-200 dark:active:bg-zinc-800"
-                  onPress={() => {
-                    settings$.oneHandMode.toggle()
-                    setIosMenuOpen(false)
-                  }}
-                >
-                  <MaterialIcons
-                    name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'}
-                    size={18}
-                    color={oneHandMode ? '#818cf8' : '#a1a1aa'}
-                  />
-                  <Text className="flex-1 text-sm text-zinc-900 dark:text-white">{t('settings.oneHandMode')}</Text>
-                  <Text className="text-xs text-zinc-600 dark:text-zinc-400">{oneHandMode ? t('common.on') : t('common.off')}</Text>
-                </Pressable>
-                <View className="mx-3 my-1 h-px bg-zinc-300 dark:bg-zinc-800" />
+                {nIf(
+                  !isWeb,
+                  <Pressable
+                    className="flex-row items-center gap-3 px-4 py-3 active:bg-zinc-200 dark:active:bg-zinc-800"
+                    onPress={() => {
+                      settings$.oneHandMode.toggle()
+                      setIosMenuOpen(false)
+                    }}
+                  >
+                    <MaterialIcons
+                      name={oneHandMode ? 'pan-tool' : 'pan-tool-alt'}
+                      size={18}
+                      color={oneHandMode ? '#818cf8' : '#a1a1aa'}
+                    />
+                    <Text className="flex-1 text-sm text-zinc-900 dark:text-white">{t('settings.oneHandMode')}</Text>
+                    <Text className="text-xs text-zinc-600 dark:text-zinc-400">{oneHandMode ? t('common.on') : t('common.off')}</Text>
+                  </Pressable>,
+                )}
+                {nIf(!isWeb, <View className="mx-3 my-1 h-px bg-zinc-300 dark:bg-zinc-800" />)}
                 <View className="px-4 pt-2 pb-1">
                   <Text className="text-[11px] uppercase tracking-[1px] text-zinc-600 dark:text-zinc-500">{t('tabs.recentlyClosed')}</Text>
                 </View>

@@ -468,7 +468,9 @@ export const NoraTab: React.FC<{
         <View
           className={clsx(
             'flex-row items-center justify-between gap-2 pl-2 pr-1',
-            isActive ? 'bg-indigo-100 dark:bg-indigo-500/20' : 'bg-zinc-100 dark:bg-zinc-800',
+            isActive
+              ? 'bg-indigo-100 dark:bg-indigo-400/30 dark:border-b dark:border-b-indigo-300/50'
+              : 'bg-zinc-100 dark:bg-zinc-800',
           )}
           style={{ borderLeftWidth: 4, borderLeftColor: profileColor, height: 36 }}
         >
@@ -480,7 +482,10 @@ export const NoraTab: React.FC<{
           <View className="flex-1 min-w-0 flex-row items-center justify-center">
             {slotSwitcher || (
               <NouText
-                className="text-[11px] font-bold text-zinc-500 tracking-wider text-center px-2"
+                className={clsx(
+                  'text-[11px] font-bold tracking-wider text-center px-2',
+                  isActive ? 'text-zinc-600 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400',
+                )}
                 numberOfLines={1}
               >
                 {getTabLabel(tab)}
