@@ -4,7 +4,6 @@ import { type CustomSavedView } from '@/states/saved-views'
 import { type Tab } from '@/states/tabs'
 import { EmptySlot } from './EmptySlot'
 import { SavedViewTab } from './SavedViewTab'
-import { SlotTabPicker } from './SlotTabPicker'
 
 export const SavedViewWorkspace: React.FC<{
   activeSlotIndex: number | null
@@ -15,39 +14,34 @@ export const SavedViewWorkspace: React.FC<{
   tabs: Tab[]
 }> = ({ activeSlotIndex, activeView, focusSlot, orderedTabs, tabIdSet, tabs }) => {
   const isSplit = activeView.layout === 'split-view'
-  const slotIndexByTabId = new Map<string, number>()
-
-  activeView.slotTabIds.forEach((tabId, slotIndex) => {
-    if (tabId && tabIdSet.has(tabId)) {
-      slotIndexByTabId.set(tabId, slotIndex)
-    }
-  })
+  const tabById = new Map(tabs.map((tab, index) => [tab.id, { index, tab }] as const))
 
   return (
     <div className={clsx(isSplit ? 'flex-1 min-w-0 flex flex-row gap-2 p-2' : 'relative flex-1 overflow-hidden p-2')}>
-      {tabs.map((tab, index) => {
-        const slotIndex = slotIndexByTabId.get(tab.id)
+      {activeView.slotTabIds.map((tabId, slotIndex) => {
+        if (!tabId || !tabIdSet.has(tabId)) {
+          return null
+        }
+
+        const entry = tabById.get(tabId)
+        if (!entry) {
+          return null
+        }
+
+        const { index, tab } = entry
 
         return (
           <SavedViewTab
+            activeSlotIndex={activeSlotIndex}
+            activeView={activeView}
+            focusSlot={focusSlot}
             key={tab.id}
             index={index}
             isSplit={isSplit}
-            isVisible={slotIndex != null}
-            slotIndex={slotIndex ?? null}
-            slotSwitcher={
-              slotIndex != null ? (
-                <SlotTabPicker
-                  currentTabId={tab.id}
-                  isActive={slotIndex === activeSlotIndex}
-                  onActivate={() => focusSlot(activeView.id, slotIndex)}
-                  orderedTabs={orderedTabs}
-                  slotIndex={slotIndex}
-                  tabIdSet={tabIdSet}
-                  view={activeView}
-                />
-              ) : undefined
-            }
+            isVisible
+            orderedTabs={orderedTabs}
+            slotIndex={slotIndex}
+            tabIdSet={tabIdSet}
             tab={tab}
             viewLayout={activeView.layout}
           />

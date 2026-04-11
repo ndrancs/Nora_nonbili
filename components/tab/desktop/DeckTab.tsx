@@ -1,4 +1,4 @@
-import React, { type CSSProperties } from 'react'
+import React, { memo, type CSSProperties } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { clsx } from '@/lib/utils'
@@ -9,7 +9,7 @@ export const DeckTab: React.FC<{
   tab: Tab
   index: number
   orders: Record<string, number>
-}> = ({ tab, index, orders }) => {
+}> = memo(({ tab, index, orders }) => {
   const { attributes, listeners, setNodeRef, transform, transition, active } = useSortable({
     id: tab.id,
   })
@@ -37,4 +37,4 @@ export const DeckTab: React.FC<{
       <NoraTab tab={tab} index={index} desktopVariant="deck" />
     </div>
   )
-}
+})

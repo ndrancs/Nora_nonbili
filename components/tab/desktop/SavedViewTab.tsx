@@ -1,20 +1,25 @@
-import React, { type CSSProperties, type ReactNode } from 'react'
+import React, { memo, type CSSProperties } from 'react'
 import { clsx } from '@/lib/utils'
 import { NoraTab } from '@/components/tab/NoraTab'
 import { settings$ } from '@/states/settings'
 import { type CustomSavedView } from '@/states/saved-views'
 import { type Tab, tabs$ } from '@/states/tabs'
 import { getHiddenTabStyle, getSlotStyle } from './desktopWorkspaceShared'
+import { SlotTabPicker } from './SlotTabPicker'
 
 export const SavedViewTab: React.FC<{
+  activeSlotIndex: number | null
+  activeView: CustomSavedView
   index: number
   isSplit: boolean
   isVisible: boolean
+  orderedTabs: Tab[]
   slotIndex: number | null
-  slotSwitcher?: ReactNode
+  focusSlot: (viewId: string, slotIndex: number) => void
+  tabIdSet: Set<string>
   tab: Tab
   viewLayout: CustomSavedView['layout']
-}> = ({ index, isSplit, isVisible, slotIndex, slotSwitcher, tab, viewLayout }) => {
+}> = memo(({ activeSlotIndex, activeView, index, isSplit, isVisible, orderedTabs, slotIndex, focusSlot, tabIdSet, tab, viewLayout }) => {
   let style: CSSProperties
   if (isSplit && isVisible) {
     style = { flex: 1, minWidth: 0, order: slotIndex ?? 0 }
@@ -36,7 +41,24 @@ export const SavedViewTab: React.FC<{
       style={style}
       onMouseDown={() => tabs$.setActiveTabIndex(index, 'user')}
     >
-      <NoraTab tab={tab} index={index} desktopVariant="saved-view" slotSwitcher={slotSwitcher} />
+      <NoraTab
+        tab={tab}
+        index={index}
+        desktopVariant="saved-view"
+        slotSwitcher={
+          slotIndex == null ? undefined : (
+            <SlotTabPicker
+              currentTabId={tab.id}
+              isActive={slotIndex === activeSlotIndex}
+              onActivate={() => focusSlot(activeView.id, slotIndex)}
+              orderedTabs={orderedTabs}
+              slotIndex={slotIndex}
+              tabIdSet={tabIdSet}
+              view={activeView}
+            />
+          )
+        }
+      />
     </div>
   )
-}
+})

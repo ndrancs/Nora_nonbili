@@ -475,26 +475,21 @@ export const NoraTab: React.FC<{
           style={{ borderLeftWidth: 4, borderLeftColor: profileColor, height: 36 }}
         >
           <View className="flex-row items-center gap-2 shrink-0">
-            {slotSwitcher || desktopVariant === 'deck' ? null : <ServiceIcon url={tab.url} icon={tab.icon} />}
+            {slotSwitcher ? null : <ServiceIcon url={tab.url} icon={tab.icon} />}
             {nIf(tab.isLoading, <ActivityIndicator size="small" color="#a1a1aa" />)}
             {nIf(canGoBack, <MaterialButton name="arrow-back" onPress={goBack} style={toolbarButtonStyle} />)}
           </View>
           <View className="flex-1 min-w-0 flex-row items-center justify-center">
             {slotSwitcher || (
-              <View className="min-w-0 max-w-full flex-row items-center justify-center gap-2 px-2">
-                <View className="shrink-0">
-                  <ServiceIcon url={tab.url} icon={tab.icon} />
-                </View>
-                <NouText
-                  className={clsx(
-                    'min-w-0 flex-1 text-[11px] font-bold tracking-wider text-center',
-                    isActive ? 'text-zinc-600 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400',
-                  )}
-                  numberOfLines={1}
-                >
-                  {getTabLabel(tab)}
-                </NouText>
-              </View>
+              <NouText
+                className={clsx(
+                  'text-[11px] font-bold tracking-wider text-center px-2',
+                  isActive ? 'text-zinc-600 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400',
+                )}
+                numberOfLines={1}
+              >
+                {getTabLabel(tab)}
+              </NouText>
             )}
           </View>
           <NouMenu
