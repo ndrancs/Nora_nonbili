@@ -27,7 +27,7 @@ Install from F-Droid, Google Play, or download APK from GitHub.
 - Multiple accounts with separate cookie storage
 - Blocklist (EasyList and EasyPrivacy)
 - Download image
-- Download fb/ig/x video
+- Download fb/ig/tiktok/x video
 - Select text
 - Zoom
 - Remove tracking url query params

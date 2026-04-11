@@ -19,10 +19,11 @@
 
   <description>
     <ul>
-      <li>Deck view to browse multiple timelines</li>
-      <li>Drag/drop to reorder decks</li>
-      <li>Download fb/ig/x video</li>
-      <li>Multiple profiles with independent cookie storage</li>
+      <li>Block ads and trackers</li>
+      <li>Deck/Split/Grid view to browse multiple timelines</li>
+      <li>Download fb/ig/tiktok/x video</li>
+      <li>Multiple accounts with separate cookie storage</li>
+      <li>Customize with CSS</li>
     </ul>
   </description>
 
@@ -58,6 +59,18 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.1.9" date="2026-04-11">
+      <description>
+        <ul>
+          <li>Improve empty pane and tab switcher styles</li>
+          <li>Add recently closed menu</li>
+          <li>Support Ctrl/Cmd + T to open new tab</li>
+          <li>Support injecting cookie and editing URL</li>
+          <li>Support dark/light theme</li>
+          <li>Support downloading TikTok video</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.8" date="2026-03-25">
       <description>
         <ul>
