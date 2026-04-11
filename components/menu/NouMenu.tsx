@@ -36,7 +36,7 @@ export const NouMenu: React.FC<{ trigger: ReactNode; items: Item[]; triggerColor
         key={index}
         onClick={item.handler}
         disabled={item.disabled}
-        className={clsx('min-w-[160px] max-w-[320px] px-3', item.description ? 'py-1 h-auto' : 'py-2')}
+        className={clsx('min-w-[160px] max-w-[320px] px-3', item.description ? 'py-2 h-auto' : 'py-2')}
       >
         <div className="flex min-w-0 flex-row items-center gap-3 leading-none">
           {item.icon ? <div className="flex shrink-0 items-center justify-center h-5 w-5">{item.icon}</div> : null}

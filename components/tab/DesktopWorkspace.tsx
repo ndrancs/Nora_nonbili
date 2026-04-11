@@ -1,4 +1,4 @@
-import React, { useEffect, type CSSProperties, type ReactNode } from 'react'
+import React, { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -55,11 +55,13 @@ const getSlotStyle = (layout: CustomSavedView['layout'], slotIndex: number): CSS
 
 const SlotTabPicker: React.FC<{
   currentTabId: string | null
+  isActive: boolean
+  onActivate: () => void
   orderedTabs: Tab[]
   slotIndex: number
   tabIdSet: Set<string>
   view: CustomSavedView
-}> = ({ currentTabId, orderedTabs, slotIndex, tabIdSet, view }) => {
+}> = ({ currentTabId, isActive, onActivate, orderedTabs, slotIndex, tabIdSet, view }) => {
   const usedTabIds = new Set(view.slotTabIds.filter((tabId): tabId is string => Boolean(tabId)))
   const currentTab = orderedTabs.find((tab) => tab.id === currentTabId) || null
   const availableTabs = orderedTabs.filter((tab) => tab.id === currentTabId || !usedTabIds.has(tab.id))
@@ -67,7 +69,12 @@ const SlotTabPicker: React.FC<{
   const items = [
     ...availableTabs.map((tab) => ({
       label: getTabLabel(tab),
+      description: tab.url || t('views.desktop.blankTab'),
+      icon: <ServiceIcon url={tab.url} icon={tab.icon} />,
+      meta:
+        tab.id === currentTabId ? <MaterialIcons name="check" size={16} color={isActive ? '#4f46e5' : '#71717a'} /> : undefined,
       handler: () => {
+        onActivate()
         savedViews$.assignSlotTab(view.id, slotIndex, tab.id)
         tabs$.setActiveTabById(tab.id, 'user')
       },
@@ -77,37 +84,85 @@ const SlotTabPicker: React.FC<{
   return (
     <NouMenu
       trigger={
-        <div className="flex max-w-[14rem] min-w-0 h-[22px] flex-row items-center justify-center px-3 gap-1 bg-zinc-950/40 hover:bg-zinc-900/60 border border-zinc-700/30 rounded-full transition-all group cursor-pointer overflow-hidden">
+        <Pressable
+          className={clsx(
+            'flex max-w-[15rem] min-w-0 h-7 flex-row items-center gap-2 rounded-full border px-2.5 transition-all overflow-hidden',
+            isActive
+              ? 'border-indigo-300 bg-indigo-50 shadow-sm shadow-indigo-500/10 dark:border-indigo-300/40 dark:bg-indigo-400/20'
+              : 'border-zinc-300/80 bg-white/90 hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700/60 dark:bg-zinc-900/65 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/80',
+          )}
+          onPress={onActivate}
+        >
+          <View
+            className={clsx(
+              'h-5 w-5 items-center justify-center rounded-full shrink-0',
+              isActive ? 'bg-indigo-100 dark:bg-indigo-200/20' : 'bg-zinc-100 dark:bg-zinc-800',
+            )}
+          >
+            <ServiceIcon url={currentTab?.url || ''} icon={currentTab?.icon} />
+          </View>
           <NouText
-            className="text-xs font-bold text-zinc-500 group-hover:text-zinc-300 flex-1 text-center tracking-tight"
+            className={clsx(
+              'text-xs font-semibold flex-1 tracking-tight',
+              isActive ? 'text-indigo-950 dark:text-indigo-50' : 'text-zinc-700 dark:text-zinc-200',
+            )}
             numberOfLines={1}
           >
             {currentTabId && tabIdSet.has(currentTabId) ? getTabLabel(currentTab) : t('tabs.new')}
           </NouText>
-          <MaterialIcons name="expand-more" size={14} color="#52525b" className="opacity-50 shrink-0" />
-        </div>
+          <MaterialIcons
+            name="unfold-more"
+            size={14}
+            color={isActive ? '#4f46e5' : '#71717a'}
+            className="shrink-0 opacity-80"
+          />
+        </Pressable>
       }
-      items={items}
+      items={[
+        ...items,
+        {
+          kind: 'separator',
+          label: '',
+          handler: () => {},
+        },
+        {
+          label: t('views.desktop.newBlankTab'),
+          description: t('views.desktop.createBlankTabInSlot'),
+          icon: <MaterialIcons name="add" size={16} color="#f97316" />,
+          handler: () => {
+            onActivate()
+            const tabId = openDesktopTab('')
+            if (tabId) {
+              savedViews$.assignSlotTab(view.id, slotIndex, tabId)
+              tabs$.setActiveTabById(tabId, 'open')
+            }
+          },
+        },
+      ]}
     />
   )
 }
 
 const EmptySlot: React.FC<{
+  isActive: boolean
+  onActivate: () => void
   slotIndex: number
   orderedTabs: Tab[]
   tabIdSet: Set<string>
   view: CustomSavedView
   isSplit?: boolean
-}> = ({ slotIndex, orderedTabs, tabIdSet, view, isSplit }) => {
+}> = ({ isActive, onActivate, slotIndex, orderedTabs, tabIdSet, view, isSplit }) => {
   const lastSelectedProfileId = useValue(ui$.lastSelectedProfileId)
   const selectedProfileId = lastSelectedProfileId
   const profileColor = getProfileColor(selectedProfileId)
   const canCloseSlot = isSplit && slotIndex >= 2 && view.slotTabIds.length > 2
   const usedTabIds = new Set(view.slotTabIds.filter((tabId): tabId is string => Boolean(tabId)))
   const availableTabs = orderedTabs.filter((tab) => !usedTabIds.has(tab.id) && tabIdSet.has(tab.id))
-  const targetLayoutLabel = view.layout === 'split-view' ? 'split view' : 'grid view'
+  const targetLayoutLabel =
+    view.layout === 'split-view' ? t('views.desktop.layout.split') : t('views.desktop.layout.grid')
 
   const createTabInSlot = (url: string, profileId: string) => {
+    onActivate()
     const tabId = openDesktopTab(url, { profile: profileId })
     if (tabId) {
       savedViews$.assignSlotTab(view.id, slotIndex, tabId)
@@ -116,6 +171,7 @@ const EmptySlot: React.FC<{
   }
 
   const assignExistingTab = (tabId: string) => {
+    onActivate()
     savedViews$.assignSlotTab(view.id, slotIndex, tabId)
     tabs$.setActiveTabById(tabId, 'user')
   }
@@ -124,21 +180,40 @@ const EmptySlot: React.FC<{
     <div
       className={clsx(
         isSplit
-          ? 'flex-1 min-w-0 h-full overflow-hidden'
-          : 'absolute overflow-hidden rounded-lg border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950',
+          ? clsx(
+              'flex-1 min-w-0 h-full overflow-hidden rounded-[20px] border transition-all',
+              isActive
+                ? 'border-indigo-300 bg-indigo-50/40 shadow-[0_0_0_1px_rgba(165,180,252,0.9)] dark:border-indigo-300/40 dark:bg-indigo-400/10'
+                : 'border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950',
+            )
+          : clsx(
+              'absolute overflow-hidden rounded-[20px] border transition-all',
+              isActive
+                ? 'border-indigo-300 bg-indigo-50/40 shadow-[0_0_0_1px_rgba(165,180,252,0.9)] dark:border-indigo-300/40 dark:bg-indigo-400/10'
+                : 'border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-950',
+            ),
       )}
       style={!isSplit ? getSlotStyle(view.layout, slotIndex) : { flex: 1, minWidth: 0, order: slotIndex }}
+      onClick={onActivate}
     >
       <View className="flex h-full min-h-0 min-w-0 flex-col">
         <View
-          className="flex-row items-center justify-between gap-2 bg-zinc-100 dark:bg-zinc-800 pl-2 pr-1"
+          className={clsx(
+            'flex-row items-center justify-between gap-2 pl-2 pr-1 transition-colors',
+            isActive ? 'bg-indigo-100 dark:bg-indigo-400/25' : 'bg-zinc-100 dark:bg-zinc-800',
+          )}
           style={{ borderLeftWidth: 4, borderLeftColor: profileColor, height: 36 }}
         >
           <View className="flex-row items-center gap-2 shrink-0">
             <ServiceIcon url="" />
           </View>
           <View className="flex-1 min-w-0 flex-row items-center justify-center">
-            <NouText className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 tracking-wider text-center px-2">
+            <NouText
+              className={clsx(
+                'text-[11px] font-bold tracking-wider text-center px-2',
+                isActive ? 'text-indigo-950 dark:text-indigo-50' : 'text-zinc-500 dark:text-zinc-400',
+              )}
+            >
               {t('tabs.new')}
             </NouText>
           </View>
@@ -153,10 +228,18 @@ const EmptySlot: React.FC<{
             <View className="w-7 shrink-0" />
           )}
         </View>
-        <View className="flex-1 items-center justify-center bg-zinc-50 px-6 dark:bg-zinc-900">
-          <View className="w-full max-w-[28rem] items-center">
-            <NouText className="mb-6 text-center text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-              {`Choose a tab to add to ${targetLayoutLabel}`}
+        <View
+          className={clsx(
+            'flex-1 min-h-0 overflow-y-auto px-6 py-8 transition-colors',
+            isActive ? 'bg-indigo-50/50 dark:bg-indigo-950/20' : 'bg-zinc-50 dark:bg-zinc-900',
+          )}
+        >
+          <View className="mx-auto w-full max-w-[28rem] items-center">
+            <NouText
+              className="mb-6 w-full text-center text-2xl font-bold leading-tight text-zinc-900 dark:text-zinc-50"
+              numberOfLines={2}
+            >
+              {t('views.desktop.chooseTabToAdd', { layout: targetLayoutLabel })}
             </NouText>
             <View className="w-full overflow-hidden rounded-[28px] border border-zinc-200 bg-white/95 shadow-sm shadow-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-950/90">
               <Pressable
@@ -171,7 +254,7 @@ const EmptySlot: React.FC<{
                     {t('tabs.new')}
                   </NouText>
                   <NouText className="text-sm text-zinc-500 dark:text-zinc-400">
-                    Create a new blank tab in this slot
+                    {t('views.desktop.createBlankTabInSlot')}
                   </NouText>
                 </View>
               </Pressable>
@@ -195,17 +278,12 @@ const EmptySlot: React.FC<{
                       {getTabLabel(tab)}
                     </NouText>
                     <NouText className="text-sm text-zinc-500 dark:text-zinc-400" numberOfLines={1}>
-                      {tab.url || 'Blank tab'}
+                      {tab.url || t('views.desktop.blankTab')}
                     </NouText>
                   </View>
                 </Pressable>
               ))}
             </View>
-            {availableTabs.length ? null : (
-              <NouText className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                No other tabs are available. Create a new one for this slot.
-              </NouText>
-            )}
           </View>
         </View>
       </View>
@@ -279,6 +357,7 @@ const SortableDesktopTab: React.FC<{
 export const DesktopWorkspace: React.FC = () => {
   const { tabs, activeTabIndex, orders } = useValue(tabs$)
   const { activeViewId, savedViews } = useValue(savedViews$)
+  const [focusedEmptySlotByView, setFocusedEmptySlotByView] = useState<Record<string, number>>({})
   const activeView = savedViews.find((view) => view.id === activeViewId)
   const isDeck = !activeView || activeViewId === DECK_VIEW_ID
   const tabIdsKey = tabs.map((tab) => tab.id).join('|')
@@ -287,6 +366,7 @@ export const DesktopWorkspace: React.FC = () => {
   const tabIdSet = new Set(tabs.map((tab) => tab.id))
   const visibleSlots = activeView?.slotTabIds ?? []
   const visibleTabIds = visibleSlots.filter((tabId): tabId is string => typeof tabId === 'string' && tabIdSet.has(tabId))
+  const activeTabId = tabs[activeTabIndex]?.id
 
   useEffect(() => {
     const nextOrders: Record<string, number> = {}
@@ -353,12 +433,33 @@ export const DesktopWorkspace: React.FC = () => {
     })
   }
 
+  const fallbackEmptySlotIndex =
+    activeView?.slotTabIds.findIndex((tabId) => !tabId || !tabIdSet.has(tabId)) ?? -1
+  const activeSlotIndex =
+    !activeView || isDeck
+      ? null
+      : activeTabId && slotIndexByTabId.has(activeTabId)
+        ? slotIndexByTabId.get(activeTabId) ?? null
+        : focusedEmptySlotByView[activeView.id] ?? (fallbackEmptySlotIndex >= 0 ? fallbackEmptySlotIndex : null)
+
   const isSplit = activeView?.layout === 'split-view'
   const createDeckTab = () => {
     const tabId = openDesktopTab('')
     if (tabId) {
       tabs$.setActiveTabById(tabId, 'open')
     }
+  }
+
+  const focusSlot = (viewId: string, slotIndex: number) => {
+    setFocusedEmptySlotByView((current) => {
+      if (current[viewId] === slotIndex) {
+        return current
+      }
+      return {
+        ...current,
+        [viewId]: slotIndex,
+      }
+    })
   }
 
   return (
@@ -390,6 +491,8 @@ export const DesktopWorkspace: React.FC = () => {
                     !isDeck && activeView && slotIndex != null ? (
                       <SlotTabPicker
                         currentTabId={tab.id}
+                        isActive={slotIndex === activeSlotIndex}
+                        onActivate={() => focusSlot(activeView.id, slotIndex)}
                         orderedTabs={orderedTabs}
                         slotIndex={slotIndex}
                         tabIdSet={tabIdSet}
@@ -420,6 +523,8 @@ export const DesktopWorkspace: React.FC = () => {
                   tabId && tabIdSet.has(tabId) ? null : (
                     <EmptySlot
                       key={`${activeView.id}-${slotIndex}`}
+                      isActive={slotIndex === activeSlotIndex}
+                      onActivate={() => focusSlot(activeView.id, slotIndex)}
                       slotIndex={slotIndex}
                       orderedTabs={orderedTabs}
                       tabIdSet={tabIdSet}

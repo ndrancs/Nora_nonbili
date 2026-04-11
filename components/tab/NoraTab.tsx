@@ -475,7 +475,7 @@ export const NoraTab: React.FC<{
           style={{ borderLeftWidth: 4, borderLeftColor: profileColor, height: 36 }}
         >
           <View className="flex-row items-center gap-2 shrink-0">
-            <ServiceIcon url={tab.url} icon={tab.icon} />
+            {slotSwitcher ? null : <ServiceIcon url={tab.url} icon={tab.icon} />}
             {nIf(tab.isLoading, <ActivityIndicator size="small" color="#a1a1aa" />)}
             {nIf(canGoBack, <MaterialButton name="arrow-back" onPress={goBack} style={toolbarButtonStyle} />)}
           </View>

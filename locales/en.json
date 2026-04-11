@@ -26,7 +26,20 @@
   },
   "views": {
     "rename": "Rename view",
-    "namePlaceholder": "View name"
+    "namePlaceholder": "View name",
+    "desktop": {
+      "blankTab": "Blank tab",
+      "newBlankTab": "New blank tab",
+      "newSplitView": "New split view",
+      "newGridView": "New grid view",
+      "chooseTabToAdd": "Choose a tab to add to {{layout}}",
+      "createBlankTabInSlot": "Create a new blank tab in this slot",
+      "layout": {
+        "split": "split view",
+        "grid": "grid view",
+        "gridFour": "4-tabs grid"
+      }
+    }
   },
   "blocklist": {
     "label": "Network blocklist",

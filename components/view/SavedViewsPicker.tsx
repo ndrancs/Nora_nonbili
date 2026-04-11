@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Pressable, ScrollView, View, useColorScheme, useWindowDimensions } from 'react-native'
 import { useValue } from '@legendapp/state/react'
 import { NouMenu } from '../menu/NouMenu'
 import { NouText } from '../NouText'
 import { DECK_VIEW_ID, type CustomSavedViewLayout, createDesktopSavedView, savedViews$ } from '@/states/saved-views'
-import { openDesktopTab, sortTabsByOrder, tabs$ } from '@/states/tabs'
+import { sortTabsByOrder, tabs$ } from '@/states/tabs'
 import { ui$ } from '@/states/ui'
 import { clsx, nIf } from '@/lib/utils'
+import { openTabForActiveDesktopView } from '@/lib/desktop-view-actions'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { NouContextMenu, type ContextItem } from '../menu/NouContextMenu'
+import { t } from 'i18next'
 
 const getFirstVisibleTabId = (viewId: string, viewTabIds: Record<string, string[]>, orderedTabIds: string[]) => {
   if (viewId === DECK_VIEW_ID) {
@@ -65,27 +67,13 @@ export const SavedViewsPicker = () => {
     }
   }
 
-  const createTabForCurrentView = () => {
-    if (activeView?.layout === 'split-view') {
-      savedViews$.appendSplitViewSlot(activeView.id)
-      return
-    }
-
-    const tabId = openDesktopTab('')
-    if (!tabId) {
-      return
-    }
-
-    tabs$.setActiveTabById(tabId, 'open')
-  }
-
   const quickViews = [
     { id: DECK_VIEW_ID, label: '', layout: 'deck', meta: '' },
     ...savedViews.map((view) => ({
       id: view.id,
       label: view.name,
       layout: view.layout,
-      meta: view.layout === 'split-view' ? 'Split view' : '4-tabs grid',
+      meta: view.layout === 'split-view' ? t('views.desktop.layout.split') : t('views.desktop.layout.gridFour'),
     })),
   ]
 
@@ -106,14 +94,14 @@ export const SavedViewsPicker = () => {
                 ? []
                 : [
                     {
-                      label: 'Rename',
+                      label: t('views.rename'),
                       icon: <MaterialIcons name="edit" size={14} color="#71717a" />,
                       handler: () => {
                         ui$.renameViewModalTargetViewId.set(view.id)
                       },
                     },
                     {
-                      label: 'Delete',
+                      label: t('menus.delete'),
                       icon: <MaterialIcons name="delete" size={14} color="#f87171" />,
                       color: 'red',
                       handler: () => savedViews$.deleteView(view.id),
@@ -190,18 +178,18 @@ export const SavedViewsPicker = () => {
                 ? []
                 : [
                     {
-                      label: 'New tab',
+                      label: t('tabs.new'),
                       icon: <MaterialIcons name="add" size={14} color="#71717a" />,
-                      handler: createTabForCurrentView,
+                      handler: openTabForActiveDesktopView,
                     },
                   ]),
               {
-                label: 'New split view',
+                label: t('views.desktop.newSplitView'),
                 icon: <ViewTypeIcon layout="split-view" size={14} />,
                 handler: () => createView('split-view'),
               },
               {
-                label: 'New grid view',
+                label: t('views.desktop.newGridView'),
                 icon: <ViewTypeIcon layout="grid-4" size={14} />,
                 handler: () => createView('grid-4'),
               },

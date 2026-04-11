@@ -1,4 +1,5 @@
 import { tabs$ } from '@/states/tabs'
+import { openTabForActiveDesktopView } from '@/lib/desktop-view-actions'
 
 export function handleShortcuts(e: {
   metaKey?: boolean
@@ -22,10 +23,7 @@ export function handleShortcuts(e: {
         tabs$.reopenClosedTab(history[0].id)
       }
     } else {
-      const tabId = tabs$.openTab('', { source: 'manual' })
-      if (tabId) {
-        tabs$.setActiveTabById(tabId, 'open')
-      }
+      openTabForActiveDesktopView()
     }
   } else if (key === 'w') {
     e.preventDefault?.()
