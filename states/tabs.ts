@@ -247,6 +247,9 @@ export const tabs$: Observable<Store> = observable<Store>({
     })
 
     tabs$.tabs.splice(index, 1)
+    if (tabId in tabs$.orders.get()) {
+      tabs$.orders[tabId].delete()
+    }
     pushRecentlyClosedTabs(closedTab ? [closedTab] : [])
     savedViews$.cleanupClosedTabIds([tabId])
     syncRuntimeTabMetadata()

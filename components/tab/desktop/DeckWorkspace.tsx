@@ -1,6 +1,14 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { Pressable } from 'react-native'
 import { type Tab, openDesktopTab, tabs$ } from '@/states/tabs'
@@ -13,6 +21,7 @@ export const DeckWorkspace: React.FC<{
 }> = ({ orderedTabIds, orders, tabs }) => {
   const deckScrollRef = useRef<HTMLDivElement>(null)
   const prevTabCountRef = useRef(tabs.length)
+  const [activeId, setActiveId] = useState<string | null>(null)
 
   useEffect(() => {
     if (tabs.length > prevTabCountRef.current && deckScrollRef.current) {
@@ -31,7 +40,12 @@ export const DeckWorkspace: React.FC<{
     }),
   )
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }
+
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setActiveId(null)
     if (!over || active.id === over.id) {
       return
     }
@@ -57,14 +71,25 @@ export const DeckWorkspace: React.FC<{
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={tabs.map((tab) => tab.id)} strategy={horizontalListSortingStrategy}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveId(null)}
+    >
+      <SortableContext items={orderedTabIds} strategy={horizontalListSortingStrategy}>
         <div ref={deckScrollRef} className="flex-1 flex gap-2 overflow-x-auto overflow-y-hidden p-2">
-          {tabs.map((tab, index) => (
-            <DeckTab key={tab.id} tab={tab} index={index} orders={orders} />
-          ))}
+          {(() => {
+            const seen = new Set<string>()
+            return tabs.map((tab, index) => {
+              if (!tab?.id || seen.has(tab.id)) return null
+              seen.add(tab.id)
+              return <DeckTab key={tab.id} tab={tab} index={index} orders={orders} />
+            })
+          })()}
 
-          <div key="deck-add-tab" style={{ order: tabs.length + 1 }}>
+          <div key="deck-add-tab" style={{ order: 9999 }}>
             <Pressable
               className="flex h-full w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950/40 hover:bg-zinc-200 dark:hover:bg-zinc-900/70"
               onPress={createDeckTab}

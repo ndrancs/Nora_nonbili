@@ -10,7 +10,7 @@ export const DeckTab: React.FC<{
   index: number
   orders: Record<string, number>
 }> = ({ tab, index, orders }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, over, isOver, active } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, active } = useSortable({
     id: tab.id,
   })
 
@@ -20,22 +20,17 @@ export const DeckTab: React.FC<{
     transition,
   }
 
+  const isDragging = active?.id === tab.id
+
   return (
     <div
       ref={setNodeRef}
       className={clsx(
-        'flex h-full transition-all',
-        over && 'pointer-events-none',
-        active?.id === tab.id && 'rotate-[1deg] translate-y-[-16px]',
-        isOver &&
-          active &&
-          over &&
-          (orders[active.id as string] < orders[over.id as string]
-            ? 'border-r-2 border-r-sky-500 pr-2'
-            : 'border-l-2 border-l-sky-500 pl-2'),
+        'flex h-full cursor-grab active:cursor-grabbing transition-opacity',
+        isDragging && 'opacity-30 z-10',
       )}
       style={style}
-      onMouseDown={() => tabs$.setActiveTabIndex(index, 'user')}
+      onMouseDown={() => tabs$.setActiveTabById(tab.id, 'user')}
       {...attributes}
       {...listeners}
     >

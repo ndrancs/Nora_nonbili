@@ -15,9 +15,9 @@ export const DesktopWorkspace: React.FC = () => {
   const activeView = savedViews.find((view) => view.id === activeViewId)
   const isDeck = !activeView || activeViewId === DECK_VIEW_ID
   const tabIdsKey = tabs.map((tab) => tab.id).join('|')
-  const orderedTabIds = useMemo(() => getOrderedTabIds(tabs, orders), [tabs, orders])
-  const orderedTabs = useMemo(() => sortTabsByOrder(tabs, orders), [tabs, orders])
-  const tabIdSet = useMemo(() => new Set(tabs.map((tab) => tab.id)), [tabs])
+  const orderedTabIds = useMemo(() => getOrderedTabIds(tabs, orders), [tabIdsKey, orders])
+  const orderedTabs = useMemo(() => sortTabsByOrder(tabs, orders), [tabIdsKey, orders])
+  const tabIdSet = useMemo(() => new Set(tabs.map((tab) => tab.id)), [tabIdsKey])
   const visibleSlots = activeView?.slotTabIds ?? []
   const visibleTabIds = visibleSlots.filter((tabId): tabId is string => typeof tabId === 'string' && tabIdSet.has(tabId))
   const visibleTabIdsKey = visibleTabIds.join('|')
