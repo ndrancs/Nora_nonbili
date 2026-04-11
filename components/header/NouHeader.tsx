@@ -1,6 +1,6 @@
 import { ActivityIndicator, Dimensions, View, Text, TouchableOpacity, LayoutChangeEvent, useColorScheme } from 'react-native'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import Drawer from 'expo-router/drawer'
 import { useValue, useObserve } from '@legendapp/state/react'
 import { ui$ } from '@/states/ui'
@@ -27,6 +27,24 @@ import { executeWebviewJavaScriptQuietly } from '@/lib/webview'
 import { SavedViewsPicker } from '../view/SavedViewsPicker'
 import { ServiceIcon } from '../service/Services'
 
+const webAnimatedHelpers = {
+  AnimatedView: View,
+  useSharedValueSafe: (initial: number) => ({ value: initial }) as SharedValue<number>,
+  withTimingSafe: (value: number) => value,
+}
+
+const nativeAnimatedHelpers = !isWeb
+  ? (() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Reanimated = require('react-native-reanimated')
+      return {
+        AnimatedView: Reanimated.default?.View ?? Reanimated.View ?? Reanimated.default,
+        useSharedValueSafe: Reanimated.useSharedValue as (initial: number) => SharedValue<number>,
+        withTimingSafe: Reanimated.withTiming as (value: number) => number,
+      }
+    })()
+  : null
+
 function prevTab() {
   const activeIndex = tabs$.activeTabIndex.get()
   const newIndex = activeIndex > 0 ? activeIndex - 1 : tabs$.tabs.length - 1
@@ -48,23 +66,7 @@ export const NouHeader: React.FC<{}> = ({}) => {
   const { tabs, activeTabIndex, recentlyClosedTabs } = useValue(tabs$)
   const currentTab = useValue(tabs$.currentTab)
   const webview = ui$.webview.get()
-  const { AnimatedView, useSharedValueSafe, withTimingSafe } = (() => {
-    if (isWeb) {
-      return {
-        AnimatedView: View,
-        useSharedValueSafe: (initial: number) => ({ value: initial }) as SharedValue<number>,
-        withTimingSafe: (value: number) => value,
-      }
-    }
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const Reanimated = require('react-native-reanimated')
-    return {
-      AnimatedView: Reanimated.default?.View ?? Reanimated.View ?? Reanimated.default,
-      useSharedValueSafe: Reanimated.useSharedValue as (initial: number) => SharedValue<number>,
-      withTimingSafe: Reanimated.withTiming as (value: number) => number,
-    }
-  })()
-  const [marginTopWeb, setMarginTopWeb] = useState(0)
+  const { AnimatedView, useSharedValueSafe, withTimingSafe } = isWeb ? webAnimatedHelpers : nativeAnimatedHelpers!
   const marginTop = useSharedValueSafe(0)
   const flingStart = useSharedValueSafe(0)
   const panStart = useSharedValueSafe(0)
@@ -83,29 +85,19 @@ export const NouHeader: React.FC<{}> = ({}) => {
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout
-    if (Math.abs(uiState.headerHeight - height) < 1) {
+    if (Math.abs(ui$.headerHeight.get() - height) < 1) {
       return
     }
     ui$.headerHeight.set(height)
   }
 
   useEffect(() => {
-    const shouldHide = (settings.autoHideHeader || settings.hideToolbarWhenScrolled) && !uiState.headerShown
-    const next = shouldHide ? -uiState.headerHeight : 0
     if (isWeb) {
-      setMarginTopWeb(next)
-    } else {
-      marginTop.value = withTimingSafe(next)
+      return
     }
-  }, [
-    settings.autoHideHeader,
-    settings.hideToolbarWhenScrolled,
-    uiState.headerHeight,
-    uiState.headerShown,
-    marginTop,
-    withTimingSafe,
-    isWeb,
-  ])
+    const shouldHide = (settings.autoHideHeader || settings.hideToolbarWhenScrolled) && !uiState.headerShown
+    marginTop.value = withTimingSafe(shouldHide ? -uiState.headerHeight : 0)
+  }, [settings.autoHideHeader, settings.hideToolbarWhenScrolled, uiState.headerHeight, uiState.headerShown, marginTop, withTimingSafe])
 
   const scrollToTop = () => {
     void executeWebviewJavaScriptQuietly(webview, `window.scrollTo(0, 0, {behavior: 'smooth'})`)
@@ -156,13 +148,15 @@ export const NouHeader: React.FC<{}> = ({}) => {
 
   const Root = AnimatedView
 
+  const webMarginTop = (settings.autoHideHeader || settings.hideToolbarWhenScrolled) && !uiState.headerShown ? -uiState.headerHeight : 0
+
   const ret = (
     <Root
       className={clsx(
         'bg-zinc-100 dark:bg-zinc-800 flex-row items-center justify-between pl-2 py-1',
         isWeb && 'lg:w-[52px] lg:flex-col lg:items-center lg:justify-start lg:gap-4 lg:bg-zinc-50 lg:px-0 lg:py-4',
       )}
-      style={{ marginTop: isWeb ? marginTopWeb : marginTop }}
+      style={{ marginTop: isWeb ? webMarginTop : marginTop }}
       onLayout={onLayout}
     >
       {nIf(
