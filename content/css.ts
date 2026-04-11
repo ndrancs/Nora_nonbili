@@ -56,7 +56,7 @@ const styles: Record<string, (settings: any) => string> = {
     }
 
     /* blocking div */
-    ._aagw {
+    ._aagv + div {
       pointer-events: none !important;
     }
   `,

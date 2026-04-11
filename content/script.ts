@@ -108,7 +108,7 @@ function runVideoLongPressScript() {
       return
     }
     video.playbackRate = playbackRate
-    void video.play().catch(() => {})
+    void video.play().catch(() => { })
   }
 
   const suppressClick = (video: HTMLVideoElement | null) => {
@@ -173,7 +173,7 @@ function runVideoLongPressScript() {
       if (isInstagramReelPage() && pendingWasPlaying) {
         try {
           await video.play()
-        } catch {}
+        } catch { }
       }
       if (video.paused) {
         cancelPending()
@@ -231,9 +231,8 @@ function runVideoLongPressScript() {
 
   const onPointerEnd = (event: PointerEvent) => {
     if (pointerId === event.pointerId) {
-      const trackedVideo = activeVideo || pendingVideo
-      if (trackedVideo && (activeVideo || shouldGuardInstagramReelPlayback(trackedVideo))) {
-        suppressClick(trackedVideo)
+      if (activeVideo) {
+        suppressClick(activeVideo)
       }
       resetPlayback()
     }
