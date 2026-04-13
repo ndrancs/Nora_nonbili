@@ -7,13 +7,14 @@ import esText from '@/locales/es.json'
 import frText from '@/locales/fr.json'
 import itText from '@/locales/it.json'
 import plText from '@/locales/pl.json'
+import ptBRText from '@/locales/pt_BR.json'
 import svText from '@/locales/sv.json'
 import trText from '@/locales/tr.json'
 import zhHansText from '@/locales/zh_Hans.json'
 import zhHantText from '@/locales/zh_Hant.json'
 import type { Locale } from 'expo-localization'
 
-export const supportedI18nLanguages = ['ar', 'el', 'en', 'es', 'fr', 'it', 'pl', 'sv', 'tr', 'zh_Hans', 'zh_Hant'] as const
+export const supportedI18nLanguages = ['ar', 'el', 'en', 'es', 'fr', 'it', 'pl', 'pt_BR', 'sv', 'tr', 'zh_Hans', 'zh_Hant'] as const
 export type SupportedI18nLanguage = (typeof supportedI18nLanguages)[number]
 
 const resources: Record<SupportedI18nLanguage, { translation: unknown }> = {
@@ -38,6 +39,9 @@ const resources: Record<SupportedI18nLanguage, { translation: unknown }> = {
   pl: {
     translation: plText,
   },
+  pt_BR: {
+    translation: ptBRText,
+  },
   sv: {
     translation: svText,
   },
@@ -53,7 +57,7 @@ const resources: Record<SupportedI18nLanguage, { translation: unknown }> = {
 }
 
 const isSupportedLanguage = (value?: string | null): value is SupportedI18nLanguage =>
-  Boolean(value && supportedI18nLanguages.includes(value))
+  Boolean(value && supportedI18nLanguages.includes(value as any))
 
 export const resolveI18nLanguageFromExpoLocale = (locale?: Locale): SupportedI18nLanguage | undefined => {
   if (!locale?.languageCode) {
@@ -67,6 +71,10 @@ export const resolveI18nLanguageFromExpoLocale = (locale?: Locale): SupportedI18
     }
     const region = locale.regionCode?.toUpperCase()
     return region === 'TW' || region === 'HK' || region === 'MO' ? 'zh_Hant' : 'zh_Hans'
+  }
+
+  if (locale.languageCode === 'pt') {
+    return 'pt_BR'
   }
 
   return isSupportedLanguage(locale.languageCode) ? locale.languageCode : undefined
