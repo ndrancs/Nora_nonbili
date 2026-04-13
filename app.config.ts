@@ -3,6 +3,27 @@ import 'ts-node/register'
 import { ExpoConfig } from 'expo/config'
 import { version, versionCode, buildNumber } from './package.json'
 
+const intentFilters = [
+  {
+    autoVerify: false,
+    action: 'VIEW',
+    data: [
+      'bsky.app',
+      'm.facebook.com',
+      'www.facebook.com',
+      'www.linkedin.com',
+      'www.instagram.com',
+      'www.reddit.com',
+      'www.threads.com',
+      'www.tiktok.com',
+      'www.tumblr.com',
+      'm.vk.com',
+      'x.com',
+    ].map((host) => ({ scheme: 'https', host })),
+    category: ['BROWSABLE', 'DEFAULT'],
+  },
+]
+
 module.exports = ({ config }: { config: ExpoConfig }) => {
   return {
     name: 'Nora',
@@ -33,55 +54,7 @@ module.exports = ({ config }: { config: ExpoConfig }) => {
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
       package: 'jp.nonbili.nora',
-      intentFilters: [
-        {
-          autoVerify: false,
-          action: 'VIEW',
-          data: [
-            {
-              scheme: 'https',
-              host: 'bsky.app',
-            },
-            {
-              scheme: 'https',
-              host: 'm.facebook.com',
-            },
-            {
-              scheme: 'https',
-              host: 'www.facebook.com',
-            },
-            {
-              scheme: 'https',
-              host: 'www.instagram.com',
-            },
-            {
-              scheme: 'https',
-              host: 'www.reddit.com',
-            },
-            {
-              scheme: 'https',
-              host: 'www.threads.com',
-            },
-            {
-              scheme: 'https',
-              host: 'www.tiktok.com',
-            },
-            {
-              scheme: 'https',
-              host: 'www.tumblr.com',
-            },
-            {
-              scheme: 'https',
-              host: 'm.vk.com',
-            },
-            {
-              scheme: 'https',
-              host: 'x.com',
-            },
-          ],
-          category: ['BROWSABLE', 'DEFAULT'],
-        },
-      ],
+      intentFilters,
     },
     web: {
       bundler: 'metro',
