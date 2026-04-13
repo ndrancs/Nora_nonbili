@@ -13,6 +13,7 @@ const withAndroidSigningConfig: ConfigPlugin = (config) => {
 
 android {`,
       )
+      .replace('pt-BR', 'b+pt+BR')
       .replace('zh-Hans', 'b+zh+Hans')
       .replace('zh-Hant', 'b+zh+Hant')
       .replace(

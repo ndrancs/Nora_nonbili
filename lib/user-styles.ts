@@ -76,6 +76,12 @@ export const builtinUserStyleDefinitions: BuiltinUserStyleDefinition[] = [
         width: calc(100vw - 4rem);
         min-width: 0;
       }
+
+      /* Videos|Favorites|Liked tabs */
+      .css-1vk63hd-7937d88b--DivVideoFeedTab.ej9r3wt0 p {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+      }
     `,
   },
   {
